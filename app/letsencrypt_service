@@ -5,6 +5,13 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 seconds_to_wait=3600
 acme_ca_uri="${ACME_CA_URI:-https://acme-v01.api.letsencrypt.org/directory}"
 
+source /app/functions.lib
+
+reload_nginx() {
+    /usr/bin/docker exec -t $NGINX_PROXY_CID \
+     sh -c '/usr/local/bin/docker-gen -only-exposed /app/nginx.tmpl /etc/nginx/conf.d/default.conf;nginx -s reload'
+}
+
 update_certs() {
     [[ ! -f "$DIR"/letsencrypt_service_data ]] && return
 
@@ -32,6 +39,8 @@ update_certs() {
         for domain in "${!hosts_array}"; do
             # Add all the domains to certificate
             params_d_str+=" -d $domain"
+            # Add location configuration for the domain
+            add_location_configuration "$domain" || reload_nginx
         done
         echo "Creating/renewal $base_domain certificates... (${hosts_array_expanded[*]})"
         /usr/bin/simp_le \
@@ -52,10 +61,7 @@ update_certs() {
             reload_nginx='true'
         fi
     done
-    if [[ "$reload_nginx" == 'true' ]]; then
-        /usr/bin/docker exec -t $NGINX_PROXY_CID \
-          sh -c '/usr/local/bin/docker-gen -only-exposed /app/nginx.tmpl /etc/nginx/conf.d/default.conf;nginx -s reload'
-    fi
+    [[ "$reload_nginx" == 'true' ]] && reload_nginx
 }
 
 pid=

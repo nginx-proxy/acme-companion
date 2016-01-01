@@ -1,0 +1,23 @@
+declare -r VHOST_DIR=/etc/nginx/vhost.d
+declare -r START_HEADER='## Start of configuration add by letsencrypt container'
+declare -r END_HEADER='## End of configuration add by letsencrypt container'
+
+add_location_configuration() {
+	local domain="$1"
+	[[ -z "$domain" || ! -f "${VHOST_DIR}/${domain}" ]] && domain=default
+	[[ -f "${VHOST_DIR}/${domain}" && \
+	   -n $(sed -n "/$START_HEADER/,/$END_HEADER/p" "${VHOST_DIR}/${domain}") ]] && return 0
+    echo "$START_HEADER" > "${VHOST_DIR}/${domain}".new
+    cat /app/nginx_location.conf >> "${VHOST_DIR}/${domain}".new
+    echo "$END_HEADER" >> "${VHOST_DIR}/${domain}".new
+    [[ -f "${VHOST_DIR}/${domain}" ]] && cat "${VHOST_DIR}/${domain}" >> "${VHOST_DIR}/${domain}".new
+    mv -f "${VHOST_DIR}/${domain}".new "${VHOST_DIR}/${domain}"
+    return 1
+}
+
+remove_all_location_configurations() {
+    for file in "${VHOST_DIR}"/*; do
+        [[ -n $(sed -n "/$START_HEADER/,/$END_HEADER/p" "$file") ]] && \
+         sed -i "/$START_HEADER/,/$END_HEADER/d" "$file"
+    done
+}
