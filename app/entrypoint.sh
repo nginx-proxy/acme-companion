@@ -24,8 +24,8 @@ EOT
 function get_nginx_proxy_cid {
 	# Look for a NGINX_VERSION environment variable in containers that we have mount volumes from.
     for cid in $(docker inspect --format '{{ range $volume := .HostConfig.VolumesFrom }}{{ $volume }} {{ end}}' $CONTAINER_ID 2>/dev/null); do
-		if [[ -n "$(docker exec -t $cid sh -c 'echo -n $NGINX_VERSION')" ]]; then
-			export NGINX_PROXY_CID=$cid
+		if [[ -n "$(docker exec -t ${cid%:*} sh -c 'echo -n $NGINX_VERSION')" ]]; then
+			export NGINX_PROXY_CID=${cid%:*}
 			break
 		fi
 	done
