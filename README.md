@@ -63,11 +63,11 @@ $ docker run -d -p 80:80 \
     -e LETSENCRYPT_EMAIL="foo@bar.com" ...
 ```
 
-##### Optional container environment variables
+#### Optional container environment variables
 
 Optional letsencrypt-nginx-proxy-companion container environment variables for custom configuration.
 
-- `ACME_CA_URI` - Directory URI for the CA ACME API endpoint (default: ``https://acme-v01.api.letsencrypt.org/directory``)
+* `ACME_CA_URI` - Directory URI for the CA ACME API endpoint (default: ``https://acme-v01.api.letsencrypt.org/directory``)
 
 For example
 
@@ -79,3 +79,5 @@ $ docker run -d \
     -v /var/run/docker.sock:/var/run/docker.sock:ro \
     jrcs/letsencrypt-nginx-proxy-companion
 ```
+
+* `DEBUG` - Set it to `true` to enable debugging of the entrypoint script, which could help you pin point any configuration issues.

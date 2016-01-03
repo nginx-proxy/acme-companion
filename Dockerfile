@@ -2,7 +2,8 @@ FROM alpine:latest
 
 MAINTAINER Yves Blusseau <90z7oey02@sneakemail.com> (@blusseau)
 
-ENV DOCKER_VERSION=latest    \
+ENV DEBUG=false              \
+    DOCKER_VERSION=latest    \
     DOCKER_GEN_VERSION=0.4.3 \
     DOCKER_HOST=unix:///var/run/docker.sock
 

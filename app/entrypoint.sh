@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -u
+
 export CONTAINER_ID=$(cat /proc/self/cgroup | grep 'docker' | sed 's/^.*\///' | tail -n1 | sed 's/^.*-//;s/\..*$//')
 
 if [[ -z "$CONTAINER_ID" ]]; then
@@ -54,6 +56,7 @@ function check_writable_directory {
     rm -f $dir/.check_writable
 }
 
+[[ $DEBUG == true ]] && set -x
 
 if [[ "$*" == "/bin/bash /app/start.sh" ]]; then
     check_docker_socket
