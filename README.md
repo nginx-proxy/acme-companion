@@ -7,6 +7,7 @@ letsencrypt-nginx-proxy-companion is a lightweight companion container for the [
 ### Features:
 * Automatic creation/renewal of Let's Encrypt certificates using original nginx-proxy container.
 * Support creation of Multi-Domain ([SAN](https://www.digicert.com/subject-alternative-name.htm)) Certificates.
+* Automatically creation of a Strong Diffie-Hellman Group (for having an A+ Rate on the [Qualsys SSL Server Test](https://www.ssllabs.com/ssltest/))
 
 #### Usage
 

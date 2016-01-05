@@ -56,6 +56,14 @@ function check_writable_directory {
     rm -f $dir/.check_writable
 }
 
+function check_dh_group {
+    if [[ ! -f /etc/nginx/certs/dhparam.pem ]]; then
+        echo "Creating Diffie-Hellman group (can take several minutes...)"
+        openssl dhparam -out /etc/nginx/certs/.dhparam.pem.tmp 2048 2>/dev/null
+        mv /etc/nginx/certs/.dhparam.pem.tmp /etc/nginx/certs/dhparam.pem || exit 1
+	fi
+}
+
 [[ $DEBUG == true ]] && set -x
 
 if [[ "$*" == "/bin/bash /app/start.sh" ]]; then
@@ -64,6 +72,7 @@ if [[ "$*" == "/bin/bash /app/start.sh" ]]; then
     check_writable_directory '/etc/nginx/certs'
     check_writable_directory '/etc/nginx/vhost.d'
     check_writable_directory '/usr/share/nginx/html'
+    check_dh_group
 fi
 
 exec "$@"

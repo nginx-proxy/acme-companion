@@ -50,8 +50,9 @@ update_certs() {
         if [[ $simp_le_return -eq 0 ]]; then
             for domain in "${!hosts_array}"; do
                 # Symlink all alternative names to base domain certificate
-                ln -sf ./$base_domain/fullchain.pem /etc/nginx/certs/$domain".crt"
-                ln -sf ./$base_domain/key.pem       /etc/nginx/certs/$domain".key"
+                ln -sf "./$base_domain"/fullchain.pem "/etc/nginx/certs/$domain".crt
+                ln -sf "./$base_domain"/key.pem       "/etc/nginx/certs/$domain".key
+                ln -sf ./dhparam.pem                  "/etc/nginx/certs/$domain".dhparam.pem
             done
             reload_nginx='true'
         fi
