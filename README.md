@@ -4,6 +4,8 @@
 
 letsencrypt-nginx-proxy-companion is a lightweight companion container for the [nginx-proxy](https://github.com/jwilder/nginx-proxy). It allow the creation/renewal of Let's Encrypt certificates automatically. See [Let's Encrypt section](#lets-encrypt) for configuration details.
 
+**Note: this version of the container only work with docker 1.9.x. I'm working on a new version that will work with all version of docker.**
+
 ### Features:
 * Automatic creation/renewal of Let's Encrypt certificates using original nginx-proxy container.
 * Support creation of Multi-Domain ([SAN](https://www.digicert.com/subject-alternative-name.htm)) Certificates.
