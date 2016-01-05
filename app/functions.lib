@@ -3,10 +3,10 @@ declare -r START_HEADER='## Start of configuration add by letsencrypt container'
 declare -r END_HEADER='## End of configuration add by letsencrypt container'
 
 add_location_configuration() {
-	local domain="$1"
-	[[ -z "$domain" || ! -f "${VHOST_DIR}/${domain}" ]] && domain=default
-	[[ -f "${VHOST_DIR}/${domain}" && \
-	   -n $(sed -n "/$START_HEADER/,/$END_HEADER/p" "${VHOST_DIR}/${domain}") ]] && return 0
+    local domain="$1"
+    [[ -z "$domain" || ! -f "${VHOST_DIR}/${domain}" ]] && domain=default
+    [[ -f "${VHOST_DIR}/${domain}" && \
+       -n $(sed -n "/$START_HEADER/,/$END_HEADER/p" "${VHOST_DIR}/${domain}") ]] && return 0
     echo "$START_HEADER" > "${VHOST_DIR}/${domain}".new
     cat /app/nginx_location.conf >> "${VHOST_DIR}/${domain}".new
     echo "$END_HEADER" >> "${VHOST_DIR}/${domain}".new
@@ -20,4 +20,11 @@ remove_all_location_configurations() {
         [[ -n $(sed -n "/$START_HEADER/,/$END_HEADER/p" "$file") ]] && \
          sed -i "/$START_HEADER/,/$END_HEADER/d" "$file"
     done
+}
+
+reload_nginx() {
+    if [[ -n "$NGINX_PROXY_CID" ]]; then
+        /usr/bin/docker exec -t $NGINX_PROXY_CID \
+         sh -c '/usr/local/bin/docker-gen -only-exposed /app/nginx.tmpl /etc/nginx/conf.d/default.conf;nginx -s reload'
+    fi
 }

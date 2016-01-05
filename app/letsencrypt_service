@@ -7,21 +7,16 @@ acme_ca_uri="${ACME_CA_URI:-https://acme-v01.api.letsencrypt.org/directory}"
 
 source /app/functions.lib
 
-reload_nginx() {
-    /usr/bin/docker exec -t $NGINX_PROXY_CID \
-     sh -c '/usr/local/bin/docker-gen -only-exposed /app/nginx.tmpl /etc/nginx/conf.d/default.conf;nginx -s reload'
-}
-
 update_certs() {
     [[ ! -f "$DIR"/letsencrypt_service_data ]] && return
 
     # Load relevant container settings
-    unset LETSENCRYPT_CONTAINERS
+	unset LETSENCRYPT_CONTAINERS
     source "$DIR"/letsencrypt_service_data
 
     reload_nginx='false'
     for cid in "${LETSENCRYPT_CONTAINERS[@]}"; do
-        # Derive host and email variable names
+      # Derive host and email variable names
         host_varname="LETSENCRYPT_${cid}_HOST"
         # Array variable indirection hack: http://stackoverflow.com/a/25880676/350221
         hosts_array=$host_varname[@]
