@@ -7,14 +7,14 @@ ENV DEBUG=false              \
     DOCKER_GEN_VERSION=0.4.3 \
     DOCKER_HOST=unix:///var/run/docker.sock
 
-RUN apk --update add bash wget ca-certificates tar procps && \
+RUN apk --update add bash curl ca-certificates tar procps jq && \
     rm -rf /var/cache/apk/*
 
-RUN wget https://github.com/jwilder/docker-gen/releases/download/$DOCKER_GEN_VERSION/docker-gen-linux-amd64-$DOCKER_GEN_VERSION.tar.gz \
+RUN curl -L -O https://github.com/jwilder/docker-gen/releases/download/$DOCKER_GEN_VERSION/docker-gen-linux-amd64-$DOCKER_GEN_VERSION.tar.gz \
  && tar -C /usr/local/bin -xvzf docker-gen-linux-amd64-$DOCKER_GEN_VERSION.tar.gz \
  && rm -f docker-gen-linux-amd64-$DOCKER_GEN_VERSION.tar.gz
 
-RUN wget -O /usr/bin/docker https://get.docker.com/builds/Linux/x86_64/docker-$DOCKER_VERSION && \
+RUN curl -L -o /usr/bin/docker https://get.docker.com/builds/Linux/x86_64/docker-$DOCKER_VERSION && \
 	chmod +rx /usr/bin/docker
 
 WORKDIR /app
