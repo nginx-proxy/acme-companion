@@ -22,9 +22,39 @@ remove_all_location_configurations() {
     done
 }
 
+## Docker
+function docker_api {
+    local scheme
+    local curl_opts=(-s)
+    local method=${2:-GET}
+    # data to POST
+    if [[ -n "${3:-}" ]]; then
+        curl_opts+=(-d "$3")
+    fi
+    if [[ $DOCKER_HOST == unix://* ]]; then
+        curl_opts+=(--unix-socket ${DOCKER_HOST#unix://})
+        scheme='http:'
+    else
+        scheme="$DOCKER_HOST"
+    fi
+    [[ $method = "POST" ]] && curl_opts+=(-H 'Content-Type: application/json')
+    curl "${curl_opts[@]}" -X${method} ${scheme}$1
+}
+
+function docker_exec {
+    local id="${1?missing id}"
+    local cmd="${2?missing command}"
+    local data=$(printf '{ "AttachStdin": false, "AttachStdout": true, "AttachStderr": true, "Tty":false,"Cmd": %s }' "$cmd")
+    exec_id=$(docker_api "/containers/$id/exec" "POST" "$data" | jq -r .Id)
+    if [[ -n "$exec_id" ]]; then
+        docker_api /exec/$exec_id/start "POST" '{"Detach": false, "Tty":false}'
+    fi
+}
+
+## Nginx
 reload_nginx() {
     if [[ -n "$NGINX_PROXY_CID" ]]; then
-        /usr/bin/docker exec -t $NGINX_PROXY_CID \
-         sh -c '/usr/local/bin/docker-gen -only-exposed /app/nginx.tmpl /etc/nginx/conf.d/default.conf;nginx -s reload'
+        docker_exec "$NGINX_PROXY_CID" \
+         '[ "sh", "-c", "/usr/local/bin/docker-gen -only-exposed /app/nginx.tmpl /etc/nginx/conf.d/default.conf; /usr/sbin/nginx -s reload" ]'
     fi
 }

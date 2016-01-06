@@ -10,34 +10,34 @@ if [[ -z "$CONTAINER_ID" ]]; then
 fi
 
 function check_docker_socket {
-	if [[ $DOCKER_HOST == unix://* ]]; then
-		socket_file=${DOCKER_HOST#unix://}
-		if [[ ! -S $socket_file ]]; then
-			cat >&2 <<-EOT
+    if [[ $DOCKER_HOST == unix://* ]]; then
+        socket_file=${DOCKER_HOST#unix://}
+        if [[ ! -S $socket_file ]]; then
+            cat >&2 <<-EOT
 ERROR: you need to share your Docker host socket with a volume at $socket_file
 Typically you should run your container with: \`-v /var/run/docker.sock:$socket_file:ro\`
 See the documentation at http://git.io/vZaGJ
 EOT
-			exit 1
-		fi
-	fi
+            exit 1
+        fi
+    fi
 }
-    
+
 function get_nginx_proxy_cid {
-	# Look for a NGINX_VERSION environment variable in containers that we have mount volumes from.
-    local query='{{ range $volume := .HostConfig.VolumesFrom }}{{ $volume }} {{ end }}'
-    for cid in $(docker inspect --format "$query" $CONTAINER_ID 2>/dev/null); do
+    # Look for a NGINX_VERSION environment variable in containers that we have mount volumes from.
+    local volumes_from=$(docker_api "/containers/$CONTAINER_ID/json" | jq -r '.HostConfig.VolumesFrom[]' 2>/dev/null)
+    for cid in $volumes_from; do
         cid=${cid%:*} # Remove leading :ro or :rw set by remote docker-compose (thx anoopr)
-		if [[ -n "$(docker exec -t $cid sh -c 'echo -n $NGINX_VERSION')" ]]; then
-			export NGINX_PROXY_CID=$cid
-			break
-		fi
-	done
-	if [[ -z "$NGINX_PROXY_CID" ]]; then
-		echo "Error: can't get nginx-proxy container id !" >&2
-		echo "Check that you use the --volumes-from option to mount volumes from the nginx-proxy." >&2
-		exit 1
-	fi
+        if [[ $(docker_api "/containers/$cid/json" | jq -r '.Config.Env[]' | egrep -c '^NGINX_VERSION=') = "1" ]];then
+            export NGINX_PROXY_CID=$cid
+            break
+        fi
+    done
+    if [[ -z "${NGINX_PROXY_CID:-}" ]]; then
+        echo "Error: can't get nginx-proxy container id !" >&2
+        echo "Check that you use the --volumes-from option to mount volumes from the nginx-proxy." >&2
+        exit 1
+    fi
 }
 
 function check_writable_directory {
@@ -61,8 +61,10 @@ function check_dh_group {
         echo "Creating Diffie-Hellman group (can take several minutes...)"
         openssl dhparam -out /etc/nginx/certs/.dhparam.pem.tmp 2048 2>/dev/null
         mv /etc/nginx/certs/.dhparam.pem.tmp /etc/nginx/certs/dhparam.pem || exit 1
-	fi
+    fi
 }
+
+source /app/functions.lib
 
 [[ $DEBUG == true ]] && set -x
 

@@ -1,15 +1,13 @@
 [![](https://img.shields.io/badge/dockerhub-master-brightgreen.svg)](https://hub.docker.com/r/jrcs/letsencrypt-nginx-proxy-companion 'Repository on DockerHub')
 ![License MIT](https://img.shields.io/badge/license-MIT-blue.svg) [![](https://badge.imagelayers.io/jrcs/letsencrypt-nginx-proxy-companion:latest.svg)](https://imagelayers.io/?images=jrcs/letsencrypt-nginx-proxy-companion:latest 'Get your own badge on imagelayers.io')
 
-
 letsencrypt-nginx-proxy-companion is a lightweight companion container for the [nginx-proxy](https://github.com/jwilder/nginx-proxy). It allow the creation/renewal of Let's Encrypt certificates automatically. See [Let's Encrypt section](#lets-encrypt) for configuration details.
-
-**Note: this version of the container only work with docker 1.9.x. I'm working on a new version that will work with all version of docker.**
 
 ### Features:
 * Automatic creation/renewal of Let's Encrypt certificates using original nginx-proxy container.
 * Support creation of Multi-Domain ([SAN](https://www.digicert.com/subject-alternative-name.htm)) Certificates.
-* Automatically creation of a Strong Diffie-Hellman Group (for having an A+ Rate on the [Qualsys SSL Server Test](https://www.ssllabs.com/ssltest/))
+* Automatically creation of a Strong Diffie-Hellman Group (for having an A+ Rate on the [Qualsys SSL Server Test](https://www.ssllabs.com/ssltest/)).
+* Work with all versions of docker.
 
 #### Usage
 
