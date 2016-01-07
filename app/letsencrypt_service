@@ -7,11 +7,19 @@ acme_ca_uri="${ACME_CA_URI:-https://acme-v01.api.letsencrypt.org/directory}"
 
 source /app/functions.lib
 
+missing_link() {
+    local readonly domain=$1; shift
+
+    [ ! -f "/etc/nginx/certs/$domain".crt ] \
+        || [ ! -f "/etc/nginx/certs/$domain".key ] \
+        || [ ! -f "/etc/nginx/certs/$domain".dhparam.pem ]
+}
+
 update_certs() {
     [[ ! -f "$DIR"/letsencrypt_service_data ]] && return
 
     # Load relevant container settings
-	unset LETSENCRYPT_CONTAINERS
+    unset LETSENCRYPT_CONTAINERS
     source "$DIR"/letsencrypt_service_data
 
     reload_nginx='false'
@@ -47,15 +55,15 @@ update_certs() {
 
         simp_le_return=$?
 
-        if [[ $simp_le_return -eq 0 ]]; then
-            for domain in "${!hosts_array}"; do
+        for domain in "${!hosts_array}"; do
+            if missing_link $domain || [[ $simp_le_return -eq 0 ]]; then
                 # Symlink all alternative names to base domain certificate
                 ln -sf "./$base_domain"/fullchain.pem "/etc/nginx/certs/$domain".crt
                 ln -sf "./$base_domain"/key.pem       "/etc/nginx/certs/$domain".key
                 ln -sf ./dhparam.pem                  "/etc/nginx/certs/$domain".dhparam.pem
-            done
-            reload_nginx='true'
-        fi
+                reload_nginx='true'
+            fi
+        done
     done
     [[ "$reload_nginx" == 'true' ]] && reload_nginx
 }
