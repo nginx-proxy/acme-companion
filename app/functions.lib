@@ -61,6 +61,7 @@ function docker_exec {
 ## Nginx
 reload_nginx() {
     if [[ -n "${NGINX_PROXY_CID:-}" ]]; then
+        echo "Reloading nginx proxy..."
         docker_exec "$NGINX_PROXY_CID" \
          '[ "sh", "-c", "/usr/local/bin/docker-gen -only-exposed /app/nginx.tmpl /etc/nginx/conf.d/default.conf; /usr/sbin/nginx -s reload" ]'
     fi

@@ -7,11 +7,38 @@ acme_ca_uri="${ACME_CA_URI:-https://acme-v01.api.letsencrypt.org/directory}"
 
 source /app/functions.lib
 
+create_link() {
+    local readonly target=${1?missing target argument}
+    local readonly source=${2?missing source argument}
+    [[ -f "$target" ]] && return 1
+    ln -sf "$source" "$target"
+}
+
+create_links() {
+    local readonly base_domain=${1?missing base_domain argument}
+    local readonly domain=${2?missing base_domain argument}
+
+    if [[ ! -f "/etc/nginx/certs/$base_domain"/fullchain.pem || \
+          ! -f "/etc/nginx/certs/$base_domain"/key.pem ]]; then
+        return 1
+    fi
+    local return_code=1
+    create_link "/etc/nginx/certs/$domain".crt "./$base_domain"/fullchain.pem
+    return_code=$(( $return_code & $? ))
+    create_link "/etc/nginx/certs/$domain".key "./$base_domain"/key.pem
+    return_code=$(( $return_code & $? ))
+    if [[ -f "/etc/nginx/certs/dhparam.pem" ]]; then
+        create_link "/etc/nginx/certs/$domain".dhparam.pem ./dhparam.pem
+        return_code=$(( $return_code & $? ))
+    fi
+    return $return_code
+}
+
 update_certs() {
     [[ ! -f "$DIR"/letsencrypt_service_data ]] && return
 
     # Load relevant container settings
-	unset LETSENCRYPT_CONTAINERS
+    unset LETSENCRYPT_CONTAINERS
     source "$DIR"/letsencrypt_service_data
 
     reload_nginx='false'
@@ -47,15 +74,10 @@ update_certs() {
 
         simp_le_return=$?
 
-        if [[ $simp_le_return -eq 0 ]]; then
-            for domain in "${!hosts_array}"; do
-                # Symlink all alternative names to base domain certificate
-                ln -sf "./$base_domain"/fullchain.pem "/etc/nginx/certs/$domain".crt
-                ln -sf "./$base_domain"/key.pem       "/etc/nginx/certs/$domain".key
-                ln -sf ./dhparam.pem                  "/etc/nginx/certs/$domain".dhparam.pem
-            done
-            reload_nginx='true'
-        fi
+        for domain in "${!hosts_array}"; do
+            create_links $base_domain $domain && reload_nginx='true'
+            [[ $simp_le_return -eq 0 ]] && reload_nginx='true'
+        done
     done
     [[ "$reload_nginx" == 'true' ]] && reload_nginx
 }
