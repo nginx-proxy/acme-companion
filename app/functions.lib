@@ -42,7 +42,7 @@ function docker_api {
         curl_opts+=(--unix-socket ${DOCKER_HOST#unix://})
         scheme='http:'
     else
-        scheme="$DOCKER_HOST"
+        scheme="http://${DOCKER_HOST#*://}"
     fi
     [[ $method = "POST" ]] && curl_opts+=(-H 'Content-Type: application/json')
     curl "${curl_opts[@]}" -X${method} ${scheme}$1
