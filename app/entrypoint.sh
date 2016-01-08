@@ -2,7 +2,7 @@
 
 set -u
 
-export CONTAINER_ID=$(cat /proc/self/cgroup | grep 'docker' | sed 's/^.*\///' | tail -n1 | sed 's/^.*-//;s/\..*$//')
+export CONTAINER_ID=$(cat /proc/self/cgroup | sed -nE 's/^.+docker[\/-]([a-f0-9]{64}).*/\1/p' | head -n 1)
 
 if [[ -z "$CONTAINER_ID" ]]; then
     echo "Error: can't get my container ID !" >&2
