@@ -1,5 +1,4 @@
-[![](https://img.shields.io/badge/dockerhub-master-brightgreen.svg)](https://hub.docker.com/r/jrcs/letsencrypt-nginx-proxy-companion 'Repository on DockerHub')
-![License MIT](https://img.shields.io/badge/license-MIT-blue.svg) [![](https://badge.imagelayers.io/jrcs/letsencrypt-nginx-proxy-companion:latest.svg)](https://imagelayers.io/?images=jrcs/letsencrypt-nginx-proxy-companion:latest 'Get your own badge on imagelayers.io')
+[![](https://img.shields.io/docker/stars/jrcs/letsencrypt-nginx-proxy-companion.svg)](https://hub.docker.com/r/jrcs/letsencrypt-nginx-proxy-companion 'DockerHub') [![](https://img.shields.io/docker/pulls/jrcs/letsencrypt-nginx-proxy-companion.svg)](https://hub.docker.com/r/jrcs/letsencrypt-nginx-proxy-companion 'DockerHub') [![](https://img.shields.io/imagelayers/image-size/jrcs/letsencrypt-nginx-proxy-companion/latest.svg)](https://imagelayers.io/?images=jrcs/letsencrypt-nginx-proxy-companion:latest 'Get information on imagelayers.io')
 
 letsencrypt-nginx-proxy-companion is a lightweight companion container for the [nginx-proxy](https://github.com/jwilder/nginx-proxy). It allow the creation/renewal of Let's Encrypt certificates automatically. See [Let's Encrypt section](#lets-encrypt) for configuration details.
 
