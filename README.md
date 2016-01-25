@@ -63,7 +63,7 @@ $ docker run -d -p 80:80 \
     -e LETSENCRYPT_EMAIL="foo@bar.com" ...
 ```
 ##### Automatic certificate renewal
-Every hour (3600 seconds) the certificates are checks and every certificate that will expire in the next [30 days](https://github.com/kuba/simp_le/blob/ecf4290c4f7863bb5427b50cdd78bc3a5df79176/simp_le.py#L72) (90 days / 3) are renewed.
+Every hour (3600 seconds) the certificates are checked and every certificate that will expire in the next [30 days](https://github.com/kuba/simp_le/blob/ecf4290c4f7863bb5427b50cdd78bc3a5df79176/simp_le.py#L72) (90 days / 3) are renewed.
 
 #### Optional container environment variables
 
