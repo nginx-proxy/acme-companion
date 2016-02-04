@@ -43,6 +43,23 @@ Then start any containers you want to proxied with a env var `VIRTUAL_HOST=subdo
 
 The containers being proxied must [expose](https://docs.docker.com/reference/run/#expose-incoming-ports) the port to be proxied, either by using the `EXPOSE` directive in their `Dockerfile` or by using the `--expose` flag to `docker run` or `docker create`. See [nginx-proxy](https://github.com/jwilder/nginx-proxy) for more informations. To generate automatically Let's Encrypt certificates see next section.
 
+#### Separate Containers
+nginx-proxy can also be run as two separate containers using the [jwilder/docker-gen](https://github.com/jwilder/docker-gen)
+image and the official [nginx](https://hub.docker.com/_/nginx/) image.
+ 
+* First start nginx and docker-gen containers separately following the instructions in [separate-container-install](https://github.com/jwilder/docker-gen#separate-container-install)
+
+* Second start this container:
+```bash
+$ docker run -d \
+    -v /path/to/certs:/etc/nginx/certs:rw \
+    --volumes-from nginx-proxy \
+    -v /var/run/docker.sock:/var/run/docker.sock:ro \
+    -v /etc/docker-gen/templates:/etc/docker-gen/templates \
+    jrcs/letsencrypt-nginx-proxy-companion
+```
+Then start any containers to be proxied as described previously.
+
 #### Let's Encrypt
 
 To use the Let's Encrypt service to automatically create a valid certificate for virtual host(s).
