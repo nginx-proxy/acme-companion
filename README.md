@@ -55,7 +55,8 @@ $ docker run -d \
     -v /path/to/certs:/etc/nginx/certs:rw \
     --volumes-from nginx-proxy \
     -v /var/run/docker.sock:/var/run/docker.sock:ro \
-    -v /etc/docker-gen/templates:/etc/docker-gen/templates \
+    -v /tmp/templates:/etc/docker-gen/templates \
+    -e SEPARATE_CONTAINER_INSTALL=true \
     jrcs/letsencrypt-nginx-proxy-companion
 ```
 Then start any containers to be proxied as described previously.
