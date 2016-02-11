@@ -86,9 +86,6 @@ pid=
 trap '[[ $pid ]] && kill $pid; exec $0' EXIT
 trap 'trap - EXIT' INT TERM
 
-echo 'Waiting 15s before updating certs...'
-sleep 15s
-
 update_certs
 
 # Wait some amount of time

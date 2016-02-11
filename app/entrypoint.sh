@@ -29,11 +29,11 @@ function get_nginx_proxy_cid {
     for cid in $volumes_from; do
         cid=${cid%:*} # Remove leading :ro or :rw set by remote docker-compose (thx anoopr)
         if [[ $(docker_api "/containers/$cid/json" | jq -r '.Config.Env[]' | egrep -c '^NGINX_VERSION=') = "1" ]];then
-            export NGINX_PROXY_CID=$cid
+            export NGINX_PROXY_CONTAINER=$cid
             break
         fi
     done
-    if [[ -z "${NGINX_PROXY_CID:-}" ]]; then
+    if [[ -z "${NGINX_PROXY_CONTAINER:-}" ]]; then
         echo "Error: can't get nginx-proxy container id !" >&2
         echo "Check that you use the --volumes-from option to mount volumes from the nginx-proxy." >&2
         exit 1
@@ -70,7 +70,9 @@ source /app/functions.lib
 
 if [[ "$*" == "/bin/bash /app/start.sh" ]]; then
     check_docker_socket
-    get_nginx_proxy_cid
+    if [[ -z "${NGINX_DOCKER_GEN_CONTAINER:-}" ]]; then
+        [[ -z "${NGINX_PROXY_CONTAINER:-}" ]] && get_nginx_proxy_cid
+    fi
     check_writable_directory '/etc/nginx/certs'
     check_writable_directory '/etc/nginx/vhost.d'
     check_writable_directory '/usr/share/nginx/html'

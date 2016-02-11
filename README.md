@@ -43,6 +43,47 @@ Then start any containers you want to proxied with a env var `VIRTUAL_HOST=subdo
 
 The containers being proxied must [expose](https://docs.docker.com/reference/run/#expose-incoming-ports) the port to be proxied, either by using the `EXPOSE` directive in their `Dockerfile` or by using the `--expose` flag to `docker run` or `docker create`. See [nginx-proxy](https://github.com/jwilder/nginx-proxy) for more informations. To generate automatically Let's Encrypt certificates see next section.
 
+#### Separate Containers (recommended method)
+nginx proxy can also be run as two separate containers using the [jwilder/docker-gen](https://github.com/jwilder/docker-gen)
+image and the official [nginx](https://hub.docker.com/_/nginx/) image.
+
+You may want to do this to prevent having the docker socket bound to a publicly exposed container service.
+
+To run nginx proxy as a separate container you'll need to have [nginx.tmpl](https://github.com/jwilder/nginx-proxy/blob/master/nginx.tmpl) on your host system and set the `NGIX_DOCKER_GEN_CONTAINER`environment variable to the name or id of the docker-gen container.
+
+* First start nginx (official image) with volumes:
+```bash
+$ docker run -d -p 80:80 -p 443:443 \
+    --name nginx \
+    -v /etc/nginx/conf.d  \
+    -v /etc/nginx/vhost.d \
+    -v /usr/share/nginx/html \
+    -v /path/to/certs:/etc/nginx/certs:ro \
+    nginx
+```
+
+* Second start the docker-gen container with the shared volumes and the template file:
+```bash
+$ docker run -d \
+    --name nginx-gen \
+    --volumes-from nginx \
+    -v /path/to/nginx.tmpl:/etc/docker-gen/templates/nginx.tmpl:ro \
+    -v /var/run/docker.sock:/tmp/docker.sock:ro \
+    jwilder/docker-gen \
+    -notify-sighup nginx -watch -only-exposed -wait 5s:30s /etc/docker-gen/templates/nginx.tmpl /etc/nginx/conf.d/default.conf
+```
+
+* Then start this container (NGIX_DOCKER_GEN_CONTAINER variable must contain the docker-gen container name or id):
+```bash
+$ docker run -d \
+    -e NGINX_DOCKER_GEN_CONTAINER=nginx-gen \
+    --volumes-from nginx \
+    -v /path/to/certs:/etc/nginx/certs:rw \
+    -v /var/run/docker.sock:/var/run/docker.sock:ro \
+    jrcs/letsencrypt-nginx-proxy-companion
+```
+Then start any containers to be proxied as described previously.
+
 #### Let's Encrypt
 
 To use the Let's Encrypt service to automatically create a valid certificate for virtual host(s).
@@ -57,7 +98,7 @@ The `LETSENCRYPT_HOST` variable most likely needs to be the same as the `VIRTUAL
 For example
 
 ```bash
-$ docker run -d -p 80:80 \
+$ docker run -d \
     -e VIRTUAL_HOST="foo.bar.com,bar.com" \
     -e LETSENCRYPT_HOST="foo.bar.com,bar.com" \
     -e LETSENCRYPT_EMAIL="foo@bar.com" ...
@@ -83,3 +124,6 @@ $ docker run -d \
 ```
 
 * `DEBUG` - Set it to `true` to enable debugging of the entrypoint script, which could help you pin point any configuration issues.
+
+* `NGINX_PROXY_CONTAINER`- I for some reason you can't use the docker --volumes-from option, you can specify the name or id of the nginx-proxy container with this variable.
+
