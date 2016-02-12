@@ -57,10 +57,10 @@ function check_writable_directory {
 }
 
 function check_dh_group {
-    if [[ ! -f /etc/nginx/certs/dhparam.pem ]]; then
+    if [[ ! -f $CERT_PATH/dhparam.pem ]]; then
         echo "Creating Diffie-Hellman group (can take several minutes...)"
-        openssl dhparam -out /etc/nginx/certs/.dhparam.pem.tmp 2048 2>/dev/null
-        mv /etc/nginx/certs/.dhparam.pem.tmp /etc/nginx/certs/dhparam.pem || exit 1
+        openssl dhparam -out $CERT_PATH/.dhparam.pem.tmp 2048 2>/dev/null
+        mv $CERT_PATH/.dhparam.pem.tmp $CERT_PATH/dhparam.pem || exit 1
     fi
 }
 
@@ -71,9 +71,9 @@ source /app/functions.lib
 if [[ "$*" == "/bin/bash /app/start.sh" ]]; then
     check_docker_socket
     get_nginx_proxy_cid
-    check_writable_directory '/etc/nginx/certs'
-    check_writable_directory '/etc/nginx/vhost.d'
-    check_writable_directory '/usr/share/nginx/html'
+    check_writable_directory ${CERT_PATH:='/etc/nginx/certs'}
+    check_writable_directory ${VHOST_PATH:='/etc/nginx/vhost.d'} 
+    check_writable_directory ${CHALLENGE_PATH:='/usr/share/nginx/html'} 
     check_dh_group
 fi
 

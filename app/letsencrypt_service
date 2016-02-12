@@ -18,17 +18,17 @@ create_links() {
     local readonly base_domain=${1?missing base_domain argument}
     local readonly domain=${2?missing base_domain argument}
 
-    if [[ ! -f "/etc/nginx/certs/$base_domain"/fullchain.pem || \
-          ! -f "/etc/nginx/certs/$base_domain"/key.pem ]]; then
+    if [[ ! -f "$CERT_PATH/$base_domain"/fullchain.pem || \
+          ! -f "$CERT_PATH/$base_domain"/key.pem ]]; then
         return 1
     fi
     local return_code=1
-    create_link "/etc/nginx/certs/$domain".crt "./$base_domain"/fullchain.pem
+    create_link "$CERT_PATH/$domain".crt "./$base_domain"/fullchain.pem
     return_code=$(( $return_code & $? ))
-    create_link "/etc/nginx/certs/$domain".key "./$base_domain"/key.pem
+    create_link "$CERT_PATH/$domain".key "./$base_domain"/key.pem
     return_code=$(( $return_code & $? ))
-    if [[ -f "/etc/nginx/certs/dhparam.pem" ]]; then
-        create_link "/etc/nginx/certs/$domain".dhparam.pem ./dhparam.pem
+    if [[ -f "$CERT_PATH/dhparam.pem" ]]; then
+        create_link "$CERT_PATH/$domain".dhparam.pem ./dhparam.pem
         return_code=$(( $return_code & $? ))
     fi
     return $return_code
@@ -55,8 +55,8 @@ update_certs() {
         base_domain="${hosts_array_expanded[0]}"
 
         # Create directorty for the first domain
-        mkdir -p /etc/nginx/certs/$base_domain
-        cd /etc/nginx/certs/$base_domain
+        mkdir -p $CERT_PATH/$base_domain
+        cd $CERT_PATH/$base_domain
 
         for domain in "${!hosts_array}"; do
             # Add all the domains to certificate
@@ -70,7 +70,7 @@ update_certs() {
              $params_d_str \
              --email "${!email_varname}" \
              --server=$acme_ca_uri \
-             --default_root /usr/share/nginx/html/
+             --default_root $CHALLENGE_PATH/
 
         simp_le_return=$?
 

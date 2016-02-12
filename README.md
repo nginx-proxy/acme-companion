@@ -9,8 +9,18 @@ letsencrypt-nginx-proxy-companion is a lightweight companion container for the [
 * Work with all versions of docker.
 
 #### Usage
+(NEW) Modified image that allows configuration of the paths to support other nginx images as well. (i.e. bitnami)
+```yaml
+image: *MAINTAINER*/letsencrypt-nginx-proxy-companion
+...
+environment:
+   - CERT_PATH="/etc/nginx/certs" (default)
+   - VHOST_PATH="/etc/nginx/vhost.d" (default)
+   - CHALLENGE_PATH="/usr/share/nginx/html" (default)
+```
 
-To use it with original [nginx-proxy](https://github.com/jwilder/nginx-proxy) container you must declare 3 writable volumes from the [nginx-proxy](https://github.com/jwilder/nginx-proxy) container:
+To use it with original [nginx-proxy](https://github.com/jwilder/nginx-proxy) container you must declare 3 writable volumes from the [nginx-proxy](https://github.com/jwilder/nginx-proxy) container.
+For the defaults, use the following:
 * `/etc/nginx/certs` to create/renew Let's Encrypt certificates
 * `/etc/nginx/vhost.d` to change the configuration of vhosts (need by Let's Encrypt)
 * `/usr/share/nginx/html` to write challenge files.
