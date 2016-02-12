@@ -1,6 +1,6 @@
 FROM alpine:latest
-
-MAINTAINER Yves Blusseau <90z7oey02@sneakemail.com> (@blusseau)
+# Changed, not sure if needed
+MAINTAINER Moreno Sint Hill <info@mirabis.nl> (@mirabis)
 
 ENV DEBUG=false              \
     DOCKER_GEN_VERSION=0.4.3 \
