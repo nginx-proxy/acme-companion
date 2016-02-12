@@ -56,6 +56,19 @@ function check_writable_directory {
     rm -f $dir/.check_writable
 }
 
+function create_nginx_config {
+	# Since NGINX does not support environment variables
+	echo "Creating nginx config file..."
+	cat > .nginx_location.conf <<-'EOF'
+	# Generated through environment variable upon creation
+	location /.well-known/ {
+		auth_basic off;
+		root $CHALLENGE_PATH;
+		try_files $uri =404;
+	}
+EOF
+}
+
 function check_dh_group {
     if [[ ! -f $CERT_PATH/dhparam.pem ]]; then
         echo "Creating Diffie-Hellman group (can take several minutes...)"
@@ -74,6 +87,7 @@ if [[ "$*" == "/bin/bash /app/start.sh" ]]; then
     check_writable_directory ${CERT_PATH:='/etc/nginx/certs'}
     check_writable_directory ${VHOST_PATH:='/etc/nginx/vhost.d'} 
     check_writable_directory ${CHALLENGE_PATH:='/usr/share/nginx/html'} 
+	create_nginx_config
     check_dh_group
 fi
 

@@ -11,7 +11,7 @@ letsencrypt-nginx-proxy-companion is a lightweight companion container for the [
 #### Usage
 (NEW) Modified image that allows configuration of the paths to support other nginx images as well. (i.e. bitnami)
 ```yaml
-image: *MAINTAINER*/letsencrypt-nginx-proxy-companion
+image: jrcs/letsencrypt-nginx-proxy-companion
 ...
 environment:
    - CERT_PATH="/etc/nginx/certs" (default)
