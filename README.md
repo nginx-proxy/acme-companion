@@ -1,4 +1,4 @@
-[![](https://img.shields.io/docker/stars/jrcs/letsencrypt-nginx-proxy-companion.svg)](https://hub.docker.com/r/jrcs/letsencrypt-nginx-proxy-companion 'DockerHub') [![](https://img.shields.io/docker/pulls/jrcs/letsencrypt-nginx-proxy-companion.svg)](https://hub.docker.com/r/jrcs/letsencrypt-nginx-proxy-companion 'DockerHub') [![](https://img.shields.io/imagelayers/image-size/jrcs/letsencrypt-nginx-proxy-companion/latest.svg)](https://imagelayers.io/?images=jrcs/letsencrypt-nginx-proxy-companion:latest 'Get information on imagelayers.io')
+[![](https://img.shields.io/docker/stars/mirabis/letsencrypt-nginx-proxy-companion.svg)](https://hub.docker.com/r/mirabis/letsencrypt-nginx-proxy-companion 'DockerHub') [![](https://img.shields.io/docker/pulls/mirabis/letsencrypt-nginx-proxy-companion.svg)](https://hub.docker.com/r/mirabis/letsencrypt-nginx-proxy-companion 'DockerHub') [![](https://img.shields.io/imagelayers/image-size/mirabis/letsencrypt-nginx-proxy-companion/latest.svg)](https://imagelayers.io/?images=mirabis/letsencrypt-nginx-proxy-companion:latest 'Get information on imagelayers.io')
 
 letsencrypt-nginx-proxy-companion is a lightweight companion container for the [nginx-proxy](https://github.com/jwilder/nginx-proxy). It allow the creation/renewal of Let's Encrypt certificates automatically. See [Let's Encrypt section](#lets-encrypt) for configuration details.
 
@@ -9,8 +9,18 @@ letsencrypt-nginx-proxy-companion is a lightweight companion container for the [
 * Work with all versions of docker.
 
 #### Usage
+(NEW) Modified image that allows configuration of the paths to support other nginx images as well. (i.e. bitnami)
+```yaml
+image: mirabis/letsencrypt-nginx-proxy-companion
+...
+environment:
+   - CERT_PATH="/etc/nginx/certs" (default)
+   - VHOST_PATH="/etc/nginx/vhost.d" (default)
+   - CHALLENGE_PATH="/usr/share/nginx/html" (default)
+```
 
-To use it with original [nginx-proxy](https://github.com/jwilder/nginx-proxy) container you must declare 3 writable volumes from the [nginx-proxy](https://github.com/jwilder/nginx-proxy) container:
+To use it with original [nginx-proxy](https://github.com/jwilder/nginx-proxy) container you must declare 3 writable volumes from the [nginx-proxy](https://github.com/jwilder/nginx-proxy) container.
+For the defaults, use the following:
 * `/etc/nginx/certs` to create/renew Let's Encrypt certificates
 * `/etc/nginx/vhost.d` to change the configuration of vhosts (need by Let's Encrypt)
 * `/usr/share/nginx/html` to write challenge files.
