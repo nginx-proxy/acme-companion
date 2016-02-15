@@ -60,9 +60,20 @@ function docker_exec {
 
 ## Nginx
 reload_nginx() {
-    if [[ -n "${NGINX_PROXY_CID:-}" ]]; then
-        echo "Reloading nginx proxy..."
-        docker_exec "$NGINX_PROXY_CID" \
-         '[ "sh", "-c", "/usr/local/bin/docker-gen -only-exposed /app/nginx.tmpl /etc/nginx/conf.d/default.conf; /usr/sbin/nginx -s reload" ]'
+
+    if [[ "${SEPARATE_CONTAINER_INSTALL}" == "true" ]]; then
+        echo "Generating nginx configuration..."
+        /usr/local/bin/docker-gen -only-exposed /etc/docker-gen/templates/nginx.tmpl /etc/nginx/conf.d/default.conf
+        if [[ -n "${NGINX_PROXY_CID:-}" ]]; then
+            echo "Reloading nginx proxy..."
+            docker_exec "$NGINX_PROXY_CID" \
+             '[ "sh", "-c", "/usr/sbin/nginx -s reload" ]'
+        fi
+    else
+        if [[ -n "${NGINX_PROXY_CID:-}" ]]; then
+            echo "Reloading nginx proxy..."
+            docker_exec "$NGINX_PROXY_CID" \
+            '[ "sh", "-c", "/usr/local/bin/docker-gen -only-exposed /app/nginx.tmpl /etc/nginx/conf.d/default.conf ; /usr/sbin/nginx -s reload" ]'
+        fi
     fi
 }
