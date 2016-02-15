@@ -1,4 +1,4 @@
-FROM alpine:latest
+FROM alpine:3.3
 
 MAINTAINER Yves Blusseau <90z7oey02@sneakemail.com> (@blusseau)
 
