@@ -73,7 +73,7 @@ $ docker run -d \
     -notify-sighup nginx -watch -only-exposed -wait 5s:30s /etc/docker-gen/templates/nginx.tmpl /etc/nginx/conf.d/default.conf
 ```
 
-* Then start this container (NGIX_DOCKER_GEN_CONTAINER variable must contain the docker-gen container name or id):
+* Then start this container (NGINX_DOCKER_GEN_CONTAINER variable must contain the docker-gen container name or id):
 ```bash
 $ docker run -d \
     -e NGINX_DOCKER_GEN_CONTAINER=nginx-gen \
