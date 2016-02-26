@@ -8,6 +8,8 @@ letsencrypt-nginx-proxy-companion is a lightweight companion container for the [
 * Automatically creation of a Strong Diffie-Hellman Group (for having an A+ Rate on the [Qualsys SSL Server Test](https://www.ssllabs.com/ssltest/)).
 * Work with all versions of docker.
 
+***NOTE***: The first time this container is launch it generate a new Diffie-Hellman group file. This process can take several minutes to complete (be patient).
+
 #### Usage
 
 To use it with original [nginx-proxy](https://github.com/jwilder/nginx-proxy) container you must declare 3 writable volumes from the [nginx-proxy](https://github.com/jwilder/nginx-proxy) container:
