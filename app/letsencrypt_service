@@ -50,6 +50,8 @@ update_certs() {
         email_varname="LETSENCRYPT_${cid}_EMAIL"
 
         params_d_str=""
+        [[ $DEBUG == true ]] && params_d_str+=" -v"
+
         hosts_array_expanded=("${!hosts_array}")
         # First domain will be our base domain
         base_domain="${hosts_array_expanded[0]}"
@@ -66,11 +68,11 @@ update_certs() {
         done
         echo "Creating/renewal $base_domain certificates... (${hosts_array_expanded[*]})"
         /usr/bin/simp_le \
-             -f account_key.json -f key.pem -f fullchain.pem \
-             $params_d_str \
-             --email "${!email_varname}" \
-             --server=$acme_ca_uri \
-             --default_root /usr/share/nginx/html/
+            -f account_key.json -f key.pem -f fullchain.pem \
+            $params_d_str \
+            --email "${!email_varname}" \
+            --server=$acme_ca_uri \
+            --default_root /usr/share/nginx/html/
 
         simp_le_return=$?
 

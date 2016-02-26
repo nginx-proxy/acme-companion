@@ -125,7 +125,7 @@ $ docker run -d \
     jrcs/letsencrypt-nginx-proxy-companion
 ```
 
-* `DEBUG` - Set it to `true` to enable debugging of the entrypoint script, which could help you pin point any configuration issues.
+* `DEBUG` - Set it to `true` to enable debugging of the entrypoint script and generation of LetsEncrypt certificates, which could help you pin point any configuration issues.
 
 * `NGINX_PROXY_CONTAINER`- I for some reason you can't use the docker --volumes-from option, you can specify the name or id of the nginx-proxy container with this variable.
 
