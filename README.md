@@ -51,7 +51,7 @@ image and the official [nginx](https://hub.docker.com/_/nginx/) image.
 
 You may want to do this to prevent having the docker socket bound to a publicly exposed container service.
 
-To run nginx proxy as a separate container you'll need to have [nginx.tmpl](https://github.com/jwilder/nginx-proxy/blob/master/nginx.tmpl) on your host system and set the `NGIX_DOCKER_GEN_CONTAINER`environment variable to the name or id of the docker-gen container.
+To run nginx proxy as a separate container you'll need to have [nginx.tmpl](https://github.com/jwilder/nginx-proxy/blob/master/nginx.tmpl) on your host system and set the `NGINX_DOCKER_GEN_CONTAINER` environment variable to the name or id of the docker-gen container.
 
 * First start nginx (official image) with volumes:
 ```bash
