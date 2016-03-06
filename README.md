@@ -101,8 +101,8 @@ For example
 
 ```bash
 $ docker run -d \
-    -e VIRTUAL_HOST="foo.bar.com,bar.com" \
-    -e LETSENCRYPT_HOST="foo.bar.com,bar.com" \
+    -e VIRTUAL_HOST=foo.bar.com,bar.com \
+    -e LETSENCRYPT_HOST=foo.bar.com,bar.com \
     -e LETSENCRYPT_EMAIL="foo@bar.com" ...
 ```
 ##### Automatic certificate renewal
