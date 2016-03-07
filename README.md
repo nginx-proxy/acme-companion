@@ -41,7 +41,7 @@ $ docker run -d \
 
 Then start any containers you want to proxied with a env var `VIRTUAL_HOST=subdomain.youdomain.com`
 
-    $ docker run -e VIRTUAL_HOST=foo.bar.com ...
+    $ docker run -e "VIRTUAL_HOST=foo.bar.com" ...
 
 The containers being proxied must [expose](https://docs.docker.com/reference/run/#expose-incoming-ports) the port to be proxied, either by using the `EXPOSE` directive in their `Dockerfile` or by using the `--expose` flag to `docker run` or `docker create`. See [nginx-proxy](https://github.com/jwilder/nginx-proxy) for more informations. To generate automatically Let's Encrypt certificates see next section.
 
@@ -78,7 +78,7 @@ $ docker run -d \
 * Then start this container (NGINX_DOCKER_GEN_CONTAINER variable must contain the docker-gen container name or id):
 ```bash
 $ docker run -d \
-    -e NGINX_DOCKER_GEN_CONTAINER=nginx-gen \
+    -e "NGINX_DOCKER_GEN_CONTAINER=nginx-gen" \
     --volumes-from nginx \
     -v /path/to/certs:/etc/nginx/certs:rw \
     -v /var/run/docker.sock:/var/run/docker.sock:ro \
@@ -101,9 +101,9 @@ For example
 
 ```bash
 $ docker run -d \
-    -e VIRTUAL_HOST="foo.bar.com,bar.com" \
-    -e LETSENCRYPT_HOST="foo.bar.com,bar.com" \
-    -e LETSENCRYPT_EMAIL="foo@bar.com" ...
+    -e "VIRTUAL_HOST=foo.bar.com,bar.com" \
+    -e "LETSENCRYPT_HOST=foo.bar.com,bar.com" \
+    -e "LETSENCRYPT_EMAIL=foo@bar.com" ...
 ```
 ##### Automatic certificate renewal
 Every hour (3600 seconds) the certificates are checked and every certificate that will expire in the next [30 days](https://github.com/kuba/simp_le/blob/ecf4290c4f7863bb5427b50cdd78bc3a5df79176/simp_le.py#L72) (90 days / 3) are renewed.
@@ -118,7 +118,7 @@ For example
 
 ```bash
 $ docker run -d \
-    -e ACME_CA_URI="https://acme-staging.api.letsencrypt.org/directory" \
+    -e "ACME_CA_URI=https://acme-staging.api.letsencrypt.org/directory" \
     -v /path/to/certs:/etc/nginx/certs:rw \
     --volumes-from nginx-proxy \
     -v /var/run/docker.sock:/var/run/docker.sock:ro \
