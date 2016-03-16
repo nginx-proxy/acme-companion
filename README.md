@@ -112,7 +112,7 @@ Every hour (3600 seconds) the certificates are checked and every certificate tha
 
 Optional letsencrypt-nginx-proxy-companion container environment variables for custom configuration.
 
-* `ACME_CA_URI` - Directory URI for the CA ACME API endpoint (default: ``https://acme-v01.api.letsencrypt.org/directory``)
+* `ACME_CA_URI` - Directory URI for the CA ACME API endpoint (default: ``https://acme-v01.api.letsencrypt.org/directory``). If you set it's value to `https://acme-staging.api.letsencrypt.org/directory` letsencrypt will use test servers that don't have the 5 certs/week/domain limits.
 
 For example
 
