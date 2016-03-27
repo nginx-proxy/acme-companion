@@ -82,3 +82,8 @@ reload_nginx() {
         fi
     fi
 }
+
+# Convert argument to lowercase (bash 4 only)
+function lc() {
+	echo "${@,,}"
+}

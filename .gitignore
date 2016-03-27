@@ -2,3 +2,4 @@ certs/
 conf.d/
 data/
 vhost.d/
+tests/letsencrypt_service_data.tmpl

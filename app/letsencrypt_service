@@ -3,7 +3,7 @@
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 seconds_to_wait=3600
-acme_ca_uri="${ACME_CA_URI:-https://acme-v01.api.letsencrypt.org/directory}"
+ACME_CA_URI="${ACME_CA_URI:-https://acme-v01.api.letsencrypt.org/directory}"
 
 source /app/functions.lib
 
@@ -43,11 +43,17 @@ update_certs() {
 
     reload_nginx='false'
     for cid in "${LETSENCRYPT_CONTAINERS[@]}"; do
-      # Derive host and email variable names
+        # Derive host and email variable names
         host_varname="LETSENCRYPT_${cid}_HOST"
         # Array variable indirection hack: http://stackoverflow.com/a/25880676/350221
         hosts_array=$host_varname[@]
         email_varname="LETSENCRYPT_${cid}_EMAIL"
+
+        test_certificate_varname="LETSENCRYPT_${cid}_TEST"
+        create_test_certificate=false
+        if [[ $(lc "${!test_certificate_varname:-}") == true ]]; then
+            create_test_certificate=true
+        fi
 
         params_d_str=""
         [[ $DEBUG == true ]] && params_d_str+=" -v"
@@ -55,6 +61,29 @@ update_certs() {
         hosts_array_expanded=("${!hosts_array}")
         # First domain will be our base domain
         base_domain="${hosts_array_expanded[0]}"
+
+        if [[ "$create_test_certificate" == true ]]; then
+            # Use staging acme end point
+            acme_ca_uri="https://acme-staging.api.letsencrypt.org/directory"
+            if [[ ! -f /etc/nginx/certs/.${base_domain}.test ]]; then
+                # Remove old certificates
+                rm -rf /etc/nginx/certs/${base_domain}
+                for domain in "${!hosts_array}"; do
+                    rm -f /etc/nginx/certs/$domain.{crt,key,dhparam.pem}
+                done
+                touch /etc/nginx/certs/.${base_domain}.test
+            fi
+        else
+            acme_ca_uri="$ACME_CA_URI"
+            if [[ -f /etc/nginx/certs/.${base_domain}.test ]]; then
+                # Remove old test certificates
+                rm -rf /etc/nginx/certs/${base_domain}
+                for domain in "${!hosts_array}"; do
+                    rm -f /etc/nginx/certs/$domain.{crt,key,dhparam.pem}
+                done
+                rm -f /etc/nginx/certs/.${base_domain}.test
+            fi
+        fi
 
         # Create directorty for the first domain
         mkdir -p /etc/nginx/certs/$base_domain
@@ -66,6 +95,7 @@ update_certs() {
             # Add location configuration for the domain
             add_location_configuration "$domain" || reload_nginx
         done
+
         echo "Creating/renewal $base_domain certificates... (${hosts_array_expanded[*]})"
         /usr/bin/simp_le \
             -f account_key.json -f key.pem -f fullchain.pem \
@@ -81,6 +111,7 @@ update_certs() {
             [[ $simp_le_return -eq 0 ]] && reload_nginx='true'
         done
     done
+
     [[ "$reload_nginx" == 'true' ]] && reload_nginx
 }
 

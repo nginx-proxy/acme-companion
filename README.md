@@ -105,6 +105,9 @@ $ docker run -d \
     -e "LETSENCRYPT_HOST=foo.bar.com,bar.com" \
     -e "LETSENCRYPT_EMAIL=foo@bar.com" ...
 ```
+
+If you want to create test certificates that don't have the 5 certs/week/domain limits define the `LETSENCRYPT_TEST` environment variable with a value of `true`.
+
 ##### Automatic certificate renewal
 Every hour (3600 seconds) the certificates are checked and every certificate that will expire in the next [30 days](https://github.com/kuba/simp_le/blob/ecf4290c4f7863bb5427b50cdd78bc3a5df79176/simp_le.py#L72) (90 days / 3) are renewed.
 
@@ -127,5 +130,5 @@ $ docker run -d \
 
 * `DEBUG` - Set it to `true` to enable debugging of the entrypoint script and generation of LetsEncrypt certificates, which could help you pin point any configuration issues.
 
-* `NGINX_PROXY_CONTAINER`- I for some reason you can't use the docker --volumes-from option, you can specify the name or id of the nginx-proxy container with this variable.
+* `NGINX_PROXY_CONTAINER`- If for some reason you can't use the docker --volumes-from option, you can specify the name or id of the nginx-proxy container with this variable.
 
