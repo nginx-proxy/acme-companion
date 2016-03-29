@@ -98,7 +98,7 @@ update_certs() {
 
         echo "Creating/renewal $base_domain certificates... (${hosts_array_expanded[*]})"
         /usr/bin/simp_le \
-            -f account_key.json -f key.pem -f fullchain.pem \
+            -f account_key.json -f key.pem -f fullchain.pem -f cert.pem \
             $params_d_str \
             --email "${!email_varname}" \
             --server=$acme_ca_uri \
