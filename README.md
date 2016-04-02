@@ -49,7 +49,7 @@ The containers being proxied must [expose](https://docs.docker.com/reference/run
 nginx proxy can also be run as two separate containers using the [jwilder/docker-gen](https://github.com/jwilder/docker-gen)
 image and the official [nginx](https://hub.docker.com/_/nginx/) image.
 
-You may want to do this to prevent having the docker socket bound to a publicly exposed container service.
+You may want to do this to prevent having the docker socket bound to a publicly exposed container service (avoid to mount the docker socket in the nginx exposed container). It's better in a security point of view.
 
 To run nginx proxy as a separate container you'll need to have [nginx.tmpl](https://github.com/jwilder/nginx-proxy/blob/master/nginx.tmpl) on your host system and set the `NGINX_DOCKER_GEN_CONTAINER` environment variable to the name or id of the docker-gen container.
 
@@ -97,16 +97,20 @@ Set the following environment variables to enable Let's Encrypt support for a co
 
 The `LETSENCRYPT_HOST` variable most likely needs to be the same as the `VIRTUAL_HOST` variable and must be publicly reachable domains. Specify multiple hosts with a comma delimiter.
 
-For example
+If you want to create multi-domain ([SAN](https://www.digicert.com/subject-alternative-name.htm)) certificates add the base domain as the first domain of the `LETSENCRYPT_HOST` environment variable.
+
+If you want to create test certificates that don't have the 5 certs/week/domain limits define the `LETSENCRYPT_TEST` environment variable with a value of `true`.
+
+Example:
 
 ```bash
 $ docker run -d \
-    -e "VIRTUAL_HOST=foo.bar.com,bar.com" \
-    -e "LETSENCRYPT_HOST=foo.bar.com,bar.com" \
-    -e "LETSENCRYPT_EMAIL=foo@bar.com" ...
+    -e "VIRTUAL_HOST=www.example.com,mail.example.com" \
+    -e "LETSENCRYPT_HOST=example.com,www.example.com,mail.example.com" \
+    -e "LETSENCRYPT_EMAIL=foo@bar.com"
+    ...
 ```
 
-If you want to create test certificates that don't have the 5 certs/week/domain limits define the `LETSENCRYPT_TEST` environment variable with a value of `true`.
 
 ##### Automatic certificate renewal
 Every hour (3600 seconds) the certificates are checked and every certificate that will expire in the next [30 days](https://github.com/kuba/simp_le/blob/ecf4290c4f7863bb5427b50cdd78bc3a5df79176/simp_le.py#L72) (90 days / 3) are renewed.
@@ -132,3 +136,5 @@ $ docker run -d \
 
 * `NGINX_PROXY_CONTAINER`- If for some reason you can't use the docker --volumes-from option, you can specify the name or id of the nginx-proxy container with this variable.
 
+#### Examples:
+If you want other examples how to use this container, look at [docker-letsencrypt-nginx-proxy-companion-examples] (https://github.com/fatk/docker-letsencrypt-nginx-proxy-companion-examples).
