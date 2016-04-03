@@ -97,29 +97,29 @@ Set the following environment variables to enable Let's Encrypt support for a co
 
 The `LETSENCRYPT_HOST` variable most likely needs to be the same as the `VIRTUAL_HOST` variable and must be publicly reachable domains. Specify multiple hosts with a comma delimiter.
 
+##### multi-domain ([SAN](https://www.digicert.com/subject-alternative-name.htm)) certificates
 If you want to create multi-domain ([SAN](https://www.digicert.com/subject-alternative-name.htm)) certificates add the base domain as the first domain of the `LETSENCRYPT_HOST` environment variable.
 
+##### test certificates
 If you want to create test certificates that don't have the 5 certs/week/domain limits define the `LETSENCRYPT_TEST` environment variable with a value of `true`.
 
-Example:
+##### Automatic certificate renewal
+Every hour (3600 seconds) the certificates are checked and every certificate that will expire in the next [30 days](https://github.com/kuba/simp_le/blob/ecf4290c4f7863bb5427b50cdd78bc3a5df79176/simp_le.py#L72) (90 days / 3) are renewed.
 
+##### Example:
 ```bash
 $ docker run -d \
-    -e "VIRTUAL_HOST=www.example.com,mail.example.com" \
+    -e "VIRTUAL_HOST=example.com,www.example.com,mail.example.com" \
     -e "LETSENCRYPT_HOST=example.com,www.example.com,mail.example.com" \
     -e "LETSENCRYPT_EMAIL=foo@bar.com"
     ...
 ```
 
-
-##### Automatic certificate renewal
-Every hour (3600 seconds) the certificates are checked and every certificate that will expire in the next [30 days](https://github.com/kuba/simp_le/blob/ecf4290c4f7863bb5427b50cdd78bc3a5df79176/simp_le.py#L72) (90 days / 3) are renewed.
-
 #### Optional container environment variables
 
 Optional letsencrypt-nginx-proxy-companion container environment variables for custom configuration.
 
-* `ACME_CA_URI` - Directory URI for the CA ACME API endpoint (default: ``https://acme-v01.api.letsencrypt.org/directory``). If you set it's value to `https://acme-staging.api.letsencrypt.org/directory` letsencrypt will use test servers that don't have the 5 certs/week/domain limits.
+* `ACME_CA_URI` - Directory URI for the CA ACME API endpoint (default: ``https://acme-v01.api.letsencrypt.org/directory``). If you set it's value to `https://acme-staging.api.letsencrypt.org/directory` letsencrypt will use test servers that don't have the 5 certs/week/domain limits. You can also create test certificates per container (see [let's encrypt test certificates](https://github.com/JrCs/docker-letsencrypt-nginx-proxy-companion/blob/doc/README.md#test-certificates))
 
 For example
 
