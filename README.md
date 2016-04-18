@@ -150,5 +150,7 @@ $ docker run -d \
 
 * `NGINX_PROXY_CONTAINER`- If for some reason you can't use the docker --volumes-from option, you can specify the name or id of the nginx-proxy container with this variable.
 
+* `NGINX_DOCKER_GEN_LINKED_CONTAINER_ENVVAR` - If you are running nginx-gen as a [linked container](https://docs.docker.com/engine/userguide/networking/default_network/dockerlinks/) and its ID cannot be predetermined, specify the name of the environment variable of the form `<alias>_NAME` that gets set by Docker when linking containers.
+
 #### Examples:
 If you want other examples how to use this container, look at [docker-letsencrypt-nginx-proxy-companion-examples] (https://github.com/fatk/docker-letsencrypt-nginx-proxy-companion-examples).
