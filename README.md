@@ -78,6 +78,7 @@ $ docker run -d \
 * Then start this container (NGINX_DOCKER_GEN_CONTAINER variable must contain the docker-gen container name or id):
 ```bash
 $ docker run -d \
+    --name nginx-letsencrypt \
     -e "NGINX_DOCKER_GEN_CONTAINER=nginx-gen" \
     --volumes-from nginx \
     -v /path/to/certs:/etc/nginx/certs:rw \
