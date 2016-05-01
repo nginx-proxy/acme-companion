@@ -91,7 +91,7 @@ Then start any containers to be proxied as described previously.
 
 To use the Let's Encrypt service to automatically create a valid certificate for virtual host(s).
 
-Set the following environment variables to enable Let's Encrypt support for a container being proxied.
+Set the following environment variables to enable Let's Encrypt support for a container being proxied. This environment variables need to be declared in each to-be-proxied application containers.
 
 - `LETSENCRYPT_HOST`
 - `LETSENCRYPT_EMAIL`
@@ -110,10 +110,11 @@ Every hour (3600 seconds) the certificates are checked and every certificate tha
 ##### Example:
 ```bash
 $ docker run -d \
+    --name example-app \
     -e "VIRTUAL_HOST=example.com,www.example.com,mail.example.com" \
     -e "LETSENCRYPT_HOST=example.com,www.example.com,mail.example.com" \
-    -e "LETSENCRYPT_EMAIL=foo@bar.com"
-    ...
+    -e "LETSENCRYPT_EMAIL=foo@bar.com" \
+    tutum/apache-php
 ```
 
 #### Optional container environment variables
