@@ -8,7 +8,7 @@ letsencrypt-nginx-proxy-companion is a lightweight companion container for the [
 * Automatically creation of a Strong Diffie-Hellman Group (for having an A+ Rate on the [Qualsys SSL Server Test](https://www.ssllabs.com/ssltest/)).
 * Work with all versions of docker.
 
-***NOTE***: The first time this container is launch it generate a new Diffie-Hellman group file. This process can take several minutes to complete (be patient).
+***NOTE***: The first time this container is launched it generate a new Diffie-Hellman group file. This process can take several minutes to complete (be patient).
 
 #### Usage
 
@@ -53,9 +53,9 @@ You may want to do this to prevent having the docker socket bound to a publicly 
 
 To run nginx proxy as a separate container you'll need:
 
-1) To mount the template file [nginx.tmpl](https://github.com/jwilder/nginx-proxy/blob/master/nginx.tmpl) into the docker-gen container. You can get the latest official [nginx.tmpl](https://github.com/jwilder/nginx-proxy/blob/master/nginx.tmpl) with a command like:
+1) To mount the template file [nginx.tmpl](https://github.com/JrCs/docker-letsencrypt-nginx-proxy-companion/blob/master/nginx.tmpl) into the docker-gen container. This is a modified version of the latest official [nginx.tmpl](https://github.com/jwilder/nginx-proxy/blob/master/nginx.tmpl), to permit LetsEncrypt challenge-response validation, with a command like:
 ```bash
-curl https://raw.githubusercontent.com/jwilder/nginx-proxy/master/nginx.tmpl > /path/to/nginx.tmpl
+curl https://raw.githubusercontent.com/JrCs/docker-letsencrypt-nginx-proxy-companion/master/nginx.tmpl > /path/to/nginx.tmpl
 ```
 
 2) Set the `NGINX_DOCKER_GEN_CONTAINER` environment variable to the name or id of the docker-gen container.
