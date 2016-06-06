@@ -39,7 +39,7 @@ $ docker run -d \
     jrcs/letsencrypt-nginx-proxy-companion
 ```
 
-Then start any containers you want to proxied with a env var `VIRTUAL_HOST=subdomain.youdomain.com`
+Then start any containers you want proxied with a env var `VIRTUAL_HOST=subdomain.youdomain.com`
 
     $ docker run -e "VIRTUAL_HOST=foo.bar.com" ...
 
