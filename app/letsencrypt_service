@@ -85,7 +85,7 @@ update_certs() {
             fi
         fi
 
-        # Create directorty for the first domain
+        # Create directory for the first domain
         mkdir -p /etc/nginx/certs/$base_domain
         cd /etc/nginx/certs/$base_domain
 
