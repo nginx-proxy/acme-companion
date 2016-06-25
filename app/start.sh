@@ -5,7 +5,7 @@ term_handler() {
     [[ -n "$docker_gen_pid" ]] && kill $docker_gen_pid
     [[ -n "$letsencrypt_service_pid" ]] && kill $letsencrypt_service_pid
 
-    source /app/functions.lib
+    source /app/functions.sh
     remove_all_location_configurations
 
     exit 143; # 128 + 15 -- SIGTERM
