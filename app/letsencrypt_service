@@ -85,7 +85,7 @@ update_certs() {
             fi
         fi
 
-        # Create directorty for the first domain
+        # Create directory for the first domain
         mkdir -p /etc/nginx/certs/$base_domain
         cd /etc/nginx/certs/$base_domain
 
@@ -116,6 +116,7 @@ update_certs() {
 }
 
 pid=
+# Service Loop: When this script exits, start it again.
 trap '[[ $pid ]] && kill $pid; exec $0' EXIT
 trap 'trap - EXIT' INT TERM
 
