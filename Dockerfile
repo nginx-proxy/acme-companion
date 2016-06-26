@@ -4,7 +4,8 @@ MAINTAINER Yves Blusseau <90z7oey02@sneakemail.com> (@blusseau)
 
 ENV DEBUG=false              \
 	DOCKER_GEN_VERSION=0.7.0 \
-	DOCKER_HOST=unix:///var/run/docker.sock
+	DOCKER_HOST=unix:///var/run/docker.sock \
+	DH_PARAM_BITS=2048
 
 RUN apk --update add bash curl ca-certificates procps jq tar && \
 	curl -L -O https://github.com/jwilder/docker-gen/releases/download/$DOCKER_GEN_VERSION/docker-gen-linux-amd64-$DOCKER_GEN_VERSION.tar.gz && \
