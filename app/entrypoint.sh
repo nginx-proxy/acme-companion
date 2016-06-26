@@ -64,7 +64,7 @@ function check_dh_group {
     fi
 }
 
-source /app/functions.lib
+source /app/functions.sh
 
 [[ $DEBUG == true ]] && set -x
 
