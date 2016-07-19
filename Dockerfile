@@ -3,7 +3,7 @@ FROM alpine:3.3
 MAINTAINER Yves Blusseau <90z7oey02@sneakemail.com> (@blusseau)
 
 ENV DEBUG=false              \
-	DOCKER_GEN_VERSION=0.7.0 \
+	DOCKER_GEN_VERSION=0.7.3 \
 	DOCKER_HOST=unix:///var/run/docker.sock
 
 RUN apk --update add bash curl ca-certificates procps jq tar && \
