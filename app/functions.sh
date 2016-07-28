@@ -24,7 +24,6 @@ remove_all_location_configurations() {
     for file in "${VHOST_DIR}"/*; do
         [[ -n $(sed -n "/$START_HEADER/,/$END_HEADER/p" "$file") ]] && \
          sed -i "/$START_HEADER/,/$END_HEADER/d" "$file"
-        [[ ! -s "$file" ]] && rm -f "$file"
     done
     eval "$old_shopt_options" # Restore shopt options
 }
