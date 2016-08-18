@@ -42,6 +42,10 @@ function get_nginx_proxy_cid {
 
 function check_writable_directory {
     local dir="$1"
+    docker_api "/containers/$HOSTNAME/json" | jq ".Mounts[].Destination" | grep -q "^\"$dir\"$"
+    if [[ $? -ne 0 ]]; then
+        echo "Warning: '$dir' does not appear to be a mounted volume."
+    fi
     if [[ ! -d "$dir" ]]; then
         echo "Error: can't access to '$dir' directory !" >&2
         echo "Check that '$dir' directory is declared has a writable volume." >&2
