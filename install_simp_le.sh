@@ -11,6 +11,7 @@ git -C /src clone https://github.com/kuba/simp_le.git
 
 # Install simp_le in /usr/bin
 cd /src/simp_le
+git checkout acme-0.8
 python ./setup.py install
 
 # Make house cleaning
