@@ -16,9 +16,12 @@ trap 'term_handler' INT QUIT KILL TERM
 /app/letsencrypt_service &
 letsencrypt_service_pid=$!
 
-echo -e "Endpoints: ${NGINX_DOCKER_GEN_ENDPOINTS} \n"
-
-docker-gen -endpoints ${NGINX_DOCKER_GEN_ENDPOINTS} -watch -only-exposed -notify '/app/update_certs' -wait 15s:60s /app/letsencrypt_service_data.tmpl /app/letsencrypt_service_data &
+if [ -z ${NGINX_DOCKER_GEN_ENDPOINTS} ]; then
+    docker-gen -watch -only-exposed -notify '/app/update_certs' -wait 15s:60s /app/letsencrypt_service_data.tmpl /app/letsencrypt_service_data &
+else
+    echo -e "Endpoints: ${NGINX_DOCKER_GEN_ENDPOINTS} \n"
+    docker-gen -endpoints ${NGINX_DOCKER_GEN_ENDPOINTS} -watch -only-exposed -notify '/app/update_certs' -wait 15s:60s /app/letsencrypt_service_data.tmpl /app/letsencrypt_service_data &
+fi
 docker_gen_pid=$!
 
 # wait "indefinitely"
