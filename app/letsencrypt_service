@@ -62,83 +62,59 @@ update_certs() {
         # First domain will be our base domain
         base_domain="${hosts_array_expanded[0]}"
 
-        # Identify base_domains
-        declare -a base_domains
-        base_domains+=("$base_domain")
+        if [[ "$create_test_certificate" == true ]]; then
+            # Use staging acme end point
+            acme_ca_uri="https://acme-staging.api.letsencrypt.org/directory"
+            if [[ ! -f /etc/nginx/certs/.${base_domain}.test ]]; then
+                # Remove old certificates
+                rm -rf /etc/nginx/certs/${base_domain}
+                for domain in "${!hosts_array}"; do
+                    rm -f /etc/nginx/certs/$domain.{crt,key,dhparam.pem}
+                done
+                touch /etc/nginx/certs/.${base_domain}.test
+            fi
+        else
+            acme_ca_uri="$ACME_CA_URI"
+            if [[ -f /etc/nginx/certs/.${base_domain}.test ]]; then
+                # Remove old test certificates
+                rm -rf /etc/nginx/certs/${base_domain}
+                for domain in "${!hosts_array}"; do
+                    rm -f /etc/nginx/certs/$domain.{crt,key,dhparam.pem}
+                done
+                rm -f /etc/nginx/certs/.${base_domain}.test
+            fi
+        fi
 
-        for domain in "${!hosts_array:1}"; do
-          if [[ $domain == *"$base_domain"* ]]; then
-            echo "$domain contains $base_domain, skipping."
-          else
-            echo "$domain not found in $base_domain. Adding $domain to base_domains."
-            base_domain=$domain
-            base_domains+=("$base_domain")
-          fi
+        # Create directory for the first domain
+        mkdir -p /etc/nginx/certs/$base_domain
+        cd /etc/nginx/certs/$base_domain
+
+        for domain in "${!hosts_array}"; do
+            # Add all the domains to certificate
+            params_d_str+=" -d $domain"
+            # Add location configuration for the domain
+            add_location_configuration "$domain" || reload_nginx
         done
 
-        for base_domain in "${base_domains[@]}"; do
-          echo "Base domain is now $base_domain"
-          if [[ "$create_test_certificate" == true ]]; then
-              # Use staging acme end point
-              acme_ca_uri="https://acme-staging.api.letsencrypt.org/directory"
-              if [[ ! -f /etc/nginx/certs/.${base_domain}.test ]]; then
-                  # Remove old certificates
-                  rm -rf /etc/nginx/certs/${base_domain}
-                  for domain in "${!hosts_array}"; do
-                      rm -f /etc/nginx/certs/$domain.{crt,key,dhparam.pem}
-                  done
-                  touch /etc/nginx/certs/.${base_domain}.test
-              fi
-          else
-              acme_ca_uri="$ACME_CA_URI"
-              if [[ -f /etc/nginx/certs/.${base_domain}.test ]]; then
-                  # Remove old test certificates
-                  rm -rf /etc/nginx/certs/${base_domain}
-                  for domain in "${!hosts_array}"; do
-                      rm -f /etc/nginx/certs/$domain.{crt,key,dhparam.pem}
-                  done
-                  rm -f /etc/nginx/certs/.${base_domain}.test
-              fi
-          fi
+        echo "Creating/renewal $base_domain certificates... (${hosts_array_expanded[*]})"
+        /usr/bin/simp_le \
+            -f account_key.json -f key.pem -f fullchain.pem -f cert.pem \
+            --tos_sha256 6373439b9f29d67a5cd4d18cbc7f264809342dbf21cb2ba2fc7588df987a6221 \
+            $params_d_str \
+            --email "${!email_varname}" \
+            --server=$acme_ca_uri \
+            --default_root /usr/share/nginx/html/
 
-          # Create directory for the first domain
-          mkdir -p /etc/nginx/certs/$base_domain
-          cd /etc/nginx/certs/$base_domain
-          related_domains=()
-          params_d_str=''
+        simp_le_return=$?
 
-          for domain in "${!hosts_array}"; do
-            if [[ $domain == *"$base_domain"* ]]; then
-              # Add all the domains to certificate
-              params_d_str+=" -d $domain"
-              related_domains+=($domain)
-              # Add location configuration for the domain
-              add_location_configuration "$domain" || reload_nginx
-            fi
-          done
+        for altnames in ${hosts_array_expanded[@]:1}; do
+            # Remove old CN domain that now are altnames
+            rm -rf /etc/nginx/certs/$altnames
+        done
 
-          echo "Creating/renewal $base_domain certificates... (${related_domains[*]})"
-          /usr/bin/simp_le \
-              -f account_key.json -f key.pem -f fullchain.pem -f cert.pem \
-              --tos_sha256 6373439b9f29d67a5cd4d18cbc7f264809342dbf21cb2ba2fc7588df987a6221 \
-              $params_d_str \
-              --email "${!email_varname}" \
-              --server=$acme_ca_uri \
-              --default_root /usr/share/nginx/html/
-
-          simp_le_return=$?
-
-          for altnames in ${related_domains[@]:1}; do
-              echo "Removing old CN domain for $altnames"
-              # Remove old CN domain that now are altnames
-              rm -rf /etc/nginx/certs/$altnames
-          done
-
-          for domain in "${related_domains[@]}"; do
-              echo "Creating links for $domain related to $base_domain"
-              create_links $base_domain $domain && reload_nginx='true'
-              [[ $simp_le_return -eq 0 ]] && reload_nginx='true'
-          done
+        for domain in "${!hosts_array}"; do
+            create_links $base_domain $domain && reload_nginx='true'
+            [[ $simp_le_return -eq 0 ]] && reload_nginx='true'
         done
     done
 
