@@ -43,7 +43,7 @@ function docker_api {
     fi
     if [[ $DOCKER_HOST == unix://* ]]; then
         curl_opts+=(--unix-socket ${DOCKER_HOST#unix://})
-        scheme='http:'
+        scheme='http://localhost'
     else
         scheme="http://${DOCKER_HOST#*://}"
     fi
