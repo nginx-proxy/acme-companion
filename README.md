@@ -61,7 +61,7 @@ To run nginx proxy as a separate container you'll need:
 curl https://raw.githubusercontent.com/jwilder/nginx-proxy/master/nginx.tmpl > /path/to/nginx.tmpl
 ```
 
-2) Set the `NGINX_DOCKER_GEN_CONTAINER` environment variable to the name or id of the docker-gen container.
+2) Set the `NGINX_DOCKER_GEN_CONTAINER` and `NGINX_CONTAINER` environment variable to the name or id of the docker-gen and nginx containers respectively.
 
 Examples:
 
@@ -92,6 +92,7 @@ $ docker run -d \
 $ docker run -d \
     --name nginx-letsencrypt \
     -e "NGINX_DOCKER_GEN_CONTAINER=nginx-gen" \
+    -e "NGINX_CONTAINER=nginx" \
     --volumes-from nginx \
     -v /path/to/certs:/etc/nginx/certs:rw \
     -v /var/run/docker.sock:/var/run/docker.sock:ro \
