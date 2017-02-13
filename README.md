@@ -84,7 +84,7 @@ $ docker run -d \
     -v /path/to/nginx.tmpl:/etc/docker-gen/templates/nginx.tmpl:ro \
     -v /var/run/docker.sock:/tmp/docker.sock:ro \
     jwilder/docker-gen \
-    -notify-sighup nginx -watch -only-exposed -wait 5s:30s /etc/docker-gen/templates/nginx.tmpl /etc/nginx/conf.d/default.conf
+    -notify-sighup nginx -watch -wait 5s:30s /etc/docker-gen/templates/nginx.tmpl /etc/nginx/conf.d/default.conf
 ```
 
 * Then start this container (NGINX_DOCKER_GEN_CONTAINER variable must contain the docker-gen container name or id):
