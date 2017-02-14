@@ -70,14 +70,9 @@ function docker_kill {
 ## Nginx
 reload_nginx() {
     if [[ -n "${NGINX_DOCKER_GEN_CONTAINER:-}" ]]; then
-        # Using docker-gen and nginx in separate container
-        echo "Reloading nginx docker-gen (using separate container ${NGINX_DOCKER_GEN_CONTAINER})..."
+        # Using docker-gen separate container
+        echo "Reloading nginx proxy (using separate container ${NGINX_DOCKER_GEN_CONTAINER})..."
         docker_kill "$NGINX_DOCKER_GEN_CONTAINER" SIGHUP
-        if [[ -n "${NGINX_CONTAINER:-}" ]]; then
-            # Reloading nginx in case only certificates had been renewed
-            echo "Reloading nginx (using separate container ${NGINX_CONTAINER})..."
-            docker_kill "$NGINX_CONTAINER" SIGHUP
-        fi
     else
         if [[ -n "${NGINX_PROXY_CONTAINER:-}" ]]; then
             echo "Reloading nginx proxy..."
