@@ -99,6 +99,8 @@ $ docker run -d \
 ```
 Then start any containers to be proxied as described previously.
 
+* If for some reason you can't use the docker --volumes-from option, you can specify the name or id of the nginx container with `NGINX_PROXY_CONTAINER` variable.
+
 #### Let's Encrypt
 
 To use the Let's Encrypt service to automatically create a valid certificate for virtual host(s).
