@@ -3,7 +3,7 @@
 [![](https://img.shields.io/docker/stars/jrcs/letsencrypt-nginx-proxy-companion.svg)](https://hub.docker.com/r/jrcs/letsencrypt-nginx-proxy-companion "Click to view the image on Docker Hub")
 [![](https://img.shields.io/docker/pulls/jrcs/letsencrypt-nginx-proxy-companion.svg)](https://hub.docker.com/r/jrcs/letsencrypt-nginx-proxy-companion "Click to view the image on Docker Hub")
 
-letsencrypt-nginx-proxy-companion is a lightweight companion container for the [nginx-proxy](https://github.com/jwilder/nginx-proxy). It allow the creation/renewal of Let's Encrypt certificates automatically. See [Let's Encrypt section](#lets-encrypt) for configuration details.
+letsencrypt-nginx-proxy-companion is a lightweight companion container for the [nginx-proxy](https://github.com/jwilder/nginx-proxy). It allows the creation/renewal of Let's Encrypt certificates automatically. See [Let's Encrypt section](#lets-encrypt) for configuration details.
 
 ### Features:
 * Automatic creation/renewal of Let's Encrypt certificates using original nginx-proxy container.
@@ -11,13 +11,13 @@ letsencrypt-nginx-proxy-companion is a lightweight companion container for the [
 * Automatically creation of a Strong Diffie-Hellman Group (for having an A+ Rate on the [Qualsys SSL Server Test](https://www.ssllabs.com/ssltest/)).
 * Work with all versions of docker.
 
-***NOTE***: The first time this container is launch it generate a new Diffie-Hellman group file. This process can take several minutes to complete (be patient).
+***NOTE***: The first time this container is launched it generates a new Diffie-Hellman group file. This process can take several minutes to complete (be patient).
 
 #### Usage
 
 To use it with original [nginx-proxy](https://github.com/jwilder/nginx-proxy) container you must declare 3 writable volumes from the [nginx-proxy](https://github.com/jwilder/nginx-proxy) container:
 * `/etc/nginx/certs` to create/renew Let's Encrypt certificates
-* `/etc/nginx/vhost.d` to change the configuration of vhosts (need by Let's Encrypt)
+* `/etc/nginx/vhost.d` to change the configuration of vhosts (needed by Let's Encrypt)
 * `/usr/share/nginx/html` to write challenge files.
 
 Example of use:
