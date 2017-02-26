@@ -151,4 +151,9 @@ $ docker run -d \
 * `NGINX_PROXY_CONTAINER`- If for some reason you can't use the docker --volumes-from option, you can specify the name or id of the nginx-proxy container with this variable.
 
 #### Examples:
-If you want other examples how to use this container, look at [docker-letsencrypt-nginx-proxy-companion-examples] (https://github.com/fatk/docker-letsencrypt-nginx-proxy-companion-examples).
+
+If you want other examples how to use this container, look at: 
+
+* [Karl Fathi's Examples](https://github.com/fatk/docker-letsencrypt-nginx-proxy-companion-examples).
+* [More examples from Karl](https://github.com/pixelfordinner/pixelcloud-docker-apps/tree/master/nginx-proxy)
+* [George Ilyes Examples](https://github.com/gilyes/docker-nginx-letsencrypt-sample) 
