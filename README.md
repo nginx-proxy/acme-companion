@@ -33,7 +33,7 @@ $ docker run -d -p 80:80 -p 443:443 \
     --label jrcs.nginx_letsencrypt_companion.is_proxy=true \
     jwilder/nginx-proxy
 ```
-The "jrcs.nginx_letsencrypt_companion.is_proxy" label is needed so that the letsencrypt container knows which nginx proxy container to use.
+The "jrcs.nginx_letsencrypt_companion.is_proxy=true" label is needed so that the letsencrypt container knows which nginx proxy container to use.
 
 * Second start this container:
 ```bash
