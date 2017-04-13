@@ -30,14 +30,15 @@ $ docker run -d -p 80:80 -p 443:443 \
     -v /etc/nginx/vhost.d \
     -v /usr/share/nginx/html \
     -v /var/run/docker.sock:/tmp/docker.sock:ro \
+    --label com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy=true \
     jwilder/nginx-proxy
 ```
+The "com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy=true" label is needed so that the letsencrypt container knows which nginx proxy container to use.
 
 * Second start this container:
 ```bash
 $ docker run -d \
     -v /path/to/certs:/etc/nginx/certs:rw \
-    --volumes-from nginx-proxy \
     -v /var/run/docker.sock:/var/run/docker.sock:ro \
     jrcs/letsencrypt-nginx-proxy-companion
 ```
@@ -73,6 +74,7 @@ $ docker run -d -p 80:80 -p 443:443 \
     -v /etc/nginx/vhost.d \
     -v /usr/share/nginx/html \
     -v /path/to/certs:/etc/nginx/certs:ro \
+    --label com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy=truee \
     nginx
 ```
 
@@ -148,7 +150,7 @@ $ docker run -d \
 
 * `DEBUG` - Set it to `true` to enable debugging of the entrypoint script and generation of LetsEncrypt certificates, which could help you pin point any configuration issues.
 
-* `NGINX_PROXY_CONTAINER`- If for some reason you can't use the docker --volumes-from option, you can specify the name or id of the nginx-proxy container with this variable.
+* The "jrcs.nginx_letsencrypt_companion.is_proxy=true" label - set this label on the nginx-proxy container to tell the docker-letsencrypt-nginx-proxy-companion container to use it as the proxy.
 
 * `ACME_TOS_HASH` - Let´s you pass an alternative TOS hash to simp_le, to support other CA´s ACME implentation.
 
