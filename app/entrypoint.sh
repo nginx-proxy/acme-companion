@@ -34,7 +34,7 @@ function get_nginx_proxy_cid {
         fi
     done
     # Check if any container has been labelled as the nginx proxy container.
-    local labeled_cid=$(docker_api "/containers/json" | jq -r '.[] | select( .Labels["jrcs.nginx_letsencrypt_companion.is_proxy"] == "true")|.Id')
+    local labeled_cid=$(docker_api "/containers/json" | jq -r '.[] | select( .Labels["com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy"] == "true")|.Id')
     if [[ ! -z "${labeled_cid:-}" ]]; then
         export NGINX_PROXY_CONTAINER=$labeled_cid
     fi

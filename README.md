@@ -30,10 +30,10 @@ $ docker run -d -p 80:80 -p 443:443 \
     -v /etc/nginx/vhost.d \
     -v /usr/share/nginx/html \
     -v /var/run/docker.sock:/tmp/docker.sock:ro \
-    --label jrcs.nginx_letsencrypt_companion.is_proxy=true \
+    --label com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy=true \
     jwilder/nginx-proxy
 ```
-The "jrcs.nginx_letsencrypt_companion.is_proxy=true" label is needed so that the letsencrypt container knows which nginx proxy container to use.
+The "com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy=true" label is needed so that the letsencrypt container knows which nginx proxy container to use.
 
 * Second start this container:
 ```bash
@@ -74,7 +74,7 @@ $ docker run -d -p 80:80 -p 443:443 \
     -v /etc/nginx/vhost.d \
     -v /usr/share/nginx/html \
     -v /path/to/certs:/etc/nginx/certs:ro \
-    --label jrcs.nginx_letsencrypt_companion.is_proxy=true \
+    --label com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy=truee \
     nginx
 ```
 
