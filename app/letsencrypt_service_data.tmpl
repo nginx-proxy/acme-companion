@@ -1,11 +1,15 @@
-LETSENCRYPT_CONTAINERS=({{ range $host, $containers := groupBy $ "Env.LETSENCRYPT_HOST" }}{{ range $container := $containers }} '{{ printf "%.12s" $container.ID }}' {{ end }}{{ end }})
+LETSENCRYPT_CONTAINERS=({{ range $hosts, $containers := groupBy $ "Env.LETSENCRYPT_HOST" }}{{ if trim $hosts }}{{ range $container := $containers }} '{{ printf "%.12s" $container.ID }}' {{ end }}{{ end }}{{ end }})
 
 {{ range $hosts, $containers := groupBy $ "Env.LETSENCRYPT_HOST" }}
+
+{{ if trim $hosts }}
 
 {{ range $container := $containers }}{{ $cid := printf "%.12s" $container.ID }}
 LETSENCRYPT_{{ $cid }}_HOST=( {{ range $host := split $hosts "," }}'{{ $host }}' {{ end }})
 LETSENCRYPT_{{ $cid }}_EMAIL="{{ $container.Env.LETSENCRYPT_EMAIL }}"
 LETSENCRYPT_{{ $cid }}_TEST="{{ $container.Env.LETSENCRYPT_TEST }}"
+{{ end }}
+
 {{ end }}
 
 {{ end }}
