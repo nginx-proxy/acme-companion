@@ -33,9 +33,14 @@ function get_nginx_proxy_cid {
             break
         fi
     done
+    # Check if any container has been labelled as the nginx proxy container.
+    local labeled_cid=$(docker_api "/containers/json" | jq -r '.[] | select( .Labels["com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy"] == "true")|.Id')
+    if [[ ! -z "${labeled_cid:-}" ]]; then
+        export NGINX_PROXY_CONTAINER=$labeled_cid
+    fi
     if [[ -z "${NGINX_PROXY_CONTAINER:-}" ]]; then
         echo "Error: can't get nginx-proxy container id !" >&2
-        echo "Check that you use the --volumes-from option to mount volumes from the nginx-proxy." >&2
+        echo "Check that you use the --volumes-from option to mount volumes from the nginx-proxy or label the nginx proxy container to use with 'com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy=true'." >&2
         exit 1
     fi
 }
