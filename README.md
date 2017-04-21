@@ -40,6 +40,7 @@ The "com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy=true" label i
 $ docker run -d \
     -v /path/to/certs:/etc/nginx/certs:rw \
     -v /var/run/docker.sock:/var/run/docker.sock:ro \
+    --volumes-from nginx-proxy \
     jrcs/letsencrypt-nginx-proxy-companion
 ```
 
