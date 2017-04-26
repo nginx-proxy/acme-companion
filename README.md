@@ -15,7 +15,13 @@ letsencrypt-nginx-proxy-companion is a lightweight companion container for the [
 
 #### Usage
 
-To use it with original [nginx-proxy](https://github.com/jwilder/nginx-proxy) container you must declare 3 writable volumes from the [nginx-proxy](https://github.com/jwilder/nginx-proxy) container:
+If you use *docker-compose*, just download our config file and run:
+```bash
+$ curl -O https://raw.githubusercontent.com/JrCs/docker-letsencrypt-nginx-proxy-companion/master/docker-compose.yml
+$ docker-compose up -d
+```
+
+To run the containers by hand with the original [nginx-proxy](https://github.com/jwilder/nginx-proxy) container you must declare 3 writable volumes from the [nginx-proxy](https://github.com/jwilder/nginx-proxy) container:
 * `/etc/nginx/certs` to create/renew Let's Encrypt certificates
 * `/etc/nginx/vhost.d` to change the configuration of vhosts (needed by Let's Encrypt)
 * `/usr/share/nginx/html` to write challenge files.
