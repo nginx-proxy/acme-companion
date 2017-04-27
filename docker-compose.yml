@@ -18,7 +18,7 @@ services:
   nginx-gen:
     image: jwilder/docker-gen
     container_name: nginx-gen
-    command: -notify-sighup nginx -wait 5s:30s -watch /etc/docker-gen/templates/nginx.tmpl /etc/nginx/conf.d/default.conf
+    command: -notify-sighup nginx-proxy -wait 5s:30s -watch /etc/docker-gen/templates/nginx.tmpl /etc/nginx/conf.d/default.conf
     volumes:
       - /var/run/docker.sock:/tmp/docker.sock:ro
       - nginx-conf:/etc/nginx/conf.d
