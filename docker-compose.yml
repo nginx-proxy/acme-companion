@@ -14,6 +14,8 @@ services:
       - nginx-ssl:/etc/nginx/certs:ro
     labels:
       com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy: "true"
+    networks:
+      - nginx-proxy
 
   nginx-gen:
     image: jwilder/docker-gen
@@ -24,9 +26,11 @@ services:
       - nginx-conf:/etc/nginx/conf.d
       - nginx-vhost:/etc/nginx/vhost.d
       - nginx-html:/usr/share/nginx/html
-      - nginx-gen-tmpl:/etc/docker-gen/templates/nginx.tmpl
+      - nginx-gen-tmpl:/etc/docker-gen/templates:rw
       - nginx-ssl:/etc/nginx/certs:ro
     links:
+      - nginx-proxy
+    networks:
       - nginx-proxy
 
   nginx-letsencrypt:
@@ -45,6 +49,8 @@ services:
     links:
       - nginx-proxy
       - nginx-gen
+    networks:
+      - nginx-proxy
 
 volumes:
   nginx-conf:
@@ -52,3 +58,7 @@ volumes:
   nginx-html:
   nginx-gen-tmpl:
   nginx-ssl:
+
+networks:
+  nginx-proxy:
+    external: true

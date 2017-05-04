@@ -15,10 +15,44 @@ letsencrypt-nginx-proxy-companion is a lightweight companion container for the [
 
 #### Usage
 
-If you use *docker-compose*, just download our config file and run:
+If you use *docker-compose* it's very easy to run the required components, as shown below:
+
 ```bash
 $ curl -O https://raw.githubusercontent.com/JrCs/docker-letsencrypt-nginx-proxy-companion/master/docker-compose.yml
+$ docker network create --subnet=172.28.0.0/16 nginx-proxy
 $ docker-compose up -d
+```
+
+Please note that the setup uses an external network that needs to be created first (the second command above), a one-time step required per docker host.  This allows you to define services in a separate docker-compose file and join those that need proxying to the external network.  Here's how it's done:
+
+```
+version: '3'
+
+services:
+   myservice:
+      <other-details not shown>
+      networks:
+         - nginx-proxy
+
+networks:
+   nginx-proxy:
+      external: true
+```
+
+Additionally, a subnet is specified in the network definition, which enables processes within your containers that need to be told where to accept request from to indicate the particular subnet in question.  For example, to tell a bitcoin server to accept requests from any process within the proxy network you could:
+
+```
+  bitcoind:
+    image: seegno/bitcoind:latest
+    <other-details-omitted>
+    command:
+      -server
+      -rpcuser=$BTCUSER
+      -rpcpassword=$BTCPASS
+      -rpcallowip=172.28.0.0/16
+      -printtoconsole
+    networks:
+      - nginx-proxy
 ```
 
 To run the containers by hand with the original [nginx-proxy](https://github.com/jwilder/nginx-proxy) container you must declare 3 writable volumes from the [nginx-proxy](https://github.com/jwilder/nginx-proxy) container:
