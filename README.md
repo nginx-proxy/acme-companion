@@ -13,17 +13,18 @@ letsencrypt-nginx-proxy-companion is a lightweight companion container for the [
 
 ***NOTE***: The first time this container is launched it generates a new Diffie-Hellman group file. This process can take several minutes to complete (be patient).
 
-#### Usage
+#### Usage - Automated
 
 If you use *docker-compose* it's very easy to run the required components, as shown below:
 
 ```bash
 $ curl -O https://raw.githubusercontent.com/JrCs/docker-letsencrypt-nginx-proxy-companion/master/docker-compose.yml
-$ docker network create --subnet=172.28.0.0/16 nginx-proxy
+$ bridge="com.docker.network.bridge.name=nginx-proxy"
+$ docker network create --subnet=172.28.0.0/16 --opt $bridge nginx-proxy
 $ docker-compose up -d
 ```
 
-Please note that the setup uses an external network that needs to be created first (the second command above), a one-time step required per docker host.  This allows you to define services in a separate docker-compose file and join those that need proxying to the external network.  Here's how it's done:
+Please note that the setup uses an external network that needs to be created first (the third command above), a one-time step required per docker host.  This allows you to define services in a separate docker-compose file and join those that need proxying to the external network.  Here's how it's done:
 
 ```
 version: '3'
@@ -54,6 +55,10 @@ Additionally, a subnet is specified in the network definition, which enables pro
     networks:
       - nginx-proxy
 ```
+
+Finally, the `--opt` passed during network creation makes sure to name the real interface as well since Docker otherwise assigns a random `br-<random hex string>` name to it.  Naming the real interface facilitates fine-tuning the IP tables using the name
+
+#### Usage - Manual
 
 To run the containers by hand with the original [nginx-proxy](https://github.com/jwilder/nginx-proxy) container you must declare 3 writable volumes from the [nginx-proxy](https://github.com/jwilder/nginx-proxy) container:
 * `/etc/nginx/certs` to create/renew Let's Encrypt certificates
