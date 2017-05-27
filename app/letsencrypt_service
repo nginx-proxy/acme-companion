@@ -5,6 +5,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 seconds_to_wait=3600
 ACME_CA_URI="${ACME_CA_URI:-https://acme-v01.api.letsencrypt.org/directory}"
 ACME_TOS_HASH="${ACME_TOS_HASH:-6373439b9f29d67a5cd4d18cbc7f264809342dbf21cb2ba2fc7588df987a6221}"
+DEFAULT_KEY_SIZE=4096
 
 source /app/functions.sh
 
@@ -53,6 +54,12 @@ update_certs() {
         # Array variable indirection hack: http://stackoverflow.com/a/25880676/350221
         hosts_array=$host_varname[@]
         email_varname="LETSENCRYPT_${cid}_EMAIL"
+
+        keysize_varname="LETSENCRYPT_${cid}_KEYSIZE"
+        cert_keysize="${!keysize_varname}"
+        if [[ "$cert_keysize" == "<no value>" ]]; then
+            cert_keysize=$DEFAULT_KEY_SIZE
+        fi
 
         test_certificate_varname="LETSENCRYPT_${cid}_TEST"
         create_test_certificate=false
@@ -106,6 +113,7 @@ update_certs() {
             -f account_key.json -f key.pem -f chain.pem -f fullchain.pem -f cert.pem \
             --tos_sha256 $ACME_TOS_HASH \
             $params_d_str \
+            --cert_key_size=$cert_keysize \
             --email "${!email_varname}" \
             --server=$acme_ca_uri \
             --default_root /usr/share/nginx/html/

@@ -7,6 +7,7 @@ LETSENCRYPT_CONTAINERS=({{ range $hosts, $containers := groupBy $ "Env.LETSENCRY
 {{ range $container := $containers }}{{ $cid := printf "%.12s" $container.ID }}
 LETSENCRYPT_{{ $cid }}_HOST=( {{ range $host := split $hosts "," }}'{{ $host }}' {{ end }})
 LETSENCRYPT_{{ $cid }}_EMAIL="{{ $container.Env.LETSENCRYPT_EMAIL }}"
+LETSENCRYPT_{{ $cid }}_KEYSIZE="{{ $container.Env.LETSENCRYPT_KEYSIZE }}"
 LETSENCRYPT_{{ $cid }}_TEST="{{ $container.Env.LETSENCRYPT_TEST }}"
 {{ end }}
 

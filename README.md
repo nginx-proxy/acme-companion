@@ -113,6 +113,12 @@ Set the following environment variables to enable Let's Encrypt support for a co
 
 The `LETSENCRYPT_HOST` variable most likely needs to be the same as the `VIRTUAL_HOST` variable and must be publicly reachable domains. Specify multiple hosts with a comma delimiter.
 
+The following environment variables are optional and parameterize the way the Let's Encrypt client works.
+
+- `LETSENCRYPT_KEYSIZE`
+
+The `LETSENCRYPT_KEYSIZE` variable determines the size of the requested key (in bit, defaults to 4096).
+
 ##### multi-domain ([SAN](https://www.digicert.com/subject-alternative-name.htm)) certificates
 If you want to create multi-domain ([SAN](https://www.digicert.com/subject-alternative-name.htm)) certificates add the base domain as the first domain of the `LETSENCRYPT_HOST` environment variable.
 
