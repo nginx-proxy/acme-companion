@@ -2,6 +2,9 @@ FROM alpine:3.3
 
 MAINTAINER Yves Blusseau <90z7oey02@sneakemail.com> (@blusseau)
 
+ARG github=https://raw.githubusercontent.com
+ARG tmpldir=/etc/docker-gen/templates
+
 ENV DEBUG=false              \
 	DOCKER_GEN_VERSION=0.7.3 \
 	DOCKER_HOST=unix:///var/run/docker.sock
@@ -23,3 +26,5 @@ ENTRYPOINT ["/bin/bash", "/app/entrypoint.sh" ]
 CMD ["/bin/bash", "/app/start.sh" ]
 
 COPY /app/ /app/
+RUN mkdir -p ${tmpldir}
+ADD ${github}/jwilder/nginx-proxy/master/nginx.tmpl ${tmpldir}/nginx.tmpl

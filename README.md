@@ -13,9 +13,13 @@ letsencrypt-nginx-proxy-companion is a lightweight companion container for the [
 
 ***NOTE***: The first time this container is launched it generates a new Diffie-Hellman group file. This process can take several minutes to complete (be patient).
 
-#### Usage
+#### Usage - Automated
 
-To use it with original [nginx-proxy](https://github.com/jwilder/nginx-proxy) container you must declare 3 writable volumes from the [nginx-proxy](https://github.com/jwilder/nginx-proxy) container:
+To start all required components you can use a docker-compose file.  See the [nginx-proxy-LE-docker-compose](https://github.com/ekkis/nginx-proxy-LE-docker-compose) project
+
+#### Usage - Manual
+
+To run the containers by hand with the original [nginx-proxy](https://github.com/jwilder/nginx-proxy) container you must declare 3 writable volumes from the [nginx-proxy](https://github.com/jwilder/nginx-proxy) container:
 * `/etc/nginx/certs` to create/renew Let's Encrypt certificates
 * `/etc/nginx/vhost.d` to change the configuration of vhosts (needed by Let's Encrypt)
 * `/usr/share/nginx/html` to write challenge files.
