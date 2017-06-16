@@ -6,6 +6,7 @@ seconds_to_wait=3600
 ACME_CA_URI="${ACME_CA_URI:-https://acme-v01.api.letsencrypt.org/directory}"
 ACME_TOS_HASH="${ACME_TOS_HASH:-6373439b9f29d67a5cd4d18cbc7f264809342dbf21cb2ba2fc7588df987a6221}"
 DEFAULT_KEY_SIZE=4096
+STATIC_DATA_FILE=/etc/docker-letsencrypt-nginx-proxy-companion/letsencrypt_service_static_data
 
 source /app/functions.sh
 
@@ -45,7 +46,9 @@ update_certs() {
 
     # Load relevant container settings
     unset LETSENCRYPT_CONTAINERS
-    source "$DIR"/letsencrypt_service_data
+    cat "$DIR"/letsencrypt_service_data > /tmp/letsencrypt_service_data.tmp
+    [[ -f "${STATIC_DATA_FILE}" ]] && cat ${STATIC_DATA_FILE} >> /tmp/letsencrypt_service_data.tmp
+    source /tmp/letsencrypt_service_data.tmp
 
     reload_nginx='false'
     for cid in "${LETSENCRYPT_CONTAINERS[@]}"; do

@@ -163,6 +163,43 @@ $ docker run -d \
 
 * `ACME_TOS_HASH` - Let´s you pass an alternative TOS hash to simp_le, to support other CA´s ACME implentation.
 
+#### Static redirections
+
+You may want to define other servers than the ones in docker containers. You need to create a shell script file (that will be sourced) like this :
+
+```
+LETSENCRYPT_CONTAINERS+=( 'static_id1' )
+LETSENCRYPT_static_id1_HOST=( '<hostname>' )
+LETSENCRYPT_static_id1_EMAIL="<e-mail>"
+LETSENCRYPT_static_id1_KEYSIZE="<no-value>"
+#LETSENCRYPT_static_id1_TEST=""
+
+LETSENCRYPT_CONTAINERS+=( 'static_id2' )
+LETSENCRYPT_static_id2_HOST=( '<other hostname>' )
+LETSENCRYPT_static_id2_EMAIL="<e-mail>"
+LETSENCRYPT_static_id2_KEYSIZE="<no-value>"
+#LETSENCRYPT_static_id2_TEST=""
+```
+
+* `LETSENCRYPT_CONTAINERS` is the list of hosts (primarily the list of docker containers, but here we add our static hosts)
+* `LETSENCRYPT_<id>_HOST` : same as docker environment var `LETSENCRYPT_HOST`
+* `LETSENCRYPT_<id>_EMAIL` : same as docker environment var `LETSENCRYPT_EMAIL`
+* `LETSENCRYPT_<id>_TEST` : same as docker environment var `LETSENCRYPT_TEST` (optional)
+* `LETSENCRYPT_<id>_KEYSIZE` : same as docker environment var `LETSENCRYPT_KEYSIZE` (mandatory, but you can set to `<no value>` if you want the default size)
+
+Then you may start the letsencrypt_nginx_proxy_companion like this :
+
+```
+$ docker run -d \
+    --name nginx-letsencrypt \
+    -e "NGINX_DOCKER_GEN_CONTAINER=nginx-gen" \
+    --volumes-from nginx \
+    -v /path/to/certs:/etc/nginx/certs:rw \
+    -v /path/to/letsencrypt_service_static_data:/etc/docker-letsencrypt-nginx-proxy-companion/letsencrypt_service_static_data:ro \
+    -v /var/run/docker.sock:/var/run/docker.sock:ro \
+    jrcs/letsencrypt-nginx-proxy-companion
+```
+
 #### Examples:
 
 If you want other examples how to use this container, look at: 
