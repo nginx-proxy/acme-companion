@@ -6,13 +6,13 @@ set -e
 apk --update add python py-setuptools git gcc py-pip musl-dev libffi-dev python-dev openssl-dev
 
 # Get Let's Encrypt simp_le client source
-branch="master"
 mkdir -p /src
-git -C /src clone --depth=1 --branch $branch https://github.com/zenhack/simp_le.git
+git -C /src clone https://github.com/zenhack/simp_le.git
 
 # Install simp_le in /usr/bin
+release='0.3.0'
 cd /src/simp_le
-#pip install wheel requests
+git checkout "$release"
 for pkg in pip distribute setuptools wheel
 do
   pip install -U "${pkg?}"
