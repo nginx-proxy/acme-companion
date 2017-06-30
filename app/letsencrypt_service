@@ -69,6 +69,7 @@ update_certs() {
 
         params_d_str=""
         [[ $DEBUG == true ]] && params_d_str+=" -v"
+        [[ $REUSE_KEY == true ]] && params_d_str+=" --reuse_key"
 
         hosts_array_expanded=("${!hosts_array}")
         # First domain will be our base domain
