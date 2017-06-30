@@ -45,6 +45,19 @@ function get_nginx_proxy_cid {
     fi
 }
 
+function get_nginx_gen_cid {
+    # Check if any container has been labelled as the nginx gen container.
+    local labeled_cid=$(docker_api "/containers/json" | jq -r '.[] | select( .Labels["com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_gen"] == "true")|.Id')
+    if [[ ! -z "${labeled_cid:-}" ]]; then
+        export NGINX_DOCKER_GEN_CONTAINER=$labeled_cid
+    fi
+    if [[ -z "${NGINX_DOCKER_GEN_CONTAINER:-}" ]]; then
+        echo "Error: can't get nginx-gen container id !" >&2
+        echo "Label the nginx gen container to use with 'com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_gen=true'." >&2
+        exit 1
+    fi
+}
+
 function check_writable_directory {
     local dir="$1"
     docker_api "/containers/$CONTAINER_ID/json" | jq ".Mounts[].Destination" | grep -q "^\"$dir\"$"
@@ -79,6 +92,7 @@ source /app/functions.sh
 
 if [[ "$*" == "/bin/bash /app/start.sh" ]]; then
     check_docker_socket
+    get_nginx_gen_cid
     if [[ -z "${NGINX_DOCKER_GEN_CONTAINER:-}" ]]; then
         [[ -z "${NGINX_PROXY_CONTAINER:-}" ]] && get_nginx_proxy_cid
     fi
