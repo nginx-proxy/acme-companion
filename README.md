@@ -165,8 +165,9 @@ $ docker run -d \
 
 #### Examples:
 
-If you want other examples how to use this container, look at: 
+If you want other examples how to use this container, look at:
 
+* [Evert Ramos's Examples](https://github.com/evertramos/docker-compose-letsencrypt-nginx-proxy-companion) - using docker-compose version '3'
 * [Karl Fathi's Examples](https://github.com/fatk/docker-letsencrypt-nginx-proxy-companion-examples)
 * [More examples from Karl](https://github.com/pixelfordinner/pixelcloud-docker-apps/tree/master/nginx-proxy)
 * [George Ilyes' Examples](https://github.com/gilyes/docker-nginx-letsencrypt-sample) 
