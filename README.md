@@ -165,6 +165,8 @@ $ docker run -d \
 
 * `ACME_TOS_HASH` - Let´s you pass an alternative TOS hash to simp_le, to support other CA´s ACME implentation.
 
+* `NGINX_DOCKER_GEN_LINKED_CONTAINER_ENVVAR` - If you are running nginx-gen as a [linked container](https://docs.docker.com/engine/userguide/networking/default_network/dockerlinks/) and its ID cannot be predetermined, specify the name of the environment variable of the form `<alias>_NAME` that gets set by Docker when linking containers.
+
 #### Examples:
 
 If you want other examples how to use this container, look at:

@@ -80,7 +80,16 @@ source /app/functions.sh
 if [[ "$*" == "/bin/bash /app/start.sh" ]]; then
     check_docker_socket
     if [[ -z "${NGINX_DOCKER_GEN_CONTAINER:-}" ]]; then
-        [[ -z "${NGINX_PROXY_CONTAINER:-}" ]] && get_nginx_proxy_cid
+        if [[ ! -z "${NGINX_DOCKER_GEN_LINKED_CONTAINER_ENVVAR:-}" ]]; then
+            # `NGINX_DOCKER_GEN_LINKED_CONTAINER_ENVVAR` is expected to
+            # contain the name of the environment variable of the form
+            # `<alias>_NAME` that gets set by Docker when linking containers.
+            # We need to chop off the `/` prefix to be able to use its
+            # value in Docker Remote API calls.
+            export NGINX_DOCKER_GEN_CONTAINER=$(echo ${!NGINX_DOCKER_GEN_LINKED_CONTAINER_ENVVAR} | sed 's/^\///')
+        else
+            [[ -z "${NGINX_PROXY_CONTAINER:-}" ]] && get_nginx_proxy_cid
+        fi
     fi
     check_writable_directory '/etc/nginx/certs'
     check_writable_directory '/etc/nginx/vhost.d'
