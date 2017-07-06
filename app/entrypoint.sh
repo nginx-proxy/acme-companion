@@ -23,6 +23,14 @@ EOT
     fi
 }
 
+function get_nginx_gen_cid {
+    # Check if any container has been labelled as the nginx gen container.
+    local labeled_cid=$(docker_api "/containers/json" | jq -r '.[] | select( .Labels["com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_gen"] == "true")|.Id')
+    if [[ ! -z "${labeled_cid:-}" ]]; then
+        export NGINX_DOCKER_GEN_CONTAINER=$labeled_cid
+    fi
+}
+
 function get_nginx_proxy_cid {
     # Look for a NGINX_VERSION environment variable in containers that we have mount volumes from.
     local volumes_from=$(docker_api "/containers/$CONTAINER_ID/json" | jq -r '.HostConfig.VolumesFrom[]' 2>/dev/null)
@@ -79,6 +87,7 @@ source /app/functions.sh
 
 if [[ "$*" == "/bin/bash /app/start.sh" ]]; then
     check_docker_socket
+    [[ -z "${NGINX_DOCKER_GEN_CONTAINER:-}" ]] && get_nginx_gen_cid
     if [[ -z "${NGINX_DOCKER_GEN_CONTAINER:-}" ]]; then
         [[ -z "${NGINX_PROXY_CONTAINER:-}" ]] && get_nginx_proxy_cid
     fi
