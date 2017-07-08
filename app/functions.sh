@@ -68,7 +68,7 @@ function docker_kill {
 }
 
 function labeled_cid {
-    docker_api "/containers/json" | jq -r '.[] | select( .Labels["'$1'"] == "true")|.Id'
+    docker_api "/containers/json" | jq -r '.[] | select(.Labels["'$1'"])|.Id'
 }
 
 function docker_gen_container {
