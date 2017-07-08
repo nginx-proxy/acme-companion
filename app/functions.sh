@@ -72,11 +72,11 @@ function labeled_cid {
 }
 
 function docker_gen_container {
-    echo ${NGINX_DOCKER_GEN_CONTAINER:-labeled_cid com.github.jrcs.letsencrypt_nginx_proxy_companion.docker_gen}
+    echo ${NGINX_DOCKER_GEN_CONTAINER:-$(labeled_cid com.github.jrcs.letsencrypt_nginx_proxy_companion.docker_gen)}
 }
 
 function nginx_proxy_container {
-    echo ${NGINX_PROXY_CONTAINER:-labeled_cid com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy}
+    echo ${NGINX_PROXY_CONTAINER:-$(labeled_cid com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy)}
 }
 
 ## Nginx
