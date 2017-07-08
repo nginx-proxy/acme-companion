@@ -63,7 +63,7 @@ To run nginx proxy as a separate container you'll need:
 curl https://raw.githubusercontent.com/jwilder/nginx-proxy/master/nginx.tmpl > /path/to/nginx.tmpl
 ```
 
-2) Set the `NGINX_DOCKER_GEN_CONTAINER` environment variable to the name or id of the docker-gen container.
+2) Use the `com.github.jrcs.letsencrypt_nginx_proxy_companion.docker_gen=true` label on the docker-gen container, or explicitly set the `NGINX_DOCKER_GEN_CONTAINER` environment variable to the name or id of that container.
 
 Examples:
 
@@ -86,23 +86,25 @@ $ docker run -d \
     --volumes-from nginx \
     -v /path/to/nginx.tmpl:/etc/docker-gen/templates/nginx.tmpl:ro \
     -v /var/run/docker.sock:/tmp/docker.sock:ro \
+    --label com.github.jrcs.letsencrypt_nginx_proxy_companion.docker_gen=true \
     jwilder/docker-gen \
     -notify-sighup nginx -watch -wait 5s:30s /etc/docker-gen/templates/nginx.tmpl /etc/nginx/conf.d/default.conf
 ```
 
-* Then start this container (NGINX_DOCKER_GEN_CONTAINER variable must contain the docker-gen container name or id):
+* Then start this container:
 ```bash
 $ docker run -d \
     --name nginx-letsencrypt \
-    -e "NGINX_DOCKER_GEN_CONTAINER=nginx-gen" \
     --volumes-from nginx \
     -v /path/to/certs:/etc/nginx/certs:rw \
     -v /var/run/docker.sock:/var/run/docker.sock:ro \
     jrcs/letsencrypt-nginx-proxy-companion
 ```
-Then start any containers to be proxied as described previously.
 
-* If for some reason you can't use the docker --volumes-from option, you can specify the name or id of the nginx container with `NGINX_PROXY_CONTAINER` variable.
+* Then start any containers to be proxied as described previously.
+
+Note: If the docker-gen container name is static and you want to explicitly set it, use `-e NGINX_DOCKER_GEN_CONTAINER=nginx-gen`. The same thing is true with the nginx container (`-e NGINX_PROXY_CONTAINER=nginx`).
+
 
 #### Let's Encrypt
 
@@ -172,5 +174,5 @@ If you want other examples how to use this container, look at:
 * [Evert Ramos's Examples](https://github.com/evertramos/docker-compose-letsencrypt-nginx-proxy-companion) - using docker-compose version '3'
 * [Karl Fathi's Examples](https://github.com/fatk/docker-letsencrypt-nginx-proxy-companion-examples)
 * [More examples from Karl](https://github.com/pixelfordinner/pixelcloud-docker-apps/tree/master/nginx-proxy)
-* [George Ilyes' Examples](https://github.com/gilyes/docker-nginx-letsencrypt-sample) 
+* [George Ilyes' Examples](https://github.com/gilyes/docker-nginx-letsencrypt-sample)
 * [Dmitry's simple docker-compose example](https://github.com/dmitrym0/simple-lets-encrypt-docker-compose-sample)
