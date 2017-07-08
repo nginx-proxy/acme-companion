@@ -82,7 +82,7 @@ reload_nginx() {
         if [[ -n "${NGINX_PROXY_CONTAINER:-}" ]]; then
             echo "Reloading nginx proxy..."
             docker_exec "$NGINX_PROXY_CONTAINER" \
-                        '[ "sh", "-c", "/usr/local/bin/docker-gen -only-exposed /app/nginx.tmpl /etc/nginx/conf.d/default.conf; /usr/sbin/nginx -s reload" ]'
+                        '[ "sh", "-c", "/usr/local/bin/docker-gen /app/nginx.tmpl /etc/nginx/conf.d/default.conf; /usr/sbin/nginx -s reload" ]'
         fi
     fi
 }
