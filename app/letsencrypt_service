@@ -135,6 +135,11 @@ update_certs() {
     [[ "$reload_nginx" == 'true' ]] && reload_nginx
 }
 
+# Allow the script functions to be sourced without starting the Service Loop.
+if [ "${1}" == "--source-only" ]; then
+  return 0
+fi
+
 pid=
 # Service Loop: When this script exits, start it again.
 trap '[[ $pid ]] && kill $pid; exec $0' EXIT
