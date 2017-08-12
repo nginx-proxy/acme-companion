@@ -142,6 +142,14 @@ $ docker run -d \
     tutum/apache-php
 ```
 
+#### Force certificates renewal
+
+If needed, you can force a running letsencrypt-nginx-proxy-companion container to renew all certificates that are currently in use. Replace `nginx-letsencrypt` with the name of your `letsencrypt-nginx-proxy-companion` container in the following command:
+
+```bash
+$ docker exec nginx-letsencrypt /app/force_renew
+```
+
 #### Optional container environment variables
 
 Optional letsencrypt-nginx-proxy-companion container environment variables for custom configuration.
