@@ -103,7 +103,19 @@ $ docker run -d \
 
 * Then start any containers to be proxied as described previously.
 
-Note: If the docker-gen container name is static and you want to explicitly set it, use `-e NGINX_DOCKER_GEN_CONTAINER=nginx-gen`. The same thing is true with the nginx container (`-e NGINX_PROXY_CONTAINER=nginx`).
+Note: 
+If the 3 containers are using using static names, as shown in the examples. The label (`--label com.github.jrcs.letsencrypt_nginx_proxy_companion.docker_gen`) on `nginx` container can be removed and additional evironment variables set on the `letsencrypt-nginx-proxy-companion` container. The variables are `-e NGINX_DOCKER_GEN_CONTAINER=nginx-gen` and `-e NGINX_PROXY_CONTAINER=nginx`.
+Example:
+```bash
+$ docker run -d \
+    --name nginx-letsencrypt \
+    --volumes-from nginx \
+    -v /path/to/certs:/etc/nginx/certs:rw \
+    -v /var/run/docker.sock:/var/run/docker.sock:ro \
+    -e NGINX_DOCKER_GEN_CONTAINER=nginx-gen \
+    -e NGINX_PROXY_CONTAINER=nginx \
+    jrcs/letsencrypt-nginx-proxy-companion
+```
 
 
 #### Let's Encrypt
