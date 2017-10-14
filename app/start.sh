@@ -16,7 +16,10 @@ trap 'term_handler' INT QUIT KILL TERM
 /app/letsencrypt_service &
 letsencrypt_service_pid=$!
 
-docker-gen -watch -notify '/app/update_certs' -wait 15s:60s /app/letsencrypt_service_data.tmpl /app/letsencrypt_service_data &
+ARGS="-watch -notify '/app/update_certs' -wait 15s:60s /app/letsencrypt_service_data.tmpl /app/letsencrypt_service_data"
+[[ ${DISABLE_ONLY_EXPOSED^^} == YES || ${DISABLE_ONLY_EXPOSED^^} == TRUE ]] || ARGS="-only-exposed $ARGS"
+
+docker-gen $ARGS &
 docker_gen_pid=$!
 
 # wait "indefinitely"
