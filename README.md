@@ -125,6 +125,8 @@ The following environment variables are optional and parameterize the way the Le
 
 The `LETSENCRYPT_KEYSIZE` variable determines the size of the requested key (in bit, defaults to 4096).
 
+**Note:** the `VIRTUAL_HOST` (or `LETSENCRYPT_HOST`) must be a reachable domain for LetEncrypt to be able to validate the challenge and provide the certificate.
+
 ##### multi-domain ([SAN](https://www.digicert.com/subject-alternative-name.htm)) certificates
 If you want to create multi-domain ([SAN](https://www.digicert.com/subject-alternative-name.htm)) certificates add the base domain as the first domain of the `LETSENCRYPT_HOST` environment variable.
 
