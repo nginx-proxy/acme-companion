@@ -13,6 +13,8 @@ letsencrypt-nginx-proxy-companion is a lightweight companion container for the [
 
 ***NOTE***: The first time this container is launched it generates a new Diffie-Hellman group file. This process can take several minutes to complete (be patient).
 
+![schema](./schema.png)
+
 #### Usage
 
 To use it with original [nginx-proxy](https://github.com/jwilder/nginx-proxy) container you must declare 3 writable volumes from the [nginx-proxy](https://github.com/jwilder/nginx-proxy) container:
