@@ -4,7 +4,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 seconds_to_wait=3600
 ACME_CA_URI="${ACME_CA_URI:-https://acme-v01.api.letsencrypt.org/directory}"
-ACME_TOS_HASH="${ACME_TOS_HASH:-6373439b9f29d67a5cd4d18cbc7f264809342dbf21cb2ba2fc7588df987a6221}"
+ACME_TOS_HASH="${ACME_TOS_HASH:-cc88d8d9517f490191401e7b54e9ffd12a2b9082ec7a1d4cec6101f9f1647e7b}"
 DEFAULT_KEY_SIZE=4096
 
 source /app/functions.sh
