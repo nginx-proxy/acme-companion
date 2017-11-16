@@ -4,6 +4,7 @@ MAINTAINER Yves Blusseau <90z7oey02@sneakemail.com> (@blusseau)
 
 ENV DEBUG=false              \
 	DOCKER_GEN_VERSION=0.7.3 \
+	ONLY_EXPOSED=1 \
 	DOCKER_HOST=unix:///var/run/docker.sock
 
 RUN apk --update add bash curl ca-certificates procps jq tar && \

@@ -98,7 +98,7 @@ reload_nginx() {
         if [[ -n "${_nginx_proxy_container:-}" ]]; then
             echo "Reloading nginx proxy (${_nginx_proxy_container})..."
             docker_exec "${_nginx_proxy_container}" \
-                        '[ "sh", "-c", "/usr/local/bin/docker-gen -only-exposed /app/nginx.tmpl /etc/nginx/conf.d/default.conf; /usr/sbin/nginx -s reload" ]'
+                        '[ "sh", "-c", "/usr/local/bin/docker-gen '"${ONLY_EXPOSED_PARAM}"' /app/nginx.tmpl /etc/nginx/conf.d/default.conf; /usr/sbin/nginx -s reload" ]'
         fi
     fi
 }

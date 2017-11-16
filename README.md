@@ -167,6 +167,8 @@ $ docker run -d \
     jrcs/letsencrypt-nginx-proxy-companion
 ```
 
+
+
 * `DEBUG` - Set it to `true` to enable debugging of the entrypoint script and generation of LetsEncrypt certificates, which could help you pin point any configuration issues.
 
 * `REUSE_KEY` - Set it to `true` to make simp_le reuse previously generated private key instead of creating a new one on certificate renewal. Recommended if you intend to use HPKP.
@@ -176,6 +178,8 @@ $ docker run -d \
 * The "com.github.jrcs.letsencrypt_nginx_proxy_companion.docker_gen" label - set this label on the docker-gen container to tell the docker-letsencrypt-nginx-proxy-companion container to use it as the docker-gen when it's split from nginx (separate containers).
 
 * `ACME_TOS_HASH` - Let´s you pass an alternative TOS hash to simp_le, to support other CA´s ACME implentation.
+
+* `ONLY_EXPOSED` - `1` (default) handle only containers with exposed ports, `0` handle all containers (required on rancher environment)
 
 #### Examples:
 

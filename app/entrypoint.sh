@@ -9,6 +9,12 @@ if [[ -z "$CONTAINER_ID" ]]; then
     exit 1
 fi
 
+if [ "${ONLY_EXPOSED}" == "1" ]; then
+	export ONLY_EXPOSED_PARAM="-only-exposed"
+else
+	export ONLY_EXPOSED_PARAM=""
+fi
+
 function check_docker_socket {
     if [[ $DOCKER_HOST == unix://* ]]; then
         socket_file=${DOCKER_HOST#unix://}
