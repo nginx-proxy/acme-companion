@@ -104,7 +104,7 @@ $ docker run -d \
 * Then start any containers to be proxied as described previously.
 
 Note: 
-If the 3 containers are using using static names, as shown in the examples. The label (`--label com.github.jrcs.letsencrypt_nginx_proxy_companion.docker_gen`) on `nginx` container can be removed and additional evironment variables set on the `letsencrypt-nginx-proxy-companion` container. The variables are `NGINX_DOCKER_GEN_CONTAINER=nginx-gen` and `NGINX_PROXY_CONTAINER=nginx`.
+If the 3 containers are using using static names, as shown in the examples. The label "com.github.jrcs.letsencrypt_nginx_proxy_companion.docker_gen" on nginx container can be removed and additional evironment variables set on the `letsencrypt-nginx-proxy-companion` container. The variables are `NGINX_DOCKER_GEN_CONTAINER=nginx-gen` and `NGINX_PROXY_CONTAINER=nginx`.
 Example:
 ```bash
 $ docker run -d \
