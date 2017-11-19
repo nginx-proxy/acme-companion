@@ -4,7 +4,6 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 seconds_to_wait=3600
 ACME_CA_URI="${ACME_CA_URI:-https://acme-v01.api.letsencrypt.org/directory}"
-ACME_TOS_HASH="${ACME_TOS_HASH:-6373439b9f29d67a5cd4d18cbc7f264809342dbf21cb2ba2fc7588df987a6221}"
 DEFAULT_KEY_SIZE=4096
 
 source /app/functions.sh
@@ -69,6 +68,7 @@ update_certs() {
 
         params_d_str=""
         [[ $DEBUG == true ]] && params_d_str+=" -v"
+        [[ -n $ACME_TOS_HASH ]] && params_d_str+=" --tos_sha256 $ACME_TOS_HASH"
         [[ $REUSE_KEY == true ]] && params_d_str+=" --reuse_key"
         [[ "${1}" == "--force-renew" ]] && params_d_str+=" --valid_min 7776000"
 
@@ -113,7 +113,6 @@ update_certs() {
         echo "Creating/renewal $base_domain certificates... (${hosts_array_expanded[*]})"
         /usr/bin/simp_le \
             -f account_key.json -f key.pem -f chain.pem -f fullchain.pem -f cert.pem \
-            --tos_sha256 $ACME_TOS_HASH \
             $params_d_str \
             --cert_key_size=$cert_keysize \
             --email "${!email_varname}" \
