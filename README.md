@@ -13,6 +13,8 @@ letsencrypt-nginx-proxy-companion is a lightweight companion container for the [
 
 ***NOTE***: The first time this container is launched it generates a new Diffie-Hellman group file. This process can take several minutes to complete (be patient).
 
+![schema](./schema.png)
+
 #### Usage
 
 To use it with original [nginx-proxy](https://github.com/jwilder/nginx-proxy) container you must declare 3 writable volumes from the [nginx-proxy](https://github.com/jwilder/nginx-proxy) container:
@@ -122,6 +124,8 @@ The following environment variables are optional and parameterize the way the Le
 - `LETSENCRYPT_KEYSIZE`
 
 The `LETSENCRYPT_KEYSIZE` variable determines the size of the requested key (in bit, defaults to 4096).
+
+**Note:** the `VIRTUAL_HOST` (or `LETSENCRYPT_HOST`) must be a reachable domain for LetEncrypt to be able to validate the challenge and provide the certificate.
 
 ##### multi-domain ([SAN](https://www.digicert.com/subject-alternative-name.htm)) certificates
 If you want to create multi-domain ([SAN](https://www.digicert.com/subject-alternative-name.htm)) certificates add the base domain as the first domain of the `LETSENCRYPT_HOST` environment variable.
