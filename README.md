@@ -167,8 +167,6 @@ $ docker run -d \
     jrcs/letsencrypt-nginx-proxy-companion
 ```
 
-
-
 * `DEBUG` - Set it to `true` to enable debugging of the entrypoint script and generation of LetsEncrypt certificates, which could help you pin point any configuration issues.
 
 * `REUSE_KEY` - Set it to `true` to make simp_le reuse previously generated private key instead of creating a new one on certificate renewal. Recommended if you intend to use HPKP.
