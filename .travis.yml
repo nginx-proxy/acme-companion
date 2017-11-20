@@ -1,0 +1,48 @@
+dist: trusty
+sudo: required
+
+language: bash
+
+addons:
+  hosts:
+    - www.example1.com
+    - example1.com
+    - example2.wtf
+    - boulder
+
+env:
+  global:
+    - IMAGE=jrcs/letsencrypt-nginx-proxy-companion
+    - NGINX_CONTAINER_NAME=nginx-proxy
+    - DOCKER_GEN_CONTAINER_NAME=nginx-proxy-gen
+    - LETSENCRYPT_CONTAINER_NAME=nginx-proxy-le
+  matrix:
+    - SETUP=2containers TEST_DOMAINS=www.example1.com
+    - SETUP=3containers TEST_DOMAINS=www.example1.com
+    - SETUP=2containers TEST_DOMAINS="www.example1.com,example1.com,example2.wtf"
+    - SETUP=3containers TEST_DOMAINS="www.example1.com,example1.com,example2.wtf"
+
+before_install:
+  - sudo rm /usr/local/bin/docker-compose
+  - curl -L https://github.com/docker/compose/releases/download/1.16.1/docker-compose-`uname -s`-`uname -m` > docker-compose.temp
+  - chmod +x docker-compose.temp
+  - sudo mv docker-compose.temp /usr/local/bin/docker-compose
+
+install:
+  - docker build -t "$IMAGE" .
+  - docker inspect "$IMAGE"
+  - docker run --rm "$IMAGE" simp_le --version
+  - docker run --rm "$IMAGE" simp_le -v --test
+  - docker images
+
+before_script:
+  - git clone https://github.com/docker-library/official-images.git official-images
+  - tests/setup-boulder.sh
+  - tests/setup-nginx-proxy.sh $SETUP
+
+script:
+  - official-images/test/run.sh "$IMAGE"
+  - tests/test.sh $SETUP
+
+after_failure:
+  - tests/after-failure.sh $SETUP
