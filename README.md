@@ -179,8 +179,6 @@ $ docker run -d \
 
 * `ACME_TOS_HASH` - Let´s you pass an alternative TOS hash to simp_le, to support other CA´s ACME implentation.
 
-* `ONLY_EXPOSED` - `1` (default) handle only containers with exposed ports, `0` handle all containers (required on rancher environment)
-
 #### Examples:
 
 If you want other examples how to use this container, look at:
