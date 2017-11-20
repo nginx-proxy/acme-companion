@@ -67,27 +67,43 @@ function docker_kill {
     docker_api "/containers/$id/kill?signal=$signal" "POST"
 }
 
+function labeled_cid {
+    docker_api "/containers/json" | jq -r '.[] | select(.Labels["'$1'"])|.Id'
+}
+
+function docker_gen_container {
+    echo ${NGINX_DOCKER_GEN_CONTAINER:-$(labeled_cid com.github.jrcs.letsencrypt_nginx_proxy_companion.docker_gen)}
+}
+
+function nginx_proxy_container {
+    echo ${NGINX_PROXY_CONTAINER:-$(labeled_cid com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy)}
+}
+
 ## Nginx
 reload_nginx() {
-    if [[ -n "${NGINX_DOCKER_GEN_CONTAINER:-}" ]]; then
+    local _docker_gen_container=$(docker_gen_container)
+    local _nginx_proxy_container=$(nginx_proxy_container)
+
+    if [[ -n "${_docker_gen_container:-}" ]]; then
         # Using docker-gen and nginx in separate container
-        echo "Reloading nginx docker-gen (using separate container ${NGINX_DOCKER_GEN_CONTAINER})..."
-        docker_kill "$NGINX_DOCKER_GEN_CONTAINER" SIGHUP
-        if [[ -n "${NGINX_PROXY_CONTAINER:-}" ]]; then
+        echo "Reloading nginx docker-gen (using separate container ${_docker_gen_container})..."
+        docker_kill "${_docker_gen_container}" SIGHUP
+
+        if [[ -n "${_nginx_proxy_container:-}" ]]; then
             # Reloading nginx in case only certificates had been renewed
-            echo "Reloading nginx (using separate container ${NGINX_PROXY_CONTAINER})..."
-            docker_kill "$NGINX_PROXY_CONTAINER" SIGHUP
+            echo "Reloading nginx (using separate container ${_nginx_proxy_container})..."
+            docker_kill "${_nginx_proxy_container}" SIGHUP
         fi
     else
-        if [[ -n "${NGINX_PROXY_CONTAINER:-}" ]]; then
-            echo "Reloading nginx proxy..."
-            docker_exec "$NGINX_PROXY_CONTAINER" \
-                        '[ "sh", "-c", "/usr/local/bin/docker-gen /app/nginx.tmpl /etc/nginx/conf.d/default.conf; /usr/sbin/nginx -s reload" ]'
+        if [[ -n "${_nginx_proxy_container:-}" ]]; then
+            echo "Reloading nginx proxy (${_nginx_proxy_container})..."
+            docker_exec "${_nginx_proxy_container}" \
+                        '[ "sh", "-c", "/usr/local/bin/docker-gen -only-exposed /app/nginx.tmpl /etc/nginx/conf.d/default.conf; /usr/sbin/nginx -s reload" ]'
         fi
     fi
 }
 
 # Convert argument to lowercase (bash 4 only)
 function lc() {
-	echo "${@,,}"
+    echo "${@,,}"
 }
