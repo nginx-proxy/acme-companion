@@ -1,3 +1,6 @@
+#!/bin/bash
+# shellcheck disable=SC2155
+
 [[ -z "${VHOST_DIR:-}" ]] && \
  declare -r VHOST_DIR=/etc/nginx/vhost.d
 [[ -z "${START_HEADER:-}" ]] && \

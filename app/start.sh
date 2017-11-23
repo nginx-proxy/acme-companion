@@ -11,7 +11,7 @@ term_handler() {
     exit 143; # 128 + 15 -- SIGTERM
 }
 
-trap 'term_handler' INT QUIT KILL TERM
+trap 'term_handler' INT QUIT TERM
 
 /app/letsencrypt_service &
 letsencrypt_service_pid=$!

@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC2120
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
@@ -9,15 +10,15 @@ DEFAULT_KEY_SIZE=4096
 source /app/functions.sh
 
 create_link() {
-    local readonly target=${1?missing target argument}
-    local readonly source=${2?missing source argument}
+    local -r target=${1?missing target argument}
+    local -r source=${2?missing source argument}
     [[ -f "$target" ]] && return 1
     ln -sf "$source" "$target"
 }
 
 create_links() {
-    local readonly base_domain=${1?missing base_domain argument}
-    local readonly domain=${2?missing base_domain argument}
+    local -r base_domain=${1?missing base_domain argument}
+    local -r domain=${2?missing base_domain argument}
 
     if [[ ! -f "/etc/nginx/certs/$base_domain"/fullchain.pem || \
           ! -f "/etc/nginx/certs/$base_domain"/key.pem ]]; then
@@ -44,6 +45,7 @@ update_certs() {
 
     # Load relevant container settings
     unset LETSENCRYPT_CONTAINERS
+    # shellcheck source=/dev/null
     source "$DIR"/letsencrypt_service_data
 
     reload_nginx='false'
@@ -51,7 +53,7 @@ update_certs() {
         # Derive host and email variable names
         host_varname="LETSENCRYPT_${cid}_HOST"
         # Array variable indirection hack: http://stackoverflow.com/a/25880676/350221
-        hosts_array=$host_varname[@]
+        hosts_array="${host_varname}[@]"
         email_varname="LETSENCRYPT_${cid}_EMAIL"
 
         keysize_varname="LETSENCRYPT_${cid}_KEYSIZE"
@@ -101,7 +103,7 @@ update_certs() {
 
         # Create directory for the first domain
         mkdir -p /etc/nginx/certs/$base_domain
-        cd /etc/nginx/certs/$base_domain
+        pushd /etc/nginx/certs/$base_domain
 
         for domain in "${!hosts_array}"; do
             # Add all the domains to certificate
@@ -121,7 +123,9 @@ update_certs() {
 
         simp_le_return=$?
 
-        for altnames in ${hosts_array_expanded[@]:1}; do
+        popd
+
+        for altnames in "${hosts_array_expanded[@]:1}"; do
             # Remove old CN domain that now are altnames
             rm -rf /etc/nginx/certs/$altnames
         done
