@@ -83,7 +83,7 @@ update_certs() {
             acme_ca_uri="https://acme-staging.api.letsencrypt.org/directory"
             if [[ ! -f /etc/nginx/certs/.${base_domain}.test ]]; then
                 # Remove old certificates
-                rm -rf /etc/nginx/certs/${base_domain}
+                [[ -n "${base_domain// }" ]] && rm -rf /etc/nginx/certs/${base_domain}
                 for domain in "${!hosts_array}"; do
                     rm -f /etc/nginx/certs/$domain.{crt,key,dhparam.pem}
                 done
@@ -93,7 +93,7 @@ update_certs() {
             acme_ca_uri="$ACME_CA_URI"
             if [[ -f /etc/nginx/certs/.${base_domain}.test ]]; then
                 # Remove old test certificates
-                rm -rf /etc/nginx/certs/${base_domain}
+                [[ -n "${base_domain// }" ]] && rm -rf /etc/nginx/certs/${base_domain}
                 for domain in "${!hosts_array}"; do
                     rm -f /etc/nginx/certs/$domain.{crt,key,dhparam.pem}
                 done
@@ -127,7 +127,7 @@ update_certs() {
 
         for altnames in "${hosts_array_expanded[@]:1}"; do
             # Remove old CN domain that now are altnames
-            rm -rf /etc/nginx/certs/$altnames
+            [[ -n "${altnames// }" ]] && rm -rf /etc/nginx/certs/${altnames}
         done
 
         for domain in "${!hosts_array}"; do
