@@ -5,9 +5,9 @@ language: bash
 
 addons:
   hosts:
-    - www.example1.com
-    - example1.com
-    - example2.wtf
+    - le1.wtf
+    - le2.wtf
+    - le3.wtf
     - boulder
 
 env:
@@ -15,12 +15,10 @@ env:
     - IMAGE=jrcs/letsencrypt-nginx-proxy-companion
     - NGINX_CONTAINER_NAME=nginx-proxy
     - DOCKER_GEN_CONTAINER_NAME=nginx-proxy-gen
-    - LETSENCRYPT_CONTAINER_NAME=nginx-proxy-le
+    - TEST_DOMAINS=le1.wtf,le2.wtf,le3.wtf
   matrix:
-    - SETUP=2containers TEST_DOMAINS=www.example1.com
-    - SETUP=3containers TEST_DOMAINS=www.example1.com
-    - SETUP=2containers TEST_DOMAINS="www.example1.com,example1.com,example2.wtf"
-    - SETUP=3containers TEST_DOMAINS="www.example1.com,example1.com,example2.wtf"
+    - SETUP=2containers
+    - SETUP=3containers
 
 before_install:
   - sudo rm /usr/local/bin/docker-compose
@@ -37,12 +35,17 @@ install:
 
 before_script:
   - git clone https://github.com/docker-library/official-images.git official-images
-  - tests/setup-boulder.sh
-  - tests/setup-nginx-proxy.sh $SETUP
+  - test/setup/setup-nginx-proxy.sh
+  - test/setup/setup-boulder.sh
+  - docker pull nginx:alpine
 
 script:
   - official-images/test/run.sh "$IMAGE"
-  - tests/test.sh $SETUP
+  - test/run.sh "$IMAGE"
 
 after_failure:
-  - tests/after-failure.sh $SETUP
+  - docker logs $NGINX_CONTAINER_NAME
+  - docker logs certs_single
+  - docker logs certs_san
+  - docker logs boulder
+  - if [[ $SETUP = "3containers" ]]; then docker logs $DOCKER_GEN_CONTAINER_NAME; fi
