@@ -3,11 +3,12 @@
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
+source /app/functions.sh
+
 seconds_to_wait=3600
 ACME_CA_URI="${ACME_CA_URI:-https://acme-v01.api.letsencrypt.org/directory}"
 DEFAULT_KEY_SIZE=4096
-
-source /app/functions.sh
+REUSE_ACCOUNT_KEYS="$(lc ${REUSE_ACCOUNT_KEYS:-true})"
 
 create_link() {
     local -r target=${1?missing target argument}
@@ -68,6 +69,12 @@ update_certs() {
             create_test_certificate=true
         fi
 
+        account_varname="LETSENCRYPT_${cid}_ACCOUNT_ALIAS"
+        account_alias="${!account_varname}"
+        if [[ "$account_alias" == "<no value>" ]]; then
+            account_alias=default
+        fi
+
         params_d_str=""
         [[ $DEBUG == true ]] && params_d_str+=" -v"
         [[ -n $ACME_TOS_HASH ]] && params_d_str+=" --tos_sha256 $ACME_TOS_HASH"
@@ -112,6 +119,22 @@ update_certs() {
             add_location_configuration "$domain" || reload_nginx
         done
 
+        # The ACME account key full path is derived from the endpoint URI
+        # + the account alias (set to 'default' if no alias is provided)
+        account_key_dir="/etc/nginx/certs/accounts/${acme_ca_uri#*://}"
+        account_key_full_path="${account_key_dir}/${account_alias}.json"
+        if [[ $REUSE_ACCOUNT_KEYS == true ]]; then
+            if [[ -f "$account_key_full_path" ]]; then
+                # If there is no symlink to the account key, create it
+                if [[ ! -L ./account_key.json ]]; then
+                    ln -sf "$account_key_full_path" ./account_key.json
+                # If the symlink target the wrong account key, replace it
+                elif [[ "$(readlink -f ./account_key.json)" != "$account_key_full_path" ]]; then
+                    ln -sf "$account_key_full_path" ./account_key.json
+                fi
+            fi
+        fi
+
         echo "Creating/renewal $base_domain certificates... (${hosts_array_expanded[*]})"
         /usr/bin/simp_le \
             -f account_key.json -f key.pem -f chain.pem -f fullchain.pem -f cert.pem \
@@ -122,6 +145,16 @@ update_certs() {
             --default_root /usr/share/nginx/html/
 
         simp_le_return=$?
+
+        if [[ $REUSE_ACCOUNT_KEYS == true ]]; then
+            # If the account key to be reused does not exist yet, copy it
+            # from the CWD and replace the file in CWD with a symlink
+            if [[ ! -f "$account_key_full_path" && -f ./account_key.json ]]; then
+                mkdir -p "$account_key_dir"
+                cp ./account_key.json "$account_key_full_path"
+                ln -sf "$account_key_full_path" ./account_key.json
+            fi
+        fi
 
         popd
 
