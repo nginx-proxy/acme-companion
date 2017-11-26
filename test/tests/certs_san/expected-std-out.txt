@@ -1,0 +1,34 @@
+Started letsencrypt container for test certs_san
+Started test web server for le1.wtf,le2.wtf,le3.wtf
+Certificate for le1.wtf has been generated.
+le1.wtf is on certificate.
+Connection to le1.wtf using https was successful.
+The correct certificate for le1.wtf was served by Nginx.
+le2.wtf is on certificate.
+Connection to le2.wtf using https was successful.
+The correct certificate for le2.wtf was served by Nginx.
+le3.wtf is on certificate.
+Connection to le3.wtf using https was successful.
+The correct certificate for le3.wtf was served by Nginx.
+Started test web server for le2.wtf, le3.wtf, le1.wtf
+Certificate for le2.wtf has been generated.
+le1.wtf is on certificate.
+Connection to le1.wtf using https was successful.
+The correct certificate for le1.wtf was served by Nginx.
+le2.wtf is on certificate.
+Connection to le2.wtf using https was successful.
+The correct certificate for le2.wtf was served by Nginx.
+le3.wtf is on certificate.
+Connection to le3.wtf using https was successful.
+The correct certificate for le3.wtf was served by Nginx.
+Started test web server for le3.wtf, le1.wtf, le2.wtf,
+Certificate for le3.wtf has been generated.
+le1.wtf is on certificate.
+Connection to le1.wtf using https was successful.
+The correct certificate for le1.wtf was served by Nginx.
+le2.wtf is on certificate.
+Connection to le2.wtf using https was successful.
+The correct certificate for le2.wtf was served by Nginx.
+le3.wtf is on certificate.
+Connection to le3.wtf using https was successful.
+The correct certificate for le3.wtf was served by Nginx.
