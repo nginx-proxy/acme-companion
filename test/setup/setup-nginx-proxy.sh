@@ -39,3 +39,7 @@ case $SETUP in
     exit 1
 
 esac
+
+docker run --name helper --volumes-from $NGINX_CONTAINER_NAME busybox true
+docker cp ${TRAVIS_BUILD_DIR}/test/setup/dhparam.pem helper:/etc/nginx/certs
+docker rm -f helper

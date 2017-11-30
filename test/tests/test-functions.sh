@@ -24,24 +24,6 @@ function run_le_container {
 }
 export -f run_le_container
 
-# Wait for the /etc/nginx/certs/dhparam.pem file to exist in container $1
-function wait_for_dhparam {
-  local name="${1:?}"
-  local i=0
-  sleep 1
-  echo -n "Waiting for the $name container to generate a DH parameters file, this might take a while..."
-  until docker exec "$name" [ -f /etc/nginx/certs/dhparam.pem ]; do
-    if [ $i -gt 600 ]; then
-      echo "DH parameters file was not generated under ten minutes by the $name container, timing out."
-      exit 1
-    fi
-    i=$((i + 5))
-    sleep 5
-  done
-  echo "Done."
-}
-export -f wait_for_dhparam
-
 # Wait for the /etc/nginx/certs/$1/cert.pem file to exist inside container $2
 function wait_for_cert {
   local domain="${1:?}"
