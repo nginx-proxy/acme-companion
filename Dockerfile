@@ -1,4 +1,4 @@
-FROM alpine:3.6
+FROM armhf/alpine:3.6
 
 LABEL maintainer="Yves Blusseau <90z7oey02@sneakemail.com> (@blusseau)"
 
@@ -16,7 +16,7 @@ RUN apk add --update \
     && rm /var/cache/apk/*
 
 # Install docker-gen
-RUN curl -L https://github.com/jwilder/docker-gen/releases/download/${DOCKER_GEN_VERSION}/docker-gen-linux-amd64-${DOCKER_GEN_VERSION}.tar.gz \
+RUN curl -L https://github.com/jwilder/docker-gen/releases/download/${DOCKER_GEN_VERSION}/docker-gen-linux-armhf-${DOCKER_GEN_VERSION}.tar.gz \
     | tar -C /usr/local/bin -xz
 
 # Install simp_le
