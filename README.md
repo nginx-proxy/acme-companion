@@ -1,8 +1,8 @@
 [![Build Status](https://travis-ci.org/JrCs/docker-letsencrypt-nginx-proxy-companion.svg?branch=master)](https://travis-ci.org/JrCs/docker-letsencrypt-nginx-proxy-companion)
-[![](https://images.microbadger.com/badges/version/jrcs/letsencrypt-nginx-proxy-companion.svg)](https://hub.docker.com/r/jrcs/letsencrypt-nginx-proxy-companion "Click to view the image on Docker Hub")
-[![](https://images.microbadger.com/badges/image/jrcs/letsencrypt-nginx-proxy-companion.svg)](https://hub.docker.com/r/jrcs/letsencrypt-nginx-proxy-companion "Click to view the image on Docker Hub")
-[![](https://img.shields.io/docker/stars/jrcs/letsencrypt-nginx-proxy-companion.svg)](https://hub.docker.com/r/jrcs/letsencrypt-nginx-proxy-companion "Click to view the image on Docker Hub")
-[![](https://img.shields.io/docker/pulls/jrcs/letsencrypt-nginx-proxy-companion.svg)](https://hub.docker.com/r/jrcs/letsencrypt-nginx-proxy-companion "Click to view the image on Docker Hub")
+[![GitHub release](https://img.shields.io/github/release/jrcs/docker-letsencrypt-nginx-proxy-companion.svg)](https://github.com/JrCs/docker-letsencrypt-nginx-proxy-companion/releases)
+[![Image info](https://images.microbadger.com/badges/image/jrcs/letsencrypt-nginx-proxy-companion.svg)](https://hub.docker.com/r/jrcs/letsencrypt-nginx-proxy-companion "Click to view the image on Docker Hub")
+[![Docker stars](https://img.shields.io/docker/stars/jrcs/letsencrypt-nginx-proxy-companion.svg)](https://hub.docker.com/r/jrcs/letsencrypt-nginx-proxy-companion "Click to view the image on Docker Hub")
+[![Docker pulls](https://img.shields.io/docker/pulls/jrcs/letsencrypt-nginx-proxy-companion.svg)](https://hub.docker.com/r/jrcs/letsencrypt-nginx-proxy-companion "Click to view the image on Docker Hub")
 
 letsencrypt-nginx-proxy-companion is a lightweight companion container for the [nginx-proxy](https://github.com/jwilder/nginx-proxy). It allows the creation/renewal of Let's Encrypt certificates automatically. See [Let's Encrypt section](#lets-encrypt) for configuration details.
 
@@ -106,8 +106,8 @@ $ docker run -d \
 
 * Then start any containers to be proxied as described previously.
 
-Note: 
-If the 3 containers are using static names, both labels `com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy` on nginx container and `com.github.jrcs.letsencrypt_nginx_proxy_companion.docker_gen` on the docker-gen container can be removed. 
+Note:
+If the 3 containers are using static names, both labels `com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy` on nginx container and `com.github.jrcs.letsencrypt_nginx_proxy_companion.docker_gen` on the docker-gen container can be removed.
 
 The docker environment variables to be set on the letsencrypt container are:
 * `NGINX_PROXY_CONTAINER` set to the name of the nginx container (here `nginx`)
@@ -145,10 +145,10 @@ The `LETSENCRYPT_KEYSIZE` variable determines the size of the requested key (in 
 
 **Note:** the `VIRTUAL_HOST` (or `LETSENCRYPT_HOST`) must be a reachable domain for LetEncrypt to be able to validate the challenge and provide the certificate.
 
-##### multi-domain ([SAN](https://www.digicert.com/subject-alternative-name.htm)) certificates
+##### Multi-domain ([SAN](https://www.digicert.com/subject-alternative-name.htm)) certificates
 If you want to create multi-domain ([SAN](https://www.digicert.com/subject-alternative-name.htm)) certificates add the base domain as the first domain of the `LETSENCRYPT_HOST` environment variable.
 
-##### test certificates
+##### Test certificates
 If you want to create test certificates that don't have the 5 certs/week/domain limits define the `LETSENCRYPT_TEST` environment variable with a value of `true` (in the containers where you request certificates with LETSENCRYPT_HOST). If you want to do this globally for all containers, set ACME_CA_URI as described below.
 
 ##### Automatic certificate renewal
@@ -164,9 +164,9 @@ $ docker run -d \
     tutum/apache-php
 ```
 
-#### Force certificates renewal
+##### Force certificates renewal
 
-If needed, you can force a running letsencrypt-nginx-proxy-companion container to renew all certificates that are currently in use. Replace `nginx-letsencrypt` with the name of your `letsencrypt-nginx-proxy-companion` container in the following command:
+If needed, you can force a running letsencrypt-nginx-proxy-companion container to renew all certificates that are currently in use. Replace `nginx-letsencrypt` with the name of your letsencrypt-nginx-proxy-companion container in the following command:
 
 ```bash
 $ docker exec nginx-letsencrypt /app/force_renew
@@ -187,7 +187,7 @@ If you want to disable the account key reutilization entirely, you can set the e
 
 Optional letsencrypt-nginx-proxy-companion container environment variables for custom configuration.
 
-* `ACME_CA_URI` - Directory URI for the CA ACME API endpoint (default: ``https://acme-v01.api.letsencrypt.org/directory``). If you set it's value to `https://acme-staging.api.letsencrypt.org/directory` letsencrypt will use test servers that don't have the 5 certs/week/domain limits. You can also create test certificates per container (see [let's encrypt test certificates](https://github.com/JrCs/docker-letsencrypt-nginx-proxy-companion/blob/doc/README.md#test-certificates))
+* `ACME_CA_URI` - Directory URI for the CA ACME API endpoint (default: ``https://acme-v01.api.letsencrypt.org/directory``). If you set it's value to `https://acme-staging.api.letsencrypt.org/directory` letsencrypt will use test servers that don't have the 5 certs/week/domain limits. You can also create test certificates per container (see [let's encrypt test certificates](#test-certificates))
 
 For example
 
@@ -206,9 +206,9 @@ $ docker run -d \
 
 * `REUSE_KEY` - Set it to `true` to make simp_le reuse previously generated private key instead of creating a new one on certificate renewal. Recommended if you intend to use HPKP.
 
-* The "com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy" label - set this label on the nginx-proxy container to tell the docker-letsencrypt-nginx-proxy-companion container to use it as the proxy.
+* The `com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy` label - set this label on the nginx-proxy container to tell the docker-letsencrypt-nginx-proxy-companion container to use it as the proxy.
 
-* The "com.github.jrcs.letsencrypt_nginx_proxy_companion.docker_gen" label - set this label on the docker-gen container to tell the docker-letsencrypt-nginx-proxy-companion container to use it as the docker-gen when it's split from nginx (separate containers).
+* The `com.github.jrcs.letsencrypt_nginx_proxy_companion.docker_gen` label - set this label on the docker-gen container to tell the docker-letsencrypt-nginx-proxy-companion container to use it as the docker-gen when it's split from nginx (separate containers).
 
 * `ACME_TOS_HASH` - Let´s you pass an alternative TOS hash to simp_le, to support other CA´s ACME implentation.
 
