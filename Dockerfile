@@ -1,4 +1,4 @@
-FROM armhf/alpine:3.6
+FROM arm32v6/alpine:3.6
 
 LABEL maintainer="Yves Blusseau <90z7oey02@sneakemail.com> (@blusseau)"
 
