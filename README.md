@@ -110,8 +110,8 @@ Note:
 If the 3 containers are using static names, both labels `com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy` on nginx container and `com.github.jrcs.letsencrypt_nginx_proxy_companion.docker_gen` on the docker-gen container can be removed. 
 
 The docker environment variables to be set on the letsencrypt container are:
-* `NGINX_DOCKER_GEN_CONTAINER` set to the name of the nginx container (here `nginx`)
-* `NGINX_PROXY_CONTAINER` set to the name of the docker-gen container (here `nginx-gen`)
+* `NGINX_PROXY_CONTAINER` set to the name of the nginx container (here `nginx`)
+* `NGINX_DOCKER_GEN_CONTAINER` set to the name of the docker-gen container (here `nginx-gen`)
 
 Example:
 ```bash
