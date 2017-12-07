@@ -68,6 +68,8 @@ update_certs() {
         create_test_certificate=false
         if [[ $(lc "${!test_certificate_varname:-}") == true ]]; then
             create_test_certificate=true
+        elif [[ $ACME_CA_URI == "https://acme-staging.api.letsencrypt.org/directory" ]]; then
+            create_test_certificate=true
         fi
 
         account_varname="LETSENCRYPT_${cid}_ACCOUNT_ALIAS"
