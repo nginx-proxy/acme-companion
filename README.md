@@ -204,7 +204,7 @@ $ docker run -d \
 
 * `REUSE_ACCOUNT_KEYS` - Set it to `false` to disable the account keys reutilization (see [ACME account keys](#acme-account-keys)).
 
-* `REUSE_KEY` - Set it to `true` to make simp_le reuse previously generated private key instead of creating a new one on certificate renewal. Recommended if you intend to use HPKP.
+* `REUSE_PRIVATE_KEYS` - Set it to `true` to make simp_le reuse previously generated private key for each certificate instead of creating a new one on certificate renewal. Recommended if you intend to use HPKP.
 
 * The `com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy` label - set this label on the nginx-proxy container to tell the docker-letsencrypt-nginx-proxy-companion container to use it as the proxy.
 
