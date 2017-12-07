@@ -128,31 +128,9 @@ $ docker run -d \
 
 #### Let's Encrypt
 
-To use the Let's Encrypt service to automatically create a valid certificate for virtual host(s).
+To use the Let's Encrypt service to automatically create a valid certificate for virtual host(s), declare the `LETSENCRYPT_HOST` environment variable in each to-be-proxied application containers.
 
-Set the following environment variables to enable Let's Encrypt support for a container being proxied. This environment variables need to be declared in each to-be-proxied application containers.
-
-- `LETSENCRYPT_HOST`
-- `LETSENCRYPT_EMAIL`
-
-The `LETSENCRYPT_HOST` variable most likely needs to be the same as the `VIRTUAL_HOST` variable and must be publicly reachable domains. Specify multiple hosts with a comma delimiter.
-
-The following environment variables are optional and parameterize the way the Let's Encrypt client works.
-
-- `LETSENCRYPT_KEYSIZE`
-
-The `LETSENCRYPT_KEYSIZE` variable determines the size of the requested key (in bit, defaults to 4096).
-
-**Note:** the `VIRTUAL_HOST` (or `LETSENCRYPT_HOST`) must be a reachable domain for LetEncrypt to be able to validate the challenge and provide the certificate.
-
-##### Multi-domain ([SAN](https://www.digicert.com/subject-alternative-name.htm)) certificates
-If you want to create multi-domain ([SAN](https://www.digicert.com/subject-alternative-name.htm)) certificates add the base domain as the first domain of the `LETSENCRYPT_HOST` environment variable.
-
-##### Test certificates
-If you want to create test certificates that don't have the 5 certs/week/domain limits define the `LETSENCRYPT_TEST` environment variable with a value of `true` (in the containers where you request certificates with LETSENCRYPT_HOST). If you want to do this globally for all containers, set ACME_CA_URI as described below.
-
-##### Automatic certificate renewal
-Every hour (3600 seconds) the certificates are checked and every certificate that will expire in the next [30 days](https://github.com/kuba/simp_le/blob/ecf4290c4f7863bb5427b50cdd78bc3a5df79176/simp_le.py#L72) (90 days / 3) are renewed.
+The `LETSENCRYPT_HOST` variable most likely needs to be set to the same value as the `VIRTUAL_HOST` variable and must be publicly reachable domains. Specify multiple hosts with a comma delimiter.
 
 ##### Example:
 ```bash
@@ -163,6 +141,31 @@ $ docker run -d \
     -e "LETSENCRYPT_EMAIL=foo@bar.com" \
     tutum/apache-php
 ```
+
+**Note:** the `VIRTUAL_HOST` (and `LETSENCRYPT_HOST`) must be (a) reachable domain(s) for LetEncrypt to be able to validate the challenge and provide the certificate.
+
+**Note on CAA**: Please ensure that your DNS provider answers correctly to CAA record requests. [If your DNS provider answer with an error, Let's Encrypt won't issue a certificate for your domain](https://letsencrypt.org/docs/caa/). Let's Encrypt do not require that you set a CAA record on your domain, just that your DNS provider answers correctly.
+
+**Note on IPv6**: If the domain or subdomain you want to issue certificate for has an AAAA record set, Let's Encrypt will favor challenge validation over IPv6. [There is an IPv6 to IPv4 fallback in place but Let's Encrypt cannot guarantee it'll work in every possible case](https://github.com/letsencrypt/boulder/issues/2770#issuecomment-340489871), so bottom line is **if you are not sure of both your host and your host's Docker reachability over IPv6, do not advertise an AAAA record** or LE challenge validation might fail.
+
+The following environment variables are optional and parameterize the way the Let's Encrypt client works.
+
+##### Contact address
+
+The `LETSENCRYPT_EMAIL` variable must be a valid email and will be used by Let's Encrypt to warn you of impeding certificate expiration (should the automated renewal fail) or for account recovery. It is strongly advised to provide a valid contact address using this variable.
+
+##### Private key size
+
+The `LETSENCRYPT_KEYSIZE` variable determines the size of the requested key (in bit, defaults to 4096).
+
+##### Multi-domain ([SAN](https://www.digicert.com/subject-alternative-name.htm)) certificates
+If you want to create multi-domain ([SAN](https://www.digicert.com/subject-alternative-name.htm)) certificates add the base domain as the first domain of the `LETSENCRYPT_HOST` environment variable (see [the example](#example) above).
+
+##### Test certificates
+If you want to create test certificates that don't have the 5 certs/week/domain limits define the `LETSENCRYPT_TEST` environment variable with a value of `true` (in the containers where you request certificates with `LETSENCRYPT_HOST`). If you want to do this globally for all containers, set `ACME_CA_URI` as described below.
+
+##### Automatic certificate renewal
+Every hour (3600 seconds) the certificates are checked and every certificate that will expire in the next [30 days](https://github.com/kuba/simp_le/blob/ecf4290c4f7863bb5427b50cdd78bc3a5df79176/simp_le.py#L72) (90 days / 3) are renewed.
 
 ##### Force certificates renewal
 
