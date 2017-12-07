@@ -56,7 +56,14 @@ update_certs() {
         host_varname="LETSENCRYPT_${cid}_HOST"
         # Array variable indirection hack: http://stackoverflow.com/a/25880676/350221
         hosts_array="${host_varname}[@]"
+
+        params_d_str=""
+
         email_varname="LETSENCRYPT_${cid}_EMAIL"
+        email_address="${!email_varname}"
+        if [[ "$email_address" != "<no value>" ]]; then
+            params_d_str+=" --email $email_address"
+        fi
 
         keysize_varname="LETSENCRYPT_${cid}_KEYSIZE"
         cert_keysize="${!keysize_varname}"
@@ -78,7 +85,6 @@ update_certs() {
             account_alias=default
         fi
 
-        params_d_str=""
         [[ $DEBUG == true ]] && params_d_str+=" -v"
         [[ -n $ACME_TOS_HASH ]] && params_d_str+=" --tos_sha256 $ACME_TOS_HASH"
         [[ $REUSE_PRIVATE_KEYS == true ]] && params_d_str+=" --reuse_key"
@@ -143,7 +149,6 @@ update_certs() {
             -f account_key.json -f key.pem -f chain.pem -f fullchain.pem -f cert.pem \
             $params_d_str \
             --cert_key_size=$cert_keysize \
-            --email "${!email_varname}" \
             --server=$acme_ca_uri \
             --default_root /usr/share/nginx/html/
 
