@@ -7,6 +7,7 @@ testAlias+=(
 
 imageTests+=(
 	[le-companion]='
+	docker_api
 	certs_single
 	certs_san
 	'
