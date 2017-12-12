@@ -1,12 +1,12 @@
 #!/bin/bash
-# shellcheck disable=SC2155,SC2002
+# shellcheck disable=SC2155
 
-set -e
+set -u
 
-if [[ -n "${DOCKER_PROVIDER}" ]] && [[ "${DOCKER_PROVIDER,,}" == "aws" ]]; then
-  export CONTAINER_ID=$(cat "${ECS_CONTAINER_METADATA_FILE}" | grep ContainerID | sed 's/.*: "\(.*\)",/\1/g')
+if [[ -n "${DOCKER_PROVIDER:-}" ]] && [[ "${DOCKER_PROVIDER,,}" == "aws" ]]; then
+  export CONTAINER_ID=$(grep ContainerID "${ECS_CONTAINER_METADATA_FILE}" | sed 's/.*: "\(.*\)",/\1/g')
 else
-  export CONTAINER_ID=$(cat /proc/self/cgroup | sed -nE 's/^.+docker[\/-]([a-f0-9]{64}).*/\1/p' | head -n 1)
+  export CONTAINER_ID=$(sed -nE 's/^.+docker[\/-]([a-f0-9]{64}).*/\1/p' /proc/self/cgroup | head -n 1)
 fi
 
 if [[ -z "$CONTAINER_ID" ]]; then
