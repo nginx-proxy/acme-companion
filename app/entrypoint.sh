@@ -1,9 +1,13 @@
 #!/bin/bash
-# shellcheck disable=SC2155
+# shellcheck disable=SC2155,SC2002
 
-set -u
+set -e
 
-export CONTAINER_ID=$(cat /proc/self/cgroup | sed -nE 's/^.+docker[\/-]([a-f0-9]{64}).*/\1/p' | head -n 1)
+if [[ -n "${DOCKER_PROVIDER}" ]] && [[ "${DOCKER_PROVIDER,,}" == "aws" ]]; then
+  export CONTAINER_ID=$(cat "${ECS_CONTAINER_METADATA_FILE}" | grep ContainerID | sed 's/.*: "\(.*\)",/\1/g')
+else
+  export CONTAINER_ID=$(cat /proc/self/cgroup | sed -nE 's/^.+docker[\/-]([a-f0-9]{64}).*/\1/p' | head -n 1)
+fi
 
 if [[ -z "$CONTAINER_ID" ]]; then
     echo "Error: can't get my container ID !" >&2
