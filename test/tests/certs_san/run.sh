@@ -2,8 +2,12 @@
 
 ## Test for SAN (Subject Alternative Names) certificates.
 
-le_container_name="$(basename ${0%/*})"
-run_le_container ${1:?} $le_container_name
+if [[ -z $TRAVIS_CI ]]; then
+  le_container_name="$(basename ${0%/*})_$(date "+%Y-%m-%d_%H.%M.%S")"
+else
+  le_container_name="$(basename ${0%/*})"
+fi
+run_le_container ${1:?} "$le_container_name"
 
 # Create the $domains array from comma separated domains in TEST_DOMAINS.
 IFS=',' read -r -a domains <<< "$TEST_DOMAINS"

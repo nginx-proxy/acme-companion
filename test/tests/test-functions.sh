@@ -19,7 +19,7 @@ function run_le_container {
     --add-host boulder:${BOULDER_IP} \
     --env "DEBUG=true" \
     --env "ACME_CA_URI=http://${BOULDER_IP}:4000/directory" \
-    --label letsencrypt-companion \
+    --label com.github.jrcs.letsencrypt_nginx_proxy_companion.test_suite \
     "$image" > /dev/null && echo "Started letsencrypt container for test ${name%%_2*}"
 }
 export -f run_le_container

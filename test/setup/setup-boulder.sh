@@ -9,8 +9,9 @@ setup_boulder() {
   nginx_proxy_ip="$(docker inspect --format='{{range .NetworkSettings.Networks}}{{.Gateway}}{{end}}' "$NGINX_CONTAINER_NAME")"
 
   export GOPATH=${TRAVIS_BUILD_DIR}/go
-  git clone --depth=1 https://github.com/letsencrypt/boulder \
-    $GOPATH/src/github.com/letsencrypt/boulder
+  [[ ! -d $GOPATH/src/github.com/letsencrypt/boulder ]] \
+    && git clone --depth=1 https://github.com/letsencrypt/boulder \
+      $GOPATH/src/github.com/letsencrypt/boulder
   pushd $GOPATH/src/github.com/letsencrypt/boulder
   sed --in-place 's/ 5002/ 80/g' test/config/va.json
   sed --in-place 's/ 5001/ 443/g' test/config/va.json
