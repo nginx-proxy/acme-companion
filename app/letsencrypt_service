@@ -130,7 +130,7 @@ update_certs() {
 
         # The ACME account key full path is derived from the endpoint URI
         # + the account alias (set to 'default' if no alias is provided)
-        account_key_dir="/etc/nginx/certs/accounts/${acme_ca_uri#*://}"
+        account_key_dir="../accounts/${acme_ca_uri#*://}"
         account_key_full_path="${account_key_dir}/${account_alias}.json"
         if [[ $REUSE_ACCOUNT_KEYS == true ]]; then
             if [[ -f "$account_key_full_path" ]]; then
