@@ -8,7 +8,7 @@ term_handler() {
     source /app/functions.sh
     remove_all_location_configurations
 
-    exit 143; # 128 + 15 -- SIGTERM
+    exit 0
 }
 
 trap 'term_handler' INT QUIT TERM
