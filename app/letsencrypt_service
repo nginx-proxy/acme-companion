@@ -42,6 +42,63 @@ create_links() {
     return $return_code
 }
 
+function cleanup_links {
+    local -a ENABLED_DOMAINS
+    local -a SYMLINKED_DOMAINS
+    local -a DISABLED_DOMAINS
+
+    # Create an array containing domains for which a
+    # symlinked private key exists in /etc/nginx/certs.
+    for symlinked_domain in /etc/nginx/certs/*.crt; do
+        [[ -f "$symlinked_domain" ]] || continue
+        symlinked_domain="${symlinked_domain##*/}"
+        symlinked_domain="${symlinked_domain%*.crt}"
+        SYMLINKED_DOMAINS+=("$symlinked_domain")
+    done
+    [[ $DEBUG == true ]] && echo "Symlinked domains: ${SYMLINKED_DOMAINS[*]}"
+
+    # Create an array containing domains that are considered
+    # enabled (ie present on /app/letsencrypt_service_data).
+    # shellcheck source=/dev/null
+    source "$DIR"/letsencrypt_service_data
+    for cid in "${LETSENCRYPT_CONTAINERS[@]}"; do
+      host_varname="LETSENCRYPT_${cid}_HOST"
+      hosts_array="${host_varname}[@]"
+      for domain in "${!hosts_array}"; do
+        # Add domain to the array storing currently enabled domains.
+        ENABLED_DOMAINS+=("$domain")
+      done
+    done
+    [[ $DEBUG == true ]] && echo "Enabled domains: ${ENABLED_DOMAINS[*]}"
+
+    # Create an array containing only domains for which a symlinked private key exists
+    # in /etc/nginx/certs but that no longer have a corresponding LETSENCRYPT_HOST set
+    # on an active container.
+    if [[ ${#SYMLINKED_DOMAINS[@]} -gt 0 ]]; then
+        mapfile -t DISABLED_DOMAINS < <(echo "${SYMLINKED_DOMAINS[@]}" \
+                                             "${ENABLED_DOMAINS[@]}" \
+                                             "${ENABLED_DOMAINS[@]}" \
+                                             | tr ' ' '\n' | sort | uniq -u)
+    fi
+    [[ $DEBUG == true ]] && echo "Disabled domains: ${DISABLED_DOMAINS[*]}"
+
+    # Remove disabled domains symlinks if present.
+    # Return 1 if nothing was removed and 0 otherwise.
+    if [[ ${#DISABLED_DOMAINS[@]} -gt 0 ]]; then
+      for disabled_domain in "${DISABLED_DOMAINS[@]}"; do
+          for extension in .crt .key .dhparam.pem .chain.pem; do
+              file="${disabled_domain}${extension}"
+              if [[ -n "${file// }" ]] && [[ -f "/etc/nginx/certs/${file}" ]]; then
+                  rm -f "/etc/nginx/certs/${file}"
+              fi
+          done
+      done
+      return 0
+    else
+      return 1
+    fi
+}
+
 update_certs() {
 
     check_two_containers_case && (check_nginx_proxy_container_run || return)
@@ -178,6 +235,8 @@ update_certs() {
             [[ $simp_le_return -eq 0 ]] && should_reload_nginx='true'
         done
     done
+
+    cleanup_links && should_reload_nginx='true'
 
     [[ "$should_reload_nginx" == 'true' ]] && reload_nginx
 }
