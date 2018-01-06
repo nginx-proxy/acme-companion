@@ -9,7 +9,7 @@
  declare -r END_HEADER='## End of configuration add by letsencrypt container'
 
 function check_nginx_proxy_container_run {
-    local _nginx_proxy_container=$(nginx_proxy_container)
+    local _nginx_proxy_container=$(get_nginx_proxy_container)
     if [[ $(docker_api "/containers/${_nginx_proxy_container}/json" | jq -r '.State.Status') = "running" ]];then
         return 0
     fi
@@ -19,7 +19,7 @@ function check_nginx_proxy_container_run {
 }
 
 function check_two_containers_case() {
-    local _docker_gen_container=$(docker_gen_container)
+    local _docker_gen_container=$(get_docker_gen_container)
     if [[ -n "${_docker_gen_container:-}" ]]; then  #case with 3 containers
         return 1
     fi
@@ -96,18 +96,18 @@ function labeled_cid {
     docker_api "/containers/json" | jq -r '.[] | select(.Labels["'$1'"])|.Id'
 }
 
-function docker_gen_container {
+function get_docker_gen_container {
     echo ${NGINX_DOCKER_GEN_CONTAINER:-$(labeled_cid com.github.jrcs.letsencrypt_nginx_proxy_companion.docker_gen)}
 }
 
-function nginx_proxy_container {
+function get_nginx_proxy_container {
     echo ${NGINX_PROXY_CONTAINER:-$(labeled_cid com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy)}
 }
 
 ## Nginx
 reload_nginx() {
-    local _docker_gen_container=$(docker_gen_container)
-    local _nginx_proxy_container=$(nginx_proxy_container)
+    local _docker_gen_container=$(get_docker_gen_container)
+    local _nginx_proxy_container=$(get_nginx_proxy_container)
 
     if [[ -n "${_docker_gen_container:-}" ]]; then
         # Using docker-gen and nginx in separate container

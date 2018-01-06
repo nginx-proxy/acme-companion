@@ -53,7 +53,7 @@ update_certs() {
     # shellcheck source=/dev/null
     source "$DIR"/letsencrypt_service_data
 
-    reload_nginx='false'
+    should_reload_nginx='false'
     for cid in "${LETSENCRYPT_CONTAINERS[@]}"; do
         # Derive host and email variable names
         host_varname="LETSENCRYPT_${cid}_HOST"
@@ -175,12 +175,12 @@ update_certs() {
         done
 
         for domain in "${!hosts_array}"; do
-            create_links $base_domain $domain && reload_nginx='true'
-            [[ $simp_le_return -eq 0 ]] && reload_nginx='true'
+            create_links $base_domain $domain && should_reload_nginx='true'
+            [[ $simp_le_return -eq 0 ]] && should_reload_nginx='true'
         done
     done
 
-    [[ "$reload_nginx" == 'true' ]] && reload_nginx
+    [[ "$should_reload_nginx" == 'true' ]] && reload_nginx
 }
 
 # Allow the script functions to be sourced without starting the Service Loop.
