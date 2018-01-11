@@ -213,8 +213,6 @@ $ docker run -d \
 
 * The `com.github.jrcs.letsencrypt_nginx_proxy_companion.docker_gen` label - set this label on the docker-gen container to tell the docker-letsencrypt-nginx-proxy-companion container to use it as the docker-gen when it's split from nginx (separate containers).
 
-* `ACME_TOS_HASH` - Let´s you pass an alternative TOS hash to simp_le, to support other CA´s ACME implentation.
-
 * `DOCKER_PROVIDER` - Set this to change behavior on container ID retrieval. Optional. Current supported values:
   * No value (empty, not  set): no change in behavior.
   * `ecs` [Amazon ECS using ECS_CONTAINER_METADATA_FILE environment variable](http://docs.aws.amazon.com/AmazonECS/latest/developerguide/container-metadata.html)

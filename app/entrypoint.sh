@@ -3,6 +3,11 @@
 
 set -u
 
+if [[ -n "${ACME_TOS_HASH:-}" ]]; then
+    echo -n "The ACME_TOS_HASH environment variable is no longer used by simp_le "
+    echo "and has been deprecated. simp_le now implicitly agree to the ACME CA ToS."
+fi
+
 DOCKER_PROVIDER=${DOCKER_PROVIDER:-docker}
 
 case "${DOCKER_PROVIDER}" in

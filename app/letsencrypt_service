@@ -89,7 +89,6 @@ update_certs() {
         fi
 
         [[ $DEBUG == true ]] && params_d_str+=" -v"
-        [[ -n $ACME_TOS_HASH ]] && params_d_str+=" --tos_sha256 $ACME_TOS_HASH"
         [[ $REUSE_PRIVATE_KEYS == true ]] && params_d_str+=" --reuse_key"
         [[ "${1}" == "--force-renew" ]] && params_d_str+=" --valid_min 7776000"
 
