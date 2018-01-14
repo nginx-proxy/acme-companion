@@ -215,6 +215,10 @@ $ docker run -d \
 
 * `ACME_TOS_HASH` - Let´s you pass an alternative TOS hash to simp_le, to support other CA´s ACME implentation.
 
+* `DOCKER_PROVIDER` - Set this to change behavior on container ID retrieval. Optional. Current supported values:
+  * No value (empty, not  set): no change in behavior.
+  * `ecs` [Amazon ECS using ECS_CONTAINER_METADATA_FILE environment variable](http://docs.aws.amazon.com/AmazonECS/latest/developerguide/container-metadata.html)
+
 #### Examples:
 
 If you want other examples how to use this container, look at:

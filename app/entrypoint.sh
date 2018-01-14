@@ -3,7 +3,22 @@
 
 set -u
 
-export CONTAINER_ID=$(cat /proc/self/cgroup | sed -nE 's/^.+docker[\/-]([a-f0-9]{64}).*/\1/p' | head -n 1)
+DOCKER_PROVIDER=${DOCKER_PROVIDER:-docker}
+
+case "${DOCKER_PROVIDER}" in
+ecs|ECS)
+    # AWS ECS. Enabled in /etc/ecs/ecs.config (http://docs.aws.amazon.com/AmazonECS/latest/developerguide/container-metadata.html)
+    if [[ -n "${ECS_CONTAINER_METADATA_FILE:-}" ]]; then
+      export CONTAINER_ID=$(grep ContainerID "${ECS_CONTAINER_METADATA_FILE}" | sed 's/.*: "\(.*\)",/\1/g')
+    else
+      echo "${DOCKER_PROVIDER} specified as 'ecs' but not available. See: http://docs.aws.amazon.com/AmazonECS/latest/developerguide/container-metadata.html"
+      exit 1
+    fi
+    ;;
+*)
+    export CONTAINER_ID=$(sed -nE 's/^.+docker[\/-]([a-f0-9]{64}).*/\1/p' /proc/self/cgroup | head -n 1)
+    ;;
+esac
 
 if [[ -z "$CONTAINER_ID" ]]; then
     echo "Error: can't get my container ID !" >&2
