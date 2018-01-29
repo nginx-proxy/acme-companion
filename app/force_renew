@@ -1,0 +1,5 @@
+#!/bin/bash
+
+source /app/letsencrypt_service --source-only
+
+update_certs --force-renew

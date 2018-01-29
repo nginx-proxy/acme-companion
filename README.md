@@ -114,6 +114,7 @@ The docker environment variables to be set on the letsencrypt container are:
 * `NGINX_PROXY_CONTAINER` set to the name of the docker-gen container (here `nginx-gen`)
 
 Example:
+
 ```bash
 $ docker run -d \
     --name nginx-letsencrypt \
@@ -124,7 +125,6 @@ $ docker run -d \
     -e NGINX_PROXY_CONTAINER=nginx \
     jrcs/letsencrypt-nginx-proxy-companion
 ```
-
 
 #### Let's Encrypt
 
@@ -208,4 +208,8 @@ If you want other examples how to use this container, look at:
 * [More examples from Karl](https://github.com/pixelfordinner/pixelcloud-docker-apps/tree/master/nginx-proxy)
 * [George Ilyes' Examples](https://github.com/gilyes/docker-nginx-letsencrypt-sample)
 * [Dmitry's simple docker-compose example](https://github.com/dmitrym0/simple-lets-encrypt-docker-compose-sample)
+<<<<<<< HEAD
 * [Radek's docker-compose jenkins example](https://github.com/dataminelab/docker-jenkins-nginx-letsencrypt)
+=======
+* [Radek's docker-compose jenkins example](https://github.com/dataminelab/docker-jenkins-nginx-letsencrypt)
+>>>>>>> f289fba723f8c0610e07b95c14000bcd0ab7f72d
