@@ -7,7 +7,7 @@ apk --update add python py-setuptools git gcc py-pip musl-dev libffi-dev python-
 
 # Get Let's Encrypt simp_le client source
 
-branch="0.7.0"
+branch="0.6.2"
 
 mkdir -p /src
 git -C /src clone --depth=1 --branch $branch https://github.com/zenhack/simp_le.git
