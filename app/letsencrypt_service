@@ -43,6 +43,9 @@ create_links() {
 }
 
 update_certs() {
+
+    check_two_containers_case && (check_nginx_proxy_container_run || return)
+
     [[ ! -f "$DIR"/letsencrypt_service_data ]] && return
 
     # Load relevant container settings

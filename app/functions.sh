@@ -8,6 +8,25 @@
 [[ -z "${END_HEADER:-}" ]] && \
  declare -r END_HEADER='## End of configuration add by letsencrypt container'
 
+function check_nginx_proxy_container_run {
+    local _nginx_proxy_container=$(nginx_proxy_container)
+    if [[ $(docker_api "/containers/${_nginx_proxy_container}/json" | jq -r '.State.Status') = "running" ]];then
+        return 0
+    fi
+
+    echo "$(date "+%Y/%m/%d %T"), Error: nginx-proxy container ${_nginx_proxy_container}  isn't running." >&2
+    return 1
+}
+
+function check_two_containers_case() {
+    local _docker_gen_container=$(docker_gen_container)
+    if [[ -n "${_docker_gen_container:-}" ]]; then  #case with 3 containers
+        return 1
+    fi
+
+    return 0
+}
+
 add_location_configuration() {
     local domain="${1:-}"
     [[ -z "$domain" || ! -f "${VHOST_DIR}/${domain}" ]] && domain=default
@@ -59,8 +78,11 @@ function docker_exec {
     local cmd="${2?missing command}"
     local data=$(printf '{ "AttachStdin": false, "AttachStdout": true, "AttachStderr": true, "Tty":false,"Cmd": %s }' "$cmd")
     exec_id=$(docker_api "/containers/$id/exec" "POST" "$data" | jq -r .Id)
-    if [[ -n "$exec_id" ]]; then
+    if [[ -n "$exec_id" && "$exec_id" != "null" ]]; then
         docker_api /exec/$exec_id/start "POST" '{"Detach": false, "Tty":false}'
+    else
+        echo "$(date "+%Y/%m/%d %T"), Error: can't exec command ${cmd} in container ${id}. Check if the container is running." >&2
+        return 1
     fi
 }
 
@@ -102,6 +124,7 @@ reload_nginx() {
             echo "Reloading nginx proxy (${_nginx_proxy_container})..."
             docker_exec "${_nginx_proxy_container}" \
                         '[ "sh", "-c", "/usr/local/bin/docker-gen /app/nginx.tmpl /etc/nginx/conf.d/default.conf; /usr/sbin/nginx -s reload" ]'
+            [[ $? -eq 1 ]] && echo "$(date "+%Y/%m/%d %T"), Error: can't reload nginx-proxy." >&2
         fi
     fi
 }
