@@ -4,8 +4,8 @@
 set -u
 
 if [[ -n "${ACME_TOS_HASH:-}" ]]; then
-    echo -n "The ACME_TOS_HASH environment variable is no longer used by simp_le "
-    echo "and has been deprecated. simp_le now implicitly agree to the ACME CA ToS."
+    echo "Info: the ACME_TOS_HASH environment variable is no longer used by simp_le and has been deprecated."
+    echo "simp_le now implicitly agree to the ACME CA ToS."
 fi
 
 DOCKER_PROVIDER=${DOCKER_PROVIDER:-docker}
@@ -34,11 +34,8 @@ function check_docker_socket {
     if [[ $DOCKER_HOST == unix://* ]]; then
         socket_file=${DOCKER_HOST#unix://}
         if [[ ! -S $socket_file ]]; then
-            cat >&2 <<-EOT
-ERROR: you need to share your Docker host socket with a volume at $socket_file
-Typically you should run your container with: \`-v /var/run/docker.sock:$socket_file:ro\`
-See the documentation at http://git.io/vZaGJ
-EOT
+            echo "Error: you need to share your Docker host socket with a volume at $socket_file" >&2
+            echo "Typically you should run your container with: '-v /var/run/docker.sock:$socket_file:ro'" >&2
             exit 1
         fi
     fi

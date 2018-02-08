@@ -27,7 +27,7 @@ function check_two_containers_case() {
     return 0
 }
 
-add_location_configuration() {
+function add_location_configuration {
     local domain="${1:-}"
     [[ -z "$domain" || ! -f "${VHOST_DIR}/${domain}" ]] && domain=default
     [[ -f "${VHOST_DIR}/${domain}" && \
@@ -40,7 +40,7 @@ add_location_configuration() {
     return 1
 }
 
-remove_all_location_configurations() {
+function remove_all_location_configurations {
     local old_shopt_options=$(shopt -p) # Backup shopt options
     shopt -s nullglob
     for file in "${VHOST_DIR}"/*; do
@@ -105,7 +105,7 @@ function get_nginx_proxy_container {
 }
 
 ## Nginx
-reload_nginx() {
+function reload_nginx {
     local _docker_gen_container=$(get_docker_gen_container)
     local _nginx_proxy_container=$(get_nginx_proxy_container)
 
@@ -130,6 +130,6 @@ reload_nginx() {
 }
 
 # Convert argument to lowercase (bash 4 only)
-function lc() {
+function lc {
 	echo "${@,,}"
 }

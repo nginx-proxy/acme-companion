@@ -11,14 +11,14 @@ DEFAULT_KEY_SIZE=4096
 REUSE_ACCOUNT_KEYS="$(lc ${REUSE_ACCOUNT_KEYS:-true})"
 REUSE_PRIVATE_KEYS="$(lc ${REUSE_PRIVATE_KEYS:-false})"
 
-create_link() {
+function create_link {
     local -r target=${1?missing target argument}
     local -r source=${2?missing source argument}
     [[ -f "$target" ]] && return 1
     ln -sf "$source" "$target"
 }
 
-create_links() {
+function create_links {
     local -r base_domain=${1?missing base_domain argument}
     local -r domain=${2?missing base_domain argument}
 
@@ -99,11 +99,11 @@ function cleanup_links {
     fi
 }
 
-update_certs() {
+function update_certs {
 
     check_two_containers_case && (check_nginx_proxy_container_run || return)
 
-    [[ ! -f "$DIR"/letsencrypt_service_data ]] && return
+    [[ -f "$DIR"/letsencrypt_service_data ]] || return
 
     # Load relevant container settings
     unset LETSENCRYPT_CONTAINERS
@@ -178,7 +178,7 @@ update_certs() {
 
         # Create directory for the first domain
         mkdir -p /etc/nginx/certs/$base_domain
-        pushd /etc/nginx/certs/$base_domain
+        pushd /etc/nginx/certs/$base_domain || return
 
         for domain in "${!hosts_array}"; do
             # Add all the domains to certificate
@@ -223,7 +223,7 @@ update_certs() {
             fi
         fi
 
-        popd
+        popd || return
 
         for altnames in "${hosts_array_expanded[@]:1}"; do
             # Remove old CN domain that now are altnames
