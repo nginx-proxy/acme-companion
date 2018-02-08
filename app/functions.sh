@@ -18,15 +18,6 @@ function check_nginx_proxy_container_run {
     return 1
 }
 
-function check_two_containers_case() {
-    local _docker_gen_container=$(get_docker_gen_container)
-    if [[ -n "${_docker_gen_container:-}" ]]; then  #case with 3 containers
-        return 1
-    fi
-
-    return 0
-}
-
 function add_location_configuration {
     local domain="${1:-}"
     [[ -z "$domain" || ! -f "${VHOST_DIR}/${domain}" ]] && domain=default
@@ -97,11 +88,43 @@ function labeled_cid {
 }
 
 function get_docker_gen_container {
-    echo ${NGINX_DOCKER_GEN_CONTAINER:-$(labeled_cid com.github.jrcs.letsencrypt_nginx_proxy_companion.docker_gen)}
+    # First try to get the docker-gen container ID from the container label.
+    local docker_gen_cid="$(labeled_cid com.github.jrcs.letsencrypt_nginx_proxy_companion.docker_gen)"
+
+    # If the labeled_cid function dit not return anything and the env var is set, use it.
+    if [[ -z "$docker_gen_cid" ]] && [[ -n "${NGINX_DOCKER_GEN_CONTAINER:-}" ]]; then
+        docker_gen_cid="$NGINX_DOCKER_GEN_CONTAINER"
+    fi
+
+    # If a container ID was found, output it. The function will return 1 otherwise.
+    [[ -n "$docker_gen_cid" ]] && echo "$docker_gen_cid"
 }
 
 function get_nginx_proxy_container {
-    echo ${NGINX_PROXY_CONTAINER:-$(labeled_cid com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy)}
+    local volumes_from
+    # First try to get the nginx container ID from the container label.
+    local nginx_cid="$(labeled_cid com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy)"
+
+    # If the labeled_cid function dit not return anything ...
+    if [[ -z "${nginx_cid}" ]]; then
+        # ... and the env var is set, use it ...
+        if [[ -n "${NGINX_PROXY_CONTAINER:-}" ]]; then
+            nginx_cid="$NGINX_PROXY_CONTAINER"
+        # ... else try to get the container ID with the volumes_from method.
+        else
+            volumes_from=$(docker_api "/containers/$CONTAINER_ID/json" | jq -r '.HostConfig.VolumesFrom[]' 2>/dev/null)
+            for cid in $volumes_from; do
+                cid="${cid%:*}" # Remove leading :ro or :rw set by remote docker-compose (thx anoopr)
+                if [[ $(docker_api "/containers/$cid/json" | jq -r '.Config.Env[]' | egrep -c '^NGINX_VERSION=') = "1" ]];then
+                    nginx_cid="$cid"
+                    break
+                fi
+            done
+        fi
+    fi
+
+    # If a container ID was found, output it. The function will return 1 otherwise.
+    [[ -n "$nginx_cid" ]] && echo "$nginx_cid"
 }
 
 ## Nginx

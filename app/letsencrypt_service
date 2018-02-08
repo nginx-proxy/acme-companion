@@ -101,7 +101,7 @@ function cleanup_links {
 
 function update_certs {
 
-    check_two_containers_case && (check_nginx_proxy_container_run || return)
+    check_nginx_proxy_container_run || return
 
     [[ -f "$DIR"/letsencrypt_service_data ]] || return
 
