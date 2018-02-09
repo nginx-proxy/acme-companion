@@ -87,6 +87,15 @@ function labeled_cid {
     docker_api "/containers/json" | jq -r '.[] | select(.Labels["'$1'"])|.Id'
 }
 
+function is_docker_gen_container {
+    local id="${1?missing id}"
+    if [[ $(docker_api "/containers/$id/json" | jq -r '.Config.Env[]' | egrep -c '^DOCKER_GEN_VERSION=') = "1" ]]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
 function get_docker_gen_container {
     # First try to get the docker-gen container ID from the container label.
     local docker_gen_cid="$(labeled_cid com.github.jrcs.letsencrypt_nginx_proxy_companion.docker_gen)"
