@@ -64,7 +64,7 @@ function check_writable_directory {
     fi
     if [[ ! -d "$dir" ]]; then
         echo "Error: can't access to '$dir' directory !" >&2
-        echo "Check that '$dir' directory is declared has a writable volume." >&2
+        echo "Check that '$dir' directory is declared as a writable volume." >&2
         exit 1
     fi
     touch $dir/.check_writable 2>/dev/null
