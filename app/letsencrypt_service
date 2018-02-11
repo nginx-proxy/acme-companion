@@ -1,23 +1,26 @@
 #!/bin/bash
+# shellcheck disable=SC2120
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+source /app/functions.sh
 
 seconds_to_wait=3600
 ACME_CA_URI="${ACME_CA_URI:-https://acme-v01.api.letsencrypt.org/directory}"
 DEFAULT_KEY_SIZE=4096
-
-source /app/functions.sh
+REUSE_ACCOUNT_KEYS="$(lc ${REUSE_ACCOUNT_KEYS:-true})"
+REUSE_PRIVATE_KEYS="$(lc ${REUSE_PRIVATE_KEYS:-false})"
 
 create_link() {
-    local readonly target=${1?missing target argument}
-    local readonly source=${2?missing source argument}
+    local -r target=${1?missing target argument}
+    local -r source=${2?missing source argument}
     [[ -f "$target" ]] && return 1
     ln -sf "$source" "$target"
 }
 
 create_links() {
-    local readonly base_domain=${1?missing base_domain argument}
-    local readonly domain=${2?missing base_domain argument}
+    local -r base_domain=${1?missing base_domain argument}
+    local -r domain=${2?missing base_domain argument}
 
     if [[ ! -f "/etc/nginx/certs/$base_domain"/fullchain.pem || \
           ! -f "/etc/nginx/certs/$base_domain"/key.pem ]]; then
@@ -40,10 +43,14 @@ create_links() {
 }
 
 update_certs() {
+
+    check_two_containers_case && (check_nginx_proxy_container_run || return)
+
     [[ ! -f "$DIR"/letsencrypt_service_data ]] && return
 
     # Load relevant container settings
     unset LETSENCRYPT_CONTAINERS
+    # shellcheck source=/dev/null
     source "$DIR"/letsencrypt_service_data
 
     reload_nginx='false'
@@ -51,8 +58,15 @@ update_certs() {
         # Derive host and email variable names
         host_varname="LETSENCRYPT_${cid}_HOST"
         # Array variable indirection hack: http://stackoverflow.com/a/25880676/350221
-        hosts_array=$host_varname[@]
+        hosts_array="${host_varname}[@]"
+
+        params_d_str=""
+
         email_varname="LETSENCRYPT_${cid}_EMAIL"
+        email_address="${!email_varname}"
+        if [[ "$email_address" != "<no value>" ]]; then
+            params_d_str+=" --email $email_address"
+        fi
 
         keysize_varname="LETSENCRYPT_${cid}_KEYSIZE"
         cert_keysize="${!keysize_varname}"
@@ -64,12 +78,19 @@ update_certs() {
         create_test_certificate=false
         if [[ $(lc "${!test_certificate_varname:-}") == true ]]; then
             create_test_certificate=true
+        elif [[ $ACME_CA_URI == "https://acme-staging.api.letsencrypt.org/directory" ]]; then
+            create_test_certificate=true
         fi
 
-        params_d_str=""
+        account_varname="LETSENCRYPT_${cid}_ACCOUNT_ALIAS"
+        account_alias="${!account_varname}"
+        if [[ "$account_alias" == "<no value>" ]]; then
+            account_alias=default
+        fi
+
         [[ $DEBUG == true ]] && params_d_str+=" -v"
         [[ -n $ACME_TOS_HASH ]] && params_d_str+=" --tos_sha256 $ACME_TOS_HASH"
-        [[ $REUSE_KEY == true ]] && params_d_str+=" --reuse_key"
+        [[ $REUSE_PRIVATE_KEYS == true ]] && params_d_str+=" --reuse_key"
         [[ "${1}" == "--force-renew" ]] && params_d_str+=" --valid_min 7776000"
 
         hosts_array_expanded=("${!hosts_array}")
@@ -81,7 +102,7 @@ update_certs() {
             acme_ca_uri="https://acme-staging.api.letsencrypt.org/directory"
             if [[ ! -f /etc/nginx/certs/.${base_domain}.test ]]; then
                 # Remove old certificates
-                rm -rf /etc/nginx/certs/${base_domain}
+                [[ -n "${base_domain// }" ]] && rm -rf /etc/nginx/certs/${base_domain}
                 for domain in "${!hosts_array}"; do
                     rm -f /etc/nginx/certs/$domain.{crt,key,dhparam.pem}
                 done
@@ -91,7 +112,7 @@ update_certs() {
             acme_ca_uri="$ACME_CA_URI"
             if [[ -f /etc/nginx/certs/.${base_domain}.test ]]; then
                 # Remove old test certificates
-                rm -rf /etc/nginx/certs/${base_domain}
+                [[ -n "${base_domain// }" ]] && rm -rf /etc/nginx/certs/${base_domain}
                 for domain in "${!hosts_array}"; do
                     rm -f /etc/nginx/certs/$domain.{crt,key,dhparam.pem}
                 done
@@ -101,7 +122,7 @@ update_certs() {
 
         # Create directory for the first domain
         mkdir -p /etc/nginx/certs/$base_domain
-        cd /etc/nginx/certs/$base_domain
+        pushd /etc/nginx/certs/$base_domain
 
         for domain in "${!hosts_array}"; do
             # Add all the domains to certificate
@@ -110,20 +131,47 @@ update_certs() {
             add_location_configuration "$domain" || reload_nginx
         done
 
+        # The ACME account key full path is derived from the endpoint URI
+        # + the account alias (set to 'default' if no alias is provided)
+        account_key_dir="../accounts/${acme_ca_uri#*://}"
+        account_key_full_path="${account_key_dir}/${account_alias}.json"
+        if [[ $REUSE_ACCOUNT_KEYS == true ]]; then
+            if [[ -f "$account_key_full_path" ]]; then
+                # If there is no symlink to the account key, create it
+                if [[ ! -L ./account_key.json ]]; then
+                    ln -sf "$account_key_full_path" ./account_key.json
+                # If the symlink target the wrong account key, replace it
+                elif [[ "$(readlink -f ./account_key.json)" != "$account_key_full_path" ]]; then
+                    ln -sf "$account_key_full_path" ./account_key.json
+                fi
+            fi
+        fi
+
         echo "Creating/renewal $base_domain certificates... (${hosts_array_expanded[*]})"
         /usr/bin/simp_le \
             -f account_key.json -f key.pem -f chain.pem -f fullchain.pem -f cert.pem \
             $params_d_str \
             --cert_key_size=$cert_keysize \
-            --email "${!email_varname}" \
             --server=$acme_ca_uri \
             --default_root /usr/share/nginx/html/
 
         simp_le_return=$?
 
-        for altnames in ${hosts_array_expanded[@]:1}; do
+        if [[ $REUSE_ACCOUNT_KEYS == true ]]; then
+            # If the account key to be reused does not exist yet, copy it
+            # from the CWD and replace the file in CWD with a symlink
+            if [[ ! -f "$account_key_full_path" && -f ./account_key.json ]]; then
+                mkdir -p "$account_key_dir"
+                cp ./account_key.json "$account_key_full_path"
+                ln -sf "$account_key_full_path" ./account_key.json
+            fi
+        fi
+
+        popd
+
+        for altnames in "${hosts_array_expanded[@]:1}"; do
             # Remove old CN domain that now are altnames
-            rm -rf /etc/nginx/certs/$altnames
+            [[ -n "${altnames// }" ]] && rm -rf /etc/nginx/certs/${altnames}
         done
 
         for domain in "${!hosts_array}"; do
