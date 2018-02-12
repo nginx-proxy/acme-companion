@@ -131,5 +131,5 @@ reload_nginx() {
 
 # Convert argument to lowercase (bash 4 only)
 function lc() {
-	echo "${@,,}"
+    echo "${@,,}"
 }

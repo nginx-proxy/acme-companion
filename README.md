@@ -125,7 +125,6 @@ $ docker run -d \
     jrcs/letsencrypt-nginx-proxy-companion
 ```
 
-
 #### Let's Encrypt
 
 To use the Let's Encrypt service to automatically create a valid certificate for virtual host(s), declare the `LETSENCRYPT_HOST` environment variable in each to-be-proxied application containers.
@@ -229,3 +228,4 @@ If you want other examples how to use this container, look at:
 * [George Ilyes' Examples](https://github.com/gilyes/docker-nginx-letsencrypt-sample)
 * [Dmitry's simple docker-compose example](https://github.com/dmitrym0/simple-lets-encrypt-docker-compose-sample)
 * [Radek's docker-compose jenkins example](https://github.com/dataminelab/docker-jenkins-nginx-letsencrypt)
+* [Progress44's docker-compose example with TICK and ELK](https://github.com/blimpair/loadbalancer)
