@@ -229,3 +229,4 @@ If you want other examples how to use this container, look at:
 * [George Ilyes' Examples](https://github.com/gilyes/docker-nginx-letsencrypt-sample)
 * [Dmitry's simple docker-compose example](https://github.com/dmitrym0/simple-lets-encrypt-docker-compose-sample)
 * [Radek's docker-compose jenkins example](https://github.com/dataminelab/docker-jenkins-nginx-letsencrypt)
+* [Progress44's docker-compose example with TICK and ELK](https://github.com/blimpair/loadbalancer)
