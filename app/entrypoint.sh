@@ -77,9 +77,15 @@ function check_writable_directory {
 }
 
 function check_dh_group {
+    local DHPARAM_BITS="${DHPARAM_BITS:-2048}"
+    re='^[0-9]*$'
+    if ! [[ "$DHPARAM_BITS" =~ $re ]] ; then
+       echo "Error: invalid Diffie-Hellman size of $DHPARAM_BITS !" >&2
+       exit 1
+    fi
     if [[ ! -f /etc/nginx/certs/dhparam.pem ]]; then
         echo "Creating Diffie-Hellman group (can take several minutes...)"
-        openssl dhparam -out /etc/nginx/certs/.dhparam.pem.tmp 2048
+        openssl dhparam -out /etc/nginx/certs/.dhparam.pem.tmp $DHPARAM_BITS
         mv /etc/nginx/certs/.dhparam.pem.tmp /etc/nginx/certs/dhparam.pem || exit 1
     fi
 }
