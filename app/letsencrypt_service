@@ -116,6 +116,9 @@ function update_certs {
         host_varname="LETSENCRYPT_${cid}_HOST"
         # Array variable indirection hack: http://stackoverflow.com/a/25880676/350221
         hosts_array="${host_varname}[@]"
+        hosts_array_expanded=("${!hosts_array}")
+        # First domain will be our base domain
+        base_domain="${hosts_array_expanded[0]}"
 
         params_d_str=""
 
@@ -132,11 +135,17 @@ function update_certs {
         fi
 
         test_certificate_varname="LETSENCRYPT_${cid}_TEST"
-        create_test_certificate=false
-        if [[ $(lc "${!test_certificate_varname:-}") == true ]]; then
-            create_test_certificate=true
-        elif [[ $ACME_CA_URI == "https://acme-staging.api.letsencrypt.org/directory" ]]; then
-            create_test_certificate=true
+        le_staging_uri="https://acme-staging.api.letsencrypt.org/directory"
+        if [[ $(lc "${!test_certificate_varname:-}") == true ]] || \
+          [[ "$ACME_CA_URI" == "$le_staging_uri" ]]; then
+            # Use staging Let's Encrypt ACME end point
+            acme_ca_uri="$le_staging_uri"
+            # Prefix test certificate directory with _test_
+            certificate_dir="/etc/nginx/certs/_test_$base_domain"
+        else
+            # Use default or user provided ACME end point
+            acme_ca_uri="$ACME_CA_URI"
+            certificate_dir="/etc/nginx/certs/$base_domain"
         fi
 
         account_varname="LETSENCRYPT_${cid}_ACCOUNT_ALIAS"
@@ -149,36 +158,9 @@ function update_certs {
         [[ $REUSE_PRIVATE_KEYS == true ]] && params_d_str+=" --reuse_key"
         [[ "${1}" == "--force-renew" ]] && params_d_str+=" --valid_min 7776000"
 
-        hosts_array_expanded=("${!hosts_array}")
-        # First domain will be our base domain
-        base_domain="${hosts_array_expanded[0]}"
-
-        if [[ "$create_test_certificate" == true ]]; then
-            # Use staging acme end point
-            acme_ca_uri="https://acme-staging.api.letsencrypt.org/directory"
-            if [[ ! -f /etc/nginx/certs/.${base_domain}.test ]]; then
-                # Remove old certificates
-                [[ -n "${base_domain// }" ]] && rm -rf /etc/nginx/certs/${base_domain}
-                for domain in "${!hosts_array}"; do
-                    rm -f /etc/nginx/certs/$domain.{crt,key,dhparam.pem}
-                done
-                touch /etc/nginx/certs/.${base_domain}.test
-            fi
-        else
-            acme_ca_uri="$ACME_CA_URI"
-            if [[ -f /etc/nginx/certs/.${base_domain}.test ]]; then
-                # Remove old test certificates
-                [[ -n "${base_domain// }" ]] && rm -rf /etc/nginx/certs/${base_domain}
-                for domain in "${!hosts_array}"; do
-                    rm -f /etc/nginx/certs/$domain.{crt,key,dhparam.pem}
-                done
-                rm -f /etc/nginx/certs/.${base_domain}.test
-            fi
-        fi
-
-        # Create directory for the first domain
-        mkdir -p /etc/nginx/certs/$base_domain
-        pushd /etc/nginx/certs/$base_domain || return
+        # Create directory for the first domain and make it the cwd
+        mkdir -p "$certificate_dir"
+        pushd "$certificate_dir" || return
 
         for domain in "${!hosts_array}"; do
             # Add all the domains to certificate
@@ -227,7 +209,11 @@ function update_certs {
 
         if [[ $simp_le_return -ne 2 ]]; then
           for domain in "${!hosts_array}"; do
-              create_links $base_domain $domain && should_reload_nginx='true'
+            if [[ "$acme_ca_uri" == "$le_staging_uri" ]]; then
+              create_links "_test_$base_domain" "$domain" && should_reload_nginx='true'
+            else
+              create_links "$base_domain" "$domain" && should_reload_nginx='true'
+            fi
           done
           # Queue nginx reload if a certificate was issued or renewed
           [[ $simp_le_return -eq 0 ]] && should_reload_nginx='true'
