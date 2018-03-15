@@ -225,10 +225,14 @@ function update_certs {
 
         popd || return
 
-        for domain in "${!hosts_array}"; do
-            create_links $base_domain $domain && should_reload_nginx='true'
-            [[ $simp_le_return -eq 0 ]] && should_reload_nginx='true'
-        done
+        if [[ $simp_le_return -ne 2 ]]; then
+          for domain in "${!hosts_array}"; do
+              create_links $base_domain $domain && should_reload_nginx='true'
+          done
+          # Queue nginx reload if a certificate was issued or renewed
+          [[ $simp_le_return -eq 0 ]] && should_reload_nginx='true'
+        fi
+
     done
 
     cleanup_links && should_reload_nginx='true'
