@@ -225,11 +225,6 @@ function update_certs {
 
         popd || return
 
-        for altnames in "${hosts_array_expanded[@]:1}"; do
-            # Remove old CN domain that now are altnames
-            [[ -n "${altnames// }" ]] && rm -rf /etc/nginx/certs/${altnames}
-        done
-
         for domain in "${!hosts_array}"; do
             create_links $base_domain $domain && should_reload_nginx='true'
             [[ $simp_le_return -eq 0 ]] && should_reload_nginx='true'
