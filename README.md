@@ -168,12 +168,20 @@ If you want to create test certificates that don't have the 5 certs/week/domain 
 Every hour (3600 seconds) the certificates are checked and every certificate that will expire in the next [30 days](https://github.com/kuba/simp_le/blob/ecf4290c4f7863bb5427b50cdd78bc3a5df79176/simp_le.py#L72) (90 days / 3) are renewed.
 
 ##### Force certificates renewal
-
 If needed, you can force a running letsencrypt-nginx-proxy-companion container to renew all certificates that are currently in use. Replace `nginx-letsencrypt` with the name of your letsencrypt-nginx-proxy-companion container in the following command:
 
 ```bash
 $ docker exec nginx-letsencrypt /app/force_renew
 ```
+
+##### Force certificates renewal
+To display informations about your existing certificates, use the following command:
+
+```bash
+$ docker exec nginx-letsencrypt /app/cert_status
+```
+
+As for the forced renewal command, replace `nginx-letsencrypt` with the name of your letsencrypt-nginx-proxy-companion container.
 
 ##### ACME account keys
 By default the container will save the first ACME account key created for each ACME API endpoint used, and will reuse it for all subsequent authorizations and issuances requests made to this endpoint. This behavior is enabled by default to avoid running into Let's Encrypt account [rate limits](https://letsencrypt.org/docs/rate-limits/).
