@@ -12,31 +12,35 @@ REUSE_ACCOUNT_KEYS="$(lc ${REUSE_ACCOUNT_KEYS:-true})"
 REUSE_PRIVATE_KEYS="$(lc ${REUSE_PRIVATE_KEYS:-false})"
 
 function create_link {
-    local -r target=${1?missing target argument}
-    local -r source=${2?missing source argument}
-    [[ -f "$target" ]] && return 1
-    ln -sf "$source" "$target"
+    local -r source=${1?missing source argument}
+    local -r target=${2?missing target argument}
+    if [[ -f "$target" ]] && [[ "$(readlink "$target")" == "$source" ]]; then
+      [[ $DEBUG == true ]] && echo "$target already linked to $source"
+      return 1
+    else
+      ln -sf "$source" "$target"
+    fi
 }
 
 function create_links {
     local -r base_domain=${1?missing base_domain argument}
     local -r domain=${2?missing base_domain argument}
 
-    if [[ ! -f "/etc/nginx/certs/$base_domain"/fullchain.pem || \
-          ! -f "/etc/nginx/certs/$base_domain"/key.pem ]]; then
+    if [[ ! -f "/etc/nginx/certs/$base_domain/fullchain.pem" || \
+          ! -f "/etc/nginx/certs/$base_domain/key.pem" ]]; then
         return 1
     fi
     local return_code=1
-    create_link "/etc/nginx/certs/$domain".crt "./$base_domain"/fullchain.pem
+    create_link "./$base_domain/fullchain.pem" "/etc/nginx/certs/$domain.crt"
     return_code=$(( $return_code & $? ))
-    create_link "/etc/nginx/certs/$domain".key "./$base_domain"/key.pem
+    create_link "./$base_domain/key.pem" "/etc/nginx/certs/$domain.key"
     return_code=$(( $return_code & $? ))
     if [[ -f "/etc/nginx/certs/dhparam.pem" ]]; then
-        create_link "/etc/nginx/certs/$domain".dhparam.pem ./dhparam.pem
+        create_link ./dhparam.pem "/etc/nginx/certs/$domain.dhparam.pem"
         return_code=$(( $return_code & $? ))
     fi
-    if [[ -f "/etc/nginx/certs/$base_domain"/chain.pem ]]; then
-        create_link "/etc/nginx/certs/$domain".chain.pem "./$base_domain"/chain.pem
+    if [[ -f "/etc/nginx/certs/$base_domain/chain.pem" ]]; then
+        create_link "./$base_domain/chain.pem" "/etc/nginx/certs/$domain.chain.pem"
         return_code=$(( $return_code & $? ))
     fi
     return $return_code
