@@ -3,6 +3,11 @@
 
 set -u
 
+if [[ -n "${ACME_TOS_HASH:-}" ]]; then
+    echo "Info: the ACME_TOS_HASH environment variable is no longer used by simp_le and has been deprecated."
+    echo "simp_le now implicitly agree to the ACME CA ToS."
+fi
+
 DOCKER_PROVIDER=${DOCKER_PROVIDER:-docker}
 
 case "${DOCKER_PROVIDER}" in
@@ -29,30 +34,10 @@ function check_docker_socket {
     if [[ $DOCKER_HOST == unix://* ]]; then
         socket_file=${DOCKER_HOST#unix://}
         if [[ ! -S $socket_file ]]; then
-            cat >&2 <<-EOT
-ERROR: you need to share your Docker host socket with a volume at $socket_file
-Typically you should run your container with: \`-v /var/run/docker.sock:$socket_file:ro\`
-See the documentation at http://git.io/vZaGJ
-EOT
+            echo "Error: you need to share your Docker host socket with a volume at $socket_file" >&2
+            echo "Typically you should run your container with: '-v /var/run/docker.sock:$socket_file:ro'" >&2
             exit 1
         fi
-    fi
-}
-
-function get_nginx_proxy_cid {
-    # Look for a NGINX_VERSION environment variable in containers that we have mount volumes from.
-    local volumes_from=$(docker_api "/containers/$CONTAINER_ID/json" | jq -r '.HostConfig.VolumesFrom[]' 2>/dev/null)
-    for cid in $volumes_from; do
-        cid=${cid%:*} # Remove leading :ro or :rw set by remote docker-compose (thx anoopr)
-        if [[ $(docker_api "/containers/$cid/json" | jq -r '.Config.Env[]' | egrep -c '^NGINX_VERSION=') = "1" ]];then
-            export NGINX_PROXY_CONTAINER=$cid
-            break
-        fi
-    done
-    if [[ -z "$(nginx_proxy_container)" ]]; then
-        echo "Error: can't get nginx-proxy container id !" >&2
-        echo "Check that you use the --volumes-from option to mount volumes from the nginx-proxy or label the nginx proxy container to use with 'com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy=true'." >&2
-        exit 1
     fi
 }
 
@@ -96,8 +81,19 @@ source /app/functions.sh
 
 if [[ "$*" == "/bin/bash /app/start.sh" ]]; then
     check_docker_socket
-    if [[ -z "$(docker_gen_container)" ]]; then
-        [[ -z "${NGINX_PROXY_CONTAINER:-}" ]] && get_nginx_proxy_cid
+    if [[ -z "$(get_nginx_proxy_container)" ]]; then
+        echo "Error: can't get nginx-proxy container ID !" >&2
+        echo "Check that you are doing one of the following :" >&2
+        echo -e "\t- Use the --volumes-from option to mount volumes from the nginx-proxy container." >&2
+        echo -e "\t- Set the NGINX_PROXY_CONTAINER env var on the letsencrypt-companion container to the name of the nginx-proxy container." >&2
+        echo -e "\t- Label the nginx-proxy container to use with 'com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy'." >&2
+        exit 1
+    elif [[ -z "$(get_docker_gen_container)" ]] && ! is_docker_gen_container "$(get_nginx_proxy_container)"; then
+        echo "Error: can't get docker-gen container id !" >&2
+        echo "If you are running a three containers setup, check that you are doing one of the following :" >&2
+        echo -e "\t- Set the NGINX_DOCKER_GEN_CONTAINER env var on the letsencrypt-companion container to the name of the docker-gen container." >&2
+        echo -e "\t- Label the docker-gen container to use with 'com.github.jrcs.letsencrypt_nginx_proxy_companion.docker_gen.'" >&2
+        exit 1
     fi
     check_writable_directory '/etc/nginx/certs'
     check_writable_directory '/etc/nginx/vhost.d'
