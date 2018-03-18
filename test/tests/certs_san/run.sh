@@ -35,9 +35,9 @@ for hosts in "${letsencrypt_hosts[@]}"; do
     -e "LETSENCRYPT_HOST=${hosts}" \
     nginx:alpine > /dev/null && echo "Started test web server for $hosts"
 
-  # Wait for a file at /etc/nginx/certs/$base_domain/cert.pem
-  # then grab the certificate in text form from the file ...
-  wait_for_cert "$base_domain" "$le_container_name"
+  # Wait for a symlink at /etc/nginx/certs/$base_domain.crt
+  # then grab the certificate in text form ...
+  wait_for_symlink "$base_domain" "$le_container_name"
   created_cert="$(docker exec "$le_container_name" \
     openssl x509 -in /etc/nginx/certs/${base_domain}/cert.pem -text -noout)"
   # ... as well as the certificate fingerprint.
@@ -77,6 +77,7 @@ for hosts in "${letsencrypt_hosts[@]}"; do
 
   # Stop the Nginx container silently.
   docker stop "$container" > /dev/null
+
   # Cleanup the files created by this run of the test to avoid foiling following test(s).
   docker exec "$le_container_name" sh -c 'rm -rf /etc/nginx/certs/le?.wtf*'
   i=$(( $i + 1 ))

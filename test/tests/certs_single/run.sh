@@ -24,9 +24,9 @@ done
 
 for domain in "${domains[@]}"; do
 
-  # Wait for a file at /etc/nginx/certs/$domain/cert.pem
+  # Wait for a symlink at /etc/nginx/certs/$domain.crt
   # then grab the certificate in text form from the file ...
-  wait_for_cert "$domain" "$le_container_name"
+  wait_for_symlink "$domain" "$le_container_name"
   created_cert="$(docker exec "$le_container_name" \
     sh -c "openssl x509 -in "/etc/nginx/certs/${domain}/cert.pem" -text -noout")"
   # ... as well as the certificate fingerprint.

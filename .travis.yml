@@ -48,5 +48,6 @@ after_failure:
   - docker logs docker_api
   - docker logs certs_single
   - docker logs certs_san
+  - docker logs symlinks
   - docker logs boulder
   - if [[ $SETUP = "3containers" ]]; then docker logs $DOCKER_GEN_CONTAINER_NAME; fi

@@ -10,5 +10,6 @@ imageTests+=(
 	docker_api
 	certs_single
 	certs_san
+	symlinks
 	'
 )
