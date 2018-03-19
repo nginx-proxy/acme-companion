@@ -92,7 +92,7 @@ function cleanup_links {
       for disabled_domain in "${DISABLED_DOMAINS[@]}"; do
           for extension in .crt .key .dhparam.pem .chain.pem; do
               file="${disabled_domain}${extension}"
-              if [[ -n "${file// }" ]] && [[ -f "/etc/nginx/certs/${file}" ]]; then
+              if [[ -n "${file// }" ]] && [[ -L "/etc/nginx/certs/${file}" ]]; then
                   rm -f "/etc/nginx/certs/${file}"
               fi
           done
