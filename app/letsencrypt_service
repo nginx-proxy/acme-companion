@@ -3,58 +3,134 @@
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
+source /app/functions.sh
+
 seconds_to_wait=3600
 ACME_CA_URI="${ACME_CA_URI:-https://acme-v01.api.letsencrypt.org/directory}"
 DEFAULT_KEY_SIZE=4096
+REUSE_ACCOUNT_KEYS="$(lc ${REUSE_ACCOUNT_KEYS:-true})"
+REUSE_PRIVATE_KEYS="$(lc ${REUSE_PRIVATE_KEYS:-false})"
 
-source /app/functions.sh
-
-create_link() {
-    local -r target=${1?missing target argument}
-    local -r source=${2?missing source argument}
-    [[ -f "$target" ]] && return 1
-    ln -sf "$source" "$target"
+function create_link {
+    local -r source=${1?missing source argument}
+    local -r target=${2?missing target argument}
+    if [[ -f "$target" ]] && [[ "$(readlink "$target")" == "$source" ]]; then
+      [[ $DEBUG == true ]] && echo "$target already linked to $source"
+      return 1
+    else
+      ln -sf "$source" "$target"
+    fi
 }
 
-create_links() {
+function create_links {
     local -r base_domain=${1?missing base_domain argument}
     local -r domain=${2?missing base_domain argument}
 
-    if [[ ! -f "/etc/nginx/certs/$base_domain"/fullchain.pem || \
-          ! -f "/etc/nginx/certs/$base_domain"/key.pem ]]; then
+    if [[ ! -f "/etc/nginx/certs/$base_domain/fullchain.pem" || \
+          ! -f "/etc/nginx/certs/$base_domain/key.pem" ]]; then
         return 1
     fi
     local return_code=1
-    create_link "/etc/nginx/certs/$domain".crt "./$base_domain"/fullchain.pem
+    create_link "./$base_domain/fullchain.pem" "/etc/nginx/certs/$domain.crt"
     return_code=$(( $return_code & $? ))
-    create_link "/etc/nginx/certs/$domain".key "./$base_domain"/key.pem
+    create_link "./$base_domain/key.pem" "/etc/nginx/certs/$domain.key"
     return_code=$(( $return_code & $? ))
     if [[ -f "/etc/nginx/certs/dhparam.pem" ]]; then
-        create_link "/etc/nginx/certs/$domain".dhparam.pem ./dhparam.pem
+        create_link ./dhparam.pem "/etc/nginx/certs/$domain.dhparam.pem"
         return_code=$(( $return_code & $? ))
     fi
-    if [[ -f "/etc/nginx/certs/$base_domain"/chain.pem ]]; then
-        create_link "/etc/nginx/certs/$domain".chain.pem "./$base_domain"/chain.pem
+    if [[ -f "/etc/nginx/certs/$base_domain/chain.pem" ]]; then
+        create_link "./$base_domain/chain.pem" "/etc/nginx/certs/$domain.chain.pem"
         return_code=$(( $return_code & $? ))
     fi
     return $return_code
 }
 
-update_certs() {
-    [[ ! -f "$DIR"/letsencrypt_service_data ]] && return
+function cleanup_links {
+    local -a ENABLED_DOMAINS
+    local -a SYMLINKED_DOMAINS
+    local -a DISABLED_DOMAINS
+
+    # Create an array containing domains for which a
+    # symlinked private key exists in /etc/nginx/certs.
+    for symlinked_domain in /etc/nginx/certs/*.crt; do
+        [[ -f "$symlinked_domain" ]] || continue
+        symlinked_domain="${symlinked_domain##*/}"
+        symlinked_domain="${symlinked_domain%*.crt}"
+        SYMLINKED_DOMAINS+=("$symlinked_domain")
+    done
+    [[ $DEBUG == true ]] && echo "Symlinked domains: ${SYMLINKED_DOMAINS[*]}"
+
+    # Create an array containing domains that are considered
+    # enabled (ie present on /app/letsencrypt_service_data).
+    # shellcheck source=/dev/null
+    source "$DIR"/letsencrypt_service_data
+    for cid in "${LETSENCRYPT_CONTAINERS[@]}"; do
+      host_varname="LETSENCRYPT_${cid}_HOST"
+      hosts_array="${host_varname}[@]"
+      for domain in "${!hosts_array}"; do
+        # Add domain to the array storing currently enabled domains.
+        ENABLED_DOMAINS+=("$domain")
+      done
+    done
+    [[ $DEBUG == true ]] && echo "Enabled domains: ${ENABLED_DOMAINS[*]}"
+
+    # Create an array containing only domains for which a symlinked private key exists
+    # in /etc/nginx/certs but that no longer have a corresponding LETSENCRYPT_HOST set
+    # on an active container.
+    if [[ ${#SYMLINKED_DOMAINS[@]} -gt 0 ]]; then
+        mapfile -t DISABLED_DOMAINS < <(echo "${SYMLINKED_DOMAINS[@]}" \
+                                             "${ENABLED_DOMAINS[@]}" \
+                                             "${ENABLED_DOMAINS[@]}" \
+                                             | tr ' ' '\n' | sort | uniq -u)
+    fi
+    [[ $DEBUG == true ]] && echo "Disabled domains: ${DISABLED_DOMAINS[*]}"
+
+    # Remove disabled domains symlinks if present.
+    # Return 1 if nothing was removed and 0 otherwise.
+    if [[ ${#DISABLED_DOMAINS[@]} -gt 0 ]]; then
+      for disabled_domain in "${DISABLED_DOMAINS[@]}"; do
+          for extension in .crt .key .dhparam.pem .chain.pem; do
+              file="${disabled_domain}${extension}"
+              if [[ -n "${file// }" ]] && [[ -L "/etc/nginx/certs/${file}" ]]; then
+                  rm -f "/etc/nginx/certs/${file}"
+              fi
+          done
+      done
+      return 0
+    else
+      return 1
+    fi
+}
+
+function update_certs {
+
+    check_nginx_proxy_container_run || return
+
+    [[ -f "$DIR"/letsencrypt_service_data ]] || return
 
     # Load relevant container settings
     unset LETSENCRYPT_CONTAINERS
     # shellcheck source=/dev/null
     source "$DIR"/letsencrypt_service_data
 
-    reload_nginx='false'
+    should_reload_nginx='false'
     for cid in "${LETSENCRYPT_CONTAINERS[@]}"; do
         # Derive host and email variable names
         host_varname="LETSENCRYPT_${cid}_HOST"
         # Array variable indirection hack: http://stackoverflow.com/a/25880676/350221
         hosts_array="${host_varname}[@]"
+        hosts_array_expanded=("${!hosts_array}")
+        # First domain will be our base domain
+        base_domain="${hosts_array_expanded[0]}"
+
+        params_d_str=""
+
         email_varname="LETSENCRYPT_${cid}_EMAIL"
+        email_address="${!email_varname}"
+        if [[ "$email_address" != "<no value>" ]]; then
+            params_d_str+=" --email $email_address"
+        fi
 
         keysize_varname="LETSENCRYPT_${cid}_KEYSIZE"
         cert_keysize="${!keysize_varname}"
@@ -63,47 +139,32 @@ update_certs() {
         fi
 
         test_certificate_varname="LETSENCRYPT_${cid}_TEST"
-        create_test_certificate=false
-        if [[ $(lc "${!test_certificate_varname:-}") == true ]]; then
-            create_test_certificate=true
+        le_staging_uri="https://acme-staging.api.letsencrypt.org/directory"
+        if [[ $(lc "${!test_certificate_varname:-}") == true ]] || \
+          [[ "$ACME_CA_URI" == "$le_staging_uri" ]]; then
+            # Use staging Let's Encrypt ACME end point
+            acme_ca_uri="$le_staging_uri"
+            # Prefix test certificate directory with _test_
+            certificate_dir="/etc/nginx/certs/_test_$base_domain"
+        else
+            # Use default or user provided ACME end point
+            acme_ca_uri="$ACME_CA_URI"
+            certificate_dir="/etc/nginx/certs/$base_domain"
         fi
 
-        params_d_str=""
+        account_varname="LETSENCRYPT_${cid}_ACCOUNT_ALIAS"
+        account_alias="${!account_varname}"
+        if [[ "$account_alias" == "<no value>" ]]; then
+            account_alias=default
+        fi
+
         [[ $DEBUG == true ]] && params_d_str+=" -v"
-        [[ -n $ACME_TOS_HASH ]] && params_d_str+=" --tos_sha256 $ACME_TOS_HASH"
-        [[ $REUSE_KEY == true ]] && params_d_str+=" --reuse_key"
+        [[ $REUSE_PRIVATE_KEYS == true ]] && params_d_str+=" --reuse_key"
         [[ "${1}" == "--force-renew" ]] && params_d_str+=" --valid_min 7776000"
 
-        hosts_array_expanded=("${!hosts_array}")
-        # First domain will be our base domain
-        base_domain="${hosts_array_expanded[0]}"
-
-        if [[ "$create_test_certificate" == true ]]; then
-            # Use staging acme end point
-            acme_ca_uri="https://acme-staging.api.letsencrypt.org/directory"
-            if [[ ! -f /etc/nginx/certs/.${base_domain}.test ]]; then
-                # Remove old certificates
-                [[ -n "${base_domain// }" ]] && rm -rf /etc/nginx/certs/${base_domain}
-                for domain in "${!hosts_array}"; do
-                    rm -f /etc/nginx/certs/$domain.{crt,key,dhparam.pem}
-                done
-                touch /etc/nginx/certs/.${base_domain}.test
-            fi
-        else
-            acme_ca_uri="$ACME_CA_URI"
-            if [[ -f /etc/nginx/certs/.${base_domain}.test ]]; then
-                # Remove old test certificates
-                [[ -n "${base_domain// }" ]] && rm -rf /etc/nginx/certs/${base_domain}
-                for domain in "${!hosts_array}"; do
-                    rm -f /etc/nginx/certs/$domain.{crt,key,dhparam.pem}
-                done
-                rm -f /etc/nginx/certs/.${base_domain}.test
-            fi
-        fi
-
-        # Create directory for the first domain
-        mkdir -p /etc/nginx/certs/$base_domain
-        pushd /etc/nginx/certs/$base_domain
+        # Create directory for the first domain and make it the cwd
+        mkdir -p "$certificate_dir"
+        pushd "$certificate_dir" || return
 
         for domain in "${!hosts_array}"; do
             # Add all the domains to certificate
@@ -112,31 +173,61 @@ update_certs() {
             add_location_configuration "$domain" || reload_nginx
         done
 
+        # The ACME account key full path is derived from the endpoint URI
+        # + the account alias (set to 'default' if no alias is provided)
+        account_key_dir="../accounts/${acme_ca_uri#*://}"
+        account_key_full_path="${account_key_dir}/${account_alias}.json"
+        if [[ $REUSE_ACCOUNT_KEYS == true ]]; then
+            if [[ -f "$account_key_full_path" ]]; then
+                # If there is no symlink to the account key, create it
+                if [[ ! -L ./account_key.json ]]; then
+                    ln -sf "$account_key_full_path" ./account_key.json
+                # If the symlink target the wrong account key, replace it
+                elif [[ "$(readlink -f ./account_key.json)" != "$account_key_full_path" ]]; then
+                    ln -sf "$account_key_full_path" ./account_key.json
+                fi
+            fi
+        fi
+
         echo "Creating/renewal $base_domain certificates... (${hosts_array_expanded[*]})"
         /usr/bin/simp_le \
             -f account_key.json -f key.pem -f chain.pem -f fullchain.pem -f cert.pem \
             $params_d_str \
             --cert_key_size=$cert_keysize \
-            --email "${!email_varname}" \
             --server=$acme_ca_uri \
             --default_root /usr/share/nginx/html/
 
         simp_le_return=$?
 
-        popd
+        if [[ $REUSE_ACCOUNT_KEYS == true ]]; then
+            # If the account key to be reused does not exist yet, copy it
+            # from the CWD and replace the file in CWD with a symlink
+            if [[ ! -f "$account_key_full_path" && -f ./account_key.json ]]; then
+                mkdir -p "$account_key_dir"
+                cp ./account_key.json "$account_key_full_path"
+                ln -sf "$account_key_full_path" ./account_key.json
+            fi
+        fi
 
-        for altnames in "${hosts_array_expanded[@]:1}"; do
-            # Remove old CN domain that now are altnames
-            [[ -n "${altnames// }" ]] && rm -rf /etc/nginx/certs/${altnames}
-        done
+        popd || return
 
-        for domain in "${!hosts_array}"; do
-            create_links $base_domain $domain && reload_nginx='true'
-            [[ $simp_le_return -eq 0 ]] && reload_nginx='true'
-        done
+        if [[ $simp_le_return -ne 2 ]]; then
+          for domain in "${!hosts_array}"; do
+            if [[ "$acme_ca_uri" == "$le_staging_uri" ]]; then
+              create_links "_test_$base_domain" "$domain" && should_reload_nginx='true'
+            else
+              create_links "$base_domain" "$domain" && should_reload_nginx='true'
+            fi
+          done
+          # Queue nginx reload if a certificate was issued or renewed
+          [[ $simp_le_return -eq 0 ]] && should_reload_nginx='true'
+        fi
+
     done
 
-    [[ "$reload_nginx" == 'true' ]] && reload_nginx
+    cleanup_links && should_reload_nginx='true'
+
+    [[ "$should_reload_nginx" == 'true' ]] && reload_nginx
 }
 
 # Allow the script functions to be sourced without starting the Service Loop.
