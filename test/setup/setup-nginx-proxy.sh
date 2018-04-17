@@ -2,15 +2,18 @@
 
 set -e
 
-case $1 in
+case $SETUP in
+
   2containers)
     docker run -d -p 80:80 -p 443:443 \
       --name $NGINX_CONTAINER_NAME \
       -v /etc/nginx/vhost.d \
       -v /usr/share/nginx/html \
       -v /var/run/docker.sock:/tmp/docker.sock:ro \
+      --label com.github.jrcs.letsencrypt_nginx_proxy_companion.test_suite \
       jwilder/nginx-proxy
     ;;
+
   3containers)
     curl https://raw.githubusercontent.com/jwilder/nginx-proxy/master/nginx.tmpl > ${TRAVIS_BUILD_DIR}/nginx.tmpl
 
@@ -20,6 +23,7 @@ case $1 in
       -v /etc/nginx/certs \
       -v /etc/nginx/vhost.d \
       -v /usr/share/nginx/html \
+      --label com.github.jrcs.letsencrypt_nginx_proxy_companion.test_suite \
       nginx:alpine
 
     docker run -d \
@@ -28,10 +32,17 @@ case $1 in
       -v ${TRAVIS_BUILD_DIR}/nginx.tmpl:/etc/docker-gen/templates/nginx.tmpl:ro \
       -v /var/run/docker.sock:/tmp/docker.sock:ro \
       --label com.github.jrcs.letsencrypt_nginx_proxy_companion.docker_gen \
+      --label com.github.jrcs.letsencrypt_nginx_proxy_companion.test_suite \
       jwilder/docker-gen \
       -notify-sighup $NGINX_CONTAINER_NAME -watch -wait 5s:30s /etc/docker-gen/templates/nginx.tmpl /etc/nginx/conf.d/default.conf
     ;;
+
   *)
-    echo "$0 $1: invalid option."
+    echo "$0 $SETUP: invalid option."
     exit 1
+
 esac
+
+docker run --name helper --volumes-from $NGINX_CONTAINER_NAME busybox true
+docker cp ${TRAVIS_BUILD_DIR}/test/setup/dhparam.pem helper:/etc/nginx/certs
+docker rm -f helper

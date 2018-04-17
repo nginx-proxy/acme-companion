@@ -2,4 +2,9 @@ certs/
 conf.d/
 data/
 vhost.d/
-tests/letsencrypt_service_data.tmpl
+
+# tests
+go/
+nginx.tmpl
+test/local_test_env.sh
+test/tests/docker_api/expected_std_out.txt
