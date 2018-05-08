@@ -174,7 +174,7 @@ If needed, you can force a running letsencrypt-nginx-proxy-companion container t
 $ docker exec nginx-letsencrypt /app/force_renew
 ```
 
-##### Force certificates renewal
+##### Show certificates informations
 To display informations about your existing certificates, use the following command:
 
 ```bash
