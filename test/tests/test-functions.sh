@@ -16,7 +16,6 @@ function run_le_container {
     --name "$name" \
     --volumes-from $NGINX_CONTAINER_NAME \
     --volume /var/run/docker.sock:/var/run/docker.sock:ro \
-    --add-host boulder:${BOULDER_IP} \
     --env "DEBUG=true" \
     --env "ACME_CA_URI=http://${BOULDER_IP}:4000/directory" \
     --label com.github.jrcs.letsencrypt_nginx_proxy_companion.test_suite \

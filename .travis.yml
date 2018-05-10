@@ -8,7 +8,6 @@ addons:
     - le1.wtf
     - le2.wtf
     - le3.wtf
-    - boulder
 
 env:
   global:

@@ -2,7 +2,7 @@
 
 set -e
 
-SERVER=http://localhost:4000/directory
+SERVER='http://10.77.77.1:4000/directory'
 
 setup_boulder() {
   # Per the boulder README:
@@ -16,9 +16,9 @@ setup_boulder() {
   sed --in-place 's/ 5002/ 80/g' test/config/va.json
   sed --in-place 's/ 5001/ 443/g' test/config/va.json
   sed --in-place 's/le.wtf,le1.wtf/le1.wtf,le2.wtf,le3.wtf/g' test/rate-limit-policies.yml
-  docker-compose pull
-  docker-compose build
+  docker-compose build --pull
   docker-compose run -d \
+    --use-aliases \
     --name boulder \
     -e FAKE_DNS=$nginx_proxy_ip \
     --service-ports \
