@@ -207,8 +207,7 @@ if [[ -z $TRAVIS_CI ]] && [[ -f "$dir/local_test_env.sh" ]]; then
 	source "$dir/local_test_env.sh"
 fi
 
-BOULDER_IP="$(docker inspect --format='{{range .NetworkSettings.Networks}}{{.Gateway}}{{end}}' boulder)" \
-	&& export BOULDER_IP
+BOULDER_IP="10.77.77.1" && export BOULDER_IP
 
 # shellcheck source=./tests/test-functions.sh
 source "$dir/tests/test-functions.sh"

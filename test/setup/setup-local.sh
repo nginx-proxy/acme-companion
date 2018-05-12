@@ -23,7 +23,6 @@ function get_environment {
 
   # Build the array containing domains to add to /etc/hosts
   IFS=',' read -r -a domains <<< "$TEST_DOMAINS"
-  domains+=("boulder")
 
   if [[ -z $SETUP ]]; then
     while true; do
