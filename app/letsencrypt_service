@@ -90,6 +90,11 @@ function cleanup_links {
     # Return 1 if nothing was removed and 0 otherwise.
     if [[ ${#DISABLED_DOMAINS[@]} -gt 0 ]]; then
       for disabled_domain in "${DISABLED_DOMAINS[@]}"; do
+          certfile="${disabled_domain}.crt"
+          # If certificate is not letsencrypt, don't ever try to remove it
+          if [[ -f "${certfile}" ]] && [[ -z $(openssl x509 -noout -issuer -in ${certfile} | grep "Let's Encrypt") ]]; then
+              continue
+          fi;
           for extension in .crt .key .dhparam.pem .chain.pem; do
               file="${disabled_domain}${extension}"
               if [[ -n "${file// }" ]] && [[ -L "/etc/nginx/certs/${file}" ]]; then
