@@ -41,7 +41,7 @@ function remove_all_location_configurations {
     eval "$old_shopt_options" # Restore shopt options
 }
 
-function get_self_id {
+function get_self_cid {
     DOCKER_PROVIDER=${DOCKER_PROVIDER:-docker}
 
     case "${DOCKER_PROVIDER}" in
@@ -140,7 +140,7 @@ function get_nginx_proxy_container {
             nginx_cid="$NGINX_PROXY_CONTAINER"
         # ... else try to get the container ID with the volumes_from method.
         else
-            volumes_from=$(docker_api "/containers/$(get_self_id)/json" | jq -r '.HostConfig.VolumesFrom[]' 2>/dev/null)
+            volumes_from=$(docker_api "/containers/${SELF_CID:-$(get_self_cid)}/json" | jq -r '.HostConfig.VolumesFrom[]' 2>/dev/null)
             for cid in $volumes_from; do
                 cid="${cid%:*}" # Remove leading :ro or :rw set by remote docker-compose (thx anoopr)
                 if [[ $(docker_api "/containers/$cid/json" | jq -r '.Config.Env[]' | egrep -c '^NGINX_VERSION=') = "1" ]];then

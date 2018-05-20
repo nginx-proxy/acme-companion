@@ -21,7 +21,7 @@ function check_docker_socket {
 
 function check_writable_directory {
     local dir="$1"
-    docker_api "/containers/$(get_self_id)/json" | jq ".Mounts[].Destination" | grep -q "^\"$dir\"$"
+    docker_api "/containers/${SELF_CID:-$(get_self_cid)}/json" | jq ".Mounts[].Destination" | grep -q "^\"$dir\"$"
     if [[ $? -ne 0 ]]; then
         echo "Warning: '$dir' does not appear to be a mounted volume."
     fi
@@ -59,9 +59,11 @@ source /app/functions.sh
 
 if [[ "$*" == "/bin/bash /app/start.sh" ]]; then
     check_docker_socket
-    if [[ -z "$(get_self_id)" ]]; then
+    if [[ -z "$(get_self_cid)" ]]; then
         echo "Error: can't get my container ID !" >&2
         exit 1
+    else
+        export SELF_CID="$(get_self_cid)"
     fi
     if [[ -z "$(get_nginx_proxy_container)" ]]; then
         echo "Error: can't get nginx-proxy container ID !" >&2
