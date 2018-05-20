@@ -8,28 +8,6 @@ if [[ -n "${ACME_TOS_HASH:-}" ]]; then
     echo "simp_le now implicitly agree to the ACME CA ToS."
 fi
 
-DOCKER_PROVIDER=${DOCKER_PROVIDER:-docker}
-
-case "${DOCKER_PROVIDER}" in
-ecs|ECS)
-    # AWS ECS. Enabled in /etc/ecs/ecs.config (http://docs.aws.amazon.com/AmazonECS/latest/developerguide/container-metadata.html)
-    if [[ -n "${ECS_CONTAINER_METADATA_FILE:-}" ]]; then
-      export CONTAINER_ID=$(grep ContainerID "${ECS_CONTAINER_METADATA_FILE}" | sed 's/.*: "\(.*\)",/\1/g')
-    else
-      echo "${DOCKER_PROVIDER} specified as 'ecs' but not available. See: http://docs.aws.amazon.com/AmazonECS/latest/developerguide/container-metadata.html"
-      exit 1
-    fi
-    ;;
-*)
-    export CONTAINER_ID=$(sed -nE 's/^.+docker[\/-]([a-f0-9]{64}).*/\1/p' /proc/self/cgroup | head -n 1)
-    ;;
-esac
-
-if [[ -z "$CONTAINER_ID" ]]; then
-    echo "Error: can't get my container ID !" >&2
-    exit 1
-fi
-
 function check_docker_socket {
     if [[ $DOCKER_HOST == unix://* ]]; then
         socket_file=${DOCKER_HOST#unix://}
@@ -43,7 +21,7 @@ function check_docker_socket {
 
 function check_writable_directory {
     local dir="$1"
-    docker_api "/containers/$CONTAINER_ID/json" | jq ".Mounts[].Destination" | grep -q "^\"$dir\"$"
+    docker_api "/containers/${SELF_CID:-$(get_self_cid)}/json" | jq ".Mounts[].Destination" | grep -q "^\"$dir\"$"
     if [[ $? -ne 0 ]]; then
         echo "Warning: '$dir' does not appear to be a mounted volume."
     fi
@@ -81,6 +59,12 @@ source /app/functions.sh
 
 if [[ "$*" == "/bin/bash /app/start.sh" ]]; then
     check_docker_socket
+    if [[ -z "$(get_self_cid)" ]]; then
+        echo "Error: can't get my container ID !" >&2
+        exit 1
+    else
+        export SELF_CID="$(get_self_cid)"
+    fi
     if [[ -z "$(get_nginx_proxy_container)" ]]; then
         echo "Error: can't get nginx-proxy container ID !" >&2
         echo "Check that you are doing one of the following :" >&2
