@@ -95,10 +95,16 @@ function cleanup_links {
           [[ $DEBUG == true ]] && echo -e -n "\nChecking domain ${disabled_domain}: "
           certfile="/etc/nginx/certs/${disabled_domain}.crt"
           # If certificate is not letsencrypt, don't ever try to remove it
-          if [[ -f "${certfile}" ]] && [[ -z $(openssl x509 -noout -issuer -in ${certfile} | grep "Let's Encrypt") ]]; then
-              [[ $DEBUG == true ]] && echo "certificate is not LE. Skipping."
-              continue
+          if [[ -f "${certfile}" ]]; then
+              issuer="$(openssl x509 -noout -issuer -in ${certfile})"
+              le_regex="Let's Encrypt"
+              ci_regex="h[a,2]ppy h[a,2]cker fake CA"
+              if [[ ! "$issuer" =~ $le_regex ]] && [[ ! "$issuer" =~ $ci_regex ]]; then
+                  [[ $DEBUG == true ]] && echo "certificate is not LE. Skipping."
+                  continue
+              fi
           fi
+
           for extension in .crt .key .dhparam.pem .chain.pem; do
               file="${disabled_domain}${extension}"
               [[ $DEBUG == true ]] && echo -n -e "\nChecking ${file}"
