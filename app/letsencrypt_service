@@ -86,22 +86,35 @@ function cleanup_links {
     fi
     [[ $DEBUG == true ]] && echo "Disabled domains: ${DISABLED_DOMAINS[*]}"
 
+
     # Remove disabled domains symlinks if present.
     # Return 1 if nothing was removed and 0 otherwise.
     if [[ ${#DISABLED_DOMAINS[@]} -gt 0 ]]; then
+      [[ $DEBUG == true ]] && echo "Some domains are disabled. Check them to remove unused symlinks."
       for disabled_domain in "${DISABLED_DOMAINS[@]}"; do
-          certfile="${disabled_domain}.crt"
+          [[ $DEBUG == true ]] && echo -e -n "\nChecking domain ${disabled_domain}: "
+          certfile="/etc/nginx/certs/${disabled_domain}.crt"
           # If certificate is not letsencrypt, don't ever try to remove it
-          if [[ -f "${certfile}" ]] && [[ -z $(openssl x509 -noout -issuer -in ${certfile} | grep "Let's Encrypt") ]]; then
-              continue
-          fi;
+          if [[ -f "${certfile}" ]]; then
+              issuer="$(openssl x509 -noout -issuer -in ${certfile})"
+              le_regex="Let's Encrypt"
+              ci_regex="h[a,2]ppy h[a,2]cker fake CA"
+              if [[ ! "$issuer" =~ $le_regex ]] && [[ ! "$issuer" =~ $ci_regex ]]; then
+                  [[ $DEBUG == true ]] && echo "certificate is not LE. Skipping."
+                  continue
+              fi
+          fi
+
           for extension in .crt .key .dhparam.pem .chain.pem; do
               file="${disabled_domain}${extension}"
+              [[ $DEBUG == true ]] && echo -n -e "\nChecking ${file}"
               if [[ -n "${file// }" ]] && [[ -L "/etc/nginx/certs/${file}" ]]; then
+                  [[ $DEBUG == true ]] && echo -n " - removing."
                   rm -f "/etc/nginx/certs/${file}"
               fi
           done
       done
+      [[ $DEBUG == true ]] && echo -e "\nUnused domains checking is finished."
       return 0
     else
       return 1
