@@ -31,7 +31,6 @@ case $SETUP in
       --volumes-from $NGINX_CONTAINER_NAME \
       -v ${TRAVIS_BUILD_DIR}/nginx.tmpl:/etc/docker-gen/templates/nginx.tmpl:ro \
       -v /var/run/docker.sock:/tmp/docker.sock:ro \
-      --label com.github.jrcs.letsencrypt_nginx_proxy_companion.docker_gen \
       --label com.github.jrcs.letsencrypt_nginx_proxy_companion.test_suite \
       jwilder/docker-gen \
       -notify-sighup $NGINX_CONTAINER_NAME -watch -wait 5s:30s /etc/docker-gen/templates/nginx.tmpl /etc/nginx/conf.d/default.conf
@@ -43,6 +42,10 @@ case $SETUP in
 
 esac
 
-docker run --name helper --volumes-from $NGINX_CONTAINER_NAME busybox true
+docker run \
+  --name helper \
+  --volumes-from $NGINX_CONTAINER_NAME \
+  --label com.github.jrcs.letsencrypt_nginx_proxy_companion.test_suite \
+  busybox true
 docker cp ${TRAVIS_BUILD_DIR}/test/setup/dhparam.pem helper:/etc/nginx/certs
 docker rm -f helper
