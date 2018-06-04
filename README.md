@@ -14,8 +14,6 @@ Please note that [letsencrypt-nginx-proxy-companion does not work with ACME v2 e
 * Automatically creation of a Strong Diffie-Hellman Group (for having an A+ Rate on the [Qualsys SSL Server Test](https://www.ssllabs.com/ssltest/)).
 * Work with all versions of docker.
 
-***NOTE***: The first time this container is launched it generates a new Diffie-Hellman group file. This process can take several minutes to complete (be patient).
-
 ![schema](./schema.png)
 
 #### Usage

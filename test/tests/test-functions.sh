@@ -22,6 +22,7 @@ function run_le_container {
     --volumes-from $NGINX_CONTAINER_NAME \
     --volume /var/run/docker.sock:/var/run/docker.sock:ro \
     $docker_gen_arg \
+    --env "DHPARAM_BITS=256" \
     --env "DEBUG=true" \
     --env "ACME_CA_URI=http://${BOULDER_IP}:4000/directory" \
     --label com.github.jrcs.letsencrypt_nginx_proxy_companion.test_suite \

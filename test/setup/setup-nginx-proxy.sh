@@ -7,6 +7,7 @@ case $SETUP in
   2containers)
     docker run -d -p 80:80 -p 443:443 \
       --name $NGINX_CONTAINER_NAME \
+      --env "DHPARAM_BITS=256" \
       -v /etc/nginx/vhost.d \
       -v /usr/share/nginx/html \
       -v /var/run/docker.sock:/tmp/docker.sock:ro \
@@ -41,11 +42,3 @@ case $SETUP in
     exit 1
 
 esac
-
-docker run \
-  --name helper \
-  --volumes-from $NGINX_CONTAINER_NAME \
-  --label com.github.jrcs.letsencrypt_nginx_proxy_companion.test_suite \
-  busybox true
-docker cp ${TRAVIS_BUILD_DIR}/test/setup/dhparam.pem helper:/etc/nginx/certs
-docker rm -f helper
