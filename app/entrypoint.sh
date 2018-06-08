@@ -42,17 +42,53 @@ function check_writable_directory {
 }
 
 function check_dh_group {
+    # Credits to Steve Kamerman for the background Diffie-Hellman creation logic.
+    # https://github.com/jwilder/nginx-proxy/pull/589
     local DHPARAM_BITS="${DHPARAM_BITS:-2048}"
     re='^[0-9]*$'
     if ! [[ "$DHPARAM_BITS" =~ $re ]] ; then
        echo "Error: invalid Diffie-Hellman size of $DHPARAM_BITS !" >&2
        exit 1
     fi
-    if [[ ! -f /etc/nginx/certs/dhparam.pem ]]; then
-        echo "Creating Diffie-Hellman group (can take several minutes...)"
-        openssl dhparam -out /etc/nginx/certs/.dhparam.pem.tmp $DHPARAM_BITS
-        mv /etc/nginx/certs/.dhparam.pem.tmp /etc/nginx/certs/dhparam.pem || exit 1
+
+    # If a dhparam file is not available, use the pre-generated one and generate a new one in the background.
+    local PREGEN_DHPARAM_FILE="/app/dhparam.pem.default"
+    local DHPARAM_FILE="/etc/nginx/certs/dhparam.pem"
+    local GEN_LOCKFILE="/tmp/le_companion_dhparam_generating.lock"
+
+    # The hash of the pregenerated dhparam file is used to check if the pregen dhparam is already in use
+    local PREGEN_HASH=$(md5sum "$PREGEN_DHPARAM_FILE" | cut -d ' ' -f1)
+    if [[ -f "$DHPARAM_FILE" ]]; then
+        local CURRENT_HASH=$(md5sum "$DHPARAM_FILE" | cut -d ' ' -f1)
+        if [[ "$PREGEN_HASH" != "$CURRENT_HASH" ]]; then
+            # There is already a dhparam, and it's not the default
+            echo "Info: Custom Diffie-Hellman group found, generation skipped."
+            return 0
+          fi
+
+        if [[ -f "$GEN_LOCKFILE" ]]; then
+            # Generation is already in progress
+            return 0
+        fi
     fi
+
+    echo "Info: Creating Diffie-Hellman group in the background."
+    echo "A pre-generated Diffie-Hellman group will be used for now while the new one
+is being created."
+
+    # Put the default dhparam file in place so we can start immediately
+    cp "$PREGEN_DHPARAM_FILE" "$DHPARAM_FILE"
+    touch "$GEN_LOCKFILE"
+
+    # Generate a new dhparam in the background in a low priority and reload nginx when finished (grep removes the progress indicator).
+    (
+        (
+            nice -n +5 openssl dhparam -out "$DHPARAM_FILE" "$DHPARAM_BITS" 2>&1 \
+            && echo "Info: Diffie-Hellman group creation complete, reloading nginx." \
+            && reload_nginx
+        ) | grep -vE '^[\.+]+'
+        rm "$GEN_LOCKFILE"
+    ) &disown
 }
 
 source /app/functions.sh
