@@ -1,4 +1,4 @@
 #!/bin/bash
 
-# Works with either procps pkill or busybox pkill
-pkill -f -SIGUSR1 /app/letsencrypt_service || pkill -USR1 -f /app/letsencrypt_service
+# Using busybox pkill
+pkill -USR1 -f /app/letsencrypt_service
