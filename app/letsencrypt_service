@@ -1,8 +1,6 @@
 #!/bin/bash
 # shellcheck disable=SC2120
 
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-
 source /app/functions.sh
 
 seconds_to_wait=3600
@@ -64,7 +62,7 @@ function cleanup_links {
     # Create an array containing domains that are considered
     # enabled (ie present on /app/letsencrypt_service_data).
     # shellcheck source=/dev/null
-    source "$DIR"/letsencrypt_service_data
+    source /app/letsencrypt_service_data
     for cid in "${LETSENCRYPT_CONTAINERS[@]}"; do
       host_varname="LETSENCRYPT_${cid}_HOST"
       hosts_array="${host_varname}[@]"
@@ -125,12 +123,12 @@ function update_certs {
 
     check_nginx_proxy_container_run || return
 
-    [[ -f "$DIR"/letsencrypt_service_data ]] || return
+    [[ -f /app/letsencrypt_service_data ]] || return
 
     # Load relevant container settings
     unset LETSENCRYPT_CONTAINERS
     # shellcheck source=/dev/null
-    source "$DIR"/letsencrypt_service_data
+    source /app/letsencrypt_service_data
 
     should_reload_nginx='false'
     for cid in "${LETSENCRYPT_CONTAINERS[@]}"; do
