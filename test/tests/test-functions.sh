@@ -82,3 +82,19 @@ function wait_for_conn {
   echo "Connection to $domain using https was successful."
 }
 export -f wait_for_conn
+
+# Get the expiration date in unix epoch of domain $1 inside container $2
+function get_cert_expiration_epoch {
+  local domain="${1:?}"
+  local name="${2:?}"
+  local cert_expiration
+  cert_expiration="$(docker exec "$name" openssl x509 -noout -enddate -in "/etc/nginx/certs/$domain.crt")"
+  cert_expiration="$(echo "$cert_expiration" | cut -d "=" -f 2)"
+  if [[ "$(uname)" == 'Darwin' ]]; then
+    cert_expiration="$(date -j -f "%b %d %T %Y %Z" "$cert_expiration" "+%s")"
+  else
+    cert_expiration="$(date -d "$cert_expiration" "+%s")"
+  fi
+  echo "$cert_expiration"
+}
+export -f get_cert_expiration_epoch
