@@ -57,9 +57,9 @@ function check_dh_group {
     local GEN_LOCKFILE="/tmp/le_companion_dhparam_generating.lock"
 
     # The hash of the pregenerated dhparam file is used to check if the pregen dhparam is already in use
-    local PREGEN_HASH=$(md5sum "$PREGEN_DHPARAM_FILE" | cut -d ' ' -f1)
+    local PREGEN_HASH=$(sha256sum "$PREGEN_DHPARAM_FILE" | cut -d ' ' -f1)
     if [[ -f "$DHPARAM_FILE" ]]; then
-        local CURRENT_HASH=$(md5sum "$DHPARAM_FILE" | cut -d ' ' -f1)
+        local CURRENT_HASH=$(sha256sum "$DHPARAM_FILE" | cut -d ' ' -f1)
         if [[ "$PREGEN_HASH" != "$CURRENT_HASH" ]]; then
             # There is already a dhparam, and it's not the default
             echo "Info: Custom Diffie-Hellman group found, generation skipped."
