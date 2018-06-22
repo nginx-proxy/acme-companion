@@ -3,7 +3,7 @@
 set -e
 
 # Install python packages needed to build simp_le
-apk --update add python py-setuptools git gcc py-pip musl-dev libffi-dev python-dev openssl-dev
+apk --update add python py-setuptools git gcc py-pip musl-dev libffi-dev python-dev openssl-dev paxctl
 
 # Get Let's Encrypt simp_le client source
 branch="0.9.0"
@@ -22,5 +22,6 @@ pip install .
 # Make house cleaning
 cd /
 rm -rf /src
-apk del git gcc py-pip musl-dev libffi-dev python-dev openssl-dev
+paxctl -cm `which python`
+apk del git gcc py-pip musl-dev libffi-dev python-dev openssl-dev paxctl
 rm -rf /var/cache/apk/*
