@@ -49,6 +49,8 @@ function create_links {
 }
 
 function cleanup_links {
+    local -a LETSENCRYPT_CONTAINERS
+    local -a LETSENCRYPT_STANDALONE_CERTS
     local -a ENABLED_DOMAINS
     local -a SYMLINKED_DOMAINS
     local -a DISABLED_DOMAINS
@@ -64,9 +66,10 @@ function cleanup_links {
     [[ "$(lc $DEBUG)" == true ]] && echo "Symlinked domains: ${SYMLINKED_DOMAINS[*]}"
 
     # Create an array containing domains that are considered
-    # enabled (ie present on /app/letsencrypt_service_data).
-    # shellcheck source=/dev/null
-    source /app/letsencrypt_service_data
+    # enabled (ie present on /app/letsencrypt_service_data or /app/letsencrypt_user_data).
+    [[ -f /app/letsencrypt_service_data ]] && source /app/letsencrypt_service_data
+    [[ -f /app/letsencrypt_user_data ]] && source /app/letsencrypt_user_data
+    LETSENCRYPT_CONTAINERS+=( "${LETSENCRYPT_STANDALONE_CERTS[@]}" )
     for cid in "${LETSENCRYPT_CONTAINERS[@]}"; do
       host_varname="LETSENCRYPT_${cid}_HOST"
       hosts_array="${host_varname}[@]"
@@ -79,7 +82,7 @@ function cleanup_links {
 
     # Create an array containing only domains for which a symlinked private key exists
     # in /etc/nginx/certs but that no longer have a corresponding LETSENCRYPT_HOST set
-    # on an active container.
+    # on an active container or on /app/letsencrypt_user_data
     if [[ ${#SYMLINKED_DOMAINS[@]} -gt 0 ]]; then
         mapfile -t DISABLED_DOMAINS < <(echo "${SYMLINKED_DOMAINS[@]}" \
                                              "${ENABLED_DOMAINS[@]}" \
@@ -119,15 +122,34 @@ function cleanup_links {
 }
 
 function update_certs {
+    local -a LETSENCRYPT_CONTAINERS
+    local -a LETSENCRYPT_STANDALONE_CERTS
 
     check_nginx_proxy_container_run || return
 
-    [[ -f /app/letsencrypt_service_data ]] || return
-
     # Load relevant container settings
-    unset LETSENCRYPT_CONTAINERS
-    # shellcheck source=/dev/null
-    source /app/letsencrypt_service_data
+    if [[ -f /app/letsencrypt_service_data ]]; then
+        source /app/letsencrypt_service_data
+    else
+        echo "Warning: /app/letsencrypt_service_data not found, skipping data from containers."
+    fi
+
+    # Load settings for standalone certs
+    if [[ -f /app/letsencrypt_user_data ]]; then
+        if source /app/letsencrypt_user_data; then
+            for cid in "${LETSENCRYPT_STANDALONE_CERTS[@]}"; do
+                host_varname="LETSENCRYPT_${cid}_HOST"
+                hosts_array="${host_varname}[@]"
+                for domain in "${!hosts_array}"; do
+                    add_standalone_configuration "$domain"
+                done
+            done
+            reload_nginx
+            LETSENCRYPT_CONTAINERS+=( "${LETSENCRYPT_STANDALONE_CERTS[@]}" )
+        else
+            echo "Warning: could not source /app/letsencrypt_user_data, skipping user data"
+        fi
+    fi
 
     should_reload_nginx='false'
     for cid in "${LETSENCRYPT_CONTAINERS[@]}"; do
@@ -144,7 +166,7 @@ function update_certs {
 
         # Use container's LETSENCRYPT_EMAIL if set, fallback to DEFAULT_EMAIL
         email_varname="LETSENCRYPT_${cid}_EMAIL"
-        email_address="${!email_varname}"
+        email_address="${!email_varname:-"<no value>"}"
         if [[ "$email_address" != "<no value>" ]]; then
             params_d_str+=" --email $email_address"
         elif [[ -n "${DEFAULT_EMAIL:-}" ]]; then
@@ -152,7 +174,7 @@ function update_certs {
         fi
 
         keysize_varname="LETSENCRYPT_${cid}_KEYSIZE"
-        cert_keysize="${!keysize_varname}"
+        cert_keysize="${!keysize_varname:-"<no value>"}"
         if [[ "$cert_keysize" == "<no value>" ]]; then
             cert_keysize=$DEFAULT_KEY_SIZE
         fi
@@ -172,7 +194,7 @@ function update_certs {
         fi
 
         account_varname="LETSENCRYPT_${cid}_ACCOUNT_ALIAS"
-        account_alias="${!account_varname}"
+        account_alias="${!account_varname:-"<no value>"}"
         if [[ "$account_alias" == "<no value>" ]]; then
             account_alias=default
         fi
@@ -181,7 +203,7 @@ function update_certs {
         [[ $REUSE_PRIVATE_KEYS == true ]] && params_d_str+=" --reuse_key"
 
         min_validity="LETSENCRYPT_${cid}_MIN_VALIDITY"
-        min_validity="${!min_validity}"
+        min_validity="${!min_validity:-"<no value>"}"
         if [[ "$min_validity" == "<no value>" ]]; then
             min_validity=$DEFAULT_MIN_VALIDITY
         fi
@@ -308,6 +330,13 @@ function update_certs {
             echo "Restarting container (${cid})..."
             docker_restart "${cid}"
         fi
+
+        for domain in "${!hosts_array}"; do
+            if [[ -f "/etc/nginx/conf.d/standalone-cert-$domain.conf" ]]; then
+                [[ $DEBUG == true ]] && echo "Debug: removing standalone configuration file /etc/nginx/conf.d/standalone-cert-$domain.conf"
+                rm -f "/etc/nginx/conf.d/standalone-cert-$domain.conf" && should_reload_nginx='true'
+            fi
+        done
 
     done
 

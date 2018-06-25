@@ -160,6 +160,7 @@ if [[ "$*" == "/bin/bash /app/start.sh" ]]; then
     check_writable_directory '/etc/nginx/certs'
     check_writable_directory '/etc/nginx/vhost.d'
     check_writable_directory '/usr/share/nginx/html'
+    [[ -f /app/letsencrypt_user_data ]] && check_writable_directory '/etc/nginx/conf.d'
     check_deprecated_env_var
     check_default_cert_key
     check_dh_group
