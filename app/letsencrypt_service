@@ -144,7 +144,7 @@ function update_certs {
 
         email_varname="LETSENCRYPT_${cid}_EMAIL"
         email_address="${!email_varname}"
-        if [[ "$email_address" != "<no value>" ]]; then
+        if [[ "$email_address" != "<no value>" ]] || [[ $email_address == *@example.com ]]; then
             params_d_str+=" --email $email_address"
         fi
 
