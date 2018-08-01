@@ -93,8 +93,6 @@ is being created."
 
 source /app/functions.sh
 
-[[ $DEBUG == true ]] && set -x
-
 if [[ "$*" == "/bin/bash /app/start.sh" ]]; then
     acmev2_re='https://acme-.*v02\.api\.letsencrypt\.org/directory'
     if [[ "${ACME_CA_URI:-}" =~ $acmev2_re ]]; then
