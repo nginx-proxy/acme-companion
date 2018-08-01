@@ -46,6 +46,19 @@ function remove_all_location_configurations {
     eval "$old_shopt_options" # Restore shopt options
 }
 
+function check_cert_min_validity {
+    # Check if a certificate ($1) is still valid for a given amount of time in seconds ($2).
+    # Returns 0 if the certificate is still valid for this amount of time, 1 otherwise.
+    local cert_path="$1"
+    local min_validity="$(( $(date "+%s") + $2 ))"
+
+    local cert_expiration
+    cert_expiration="$(openssl x509 -noout -enddate -in "$cert_path" | cut -d "=" -f 2)"
+    cert_expiration="$(date --utc --date "${cert_expiration% GMT}" "+%s")"
+
+    [[ $cert_expiration -gt $min_validity ]] || return 1
+}
+
 function get_self_cid {
     DOCKER_PROVIDER=${DOCKER_PROVIDER:-docker}
 
