@@ -41,7 +41,7 @@ for domain in "${domains[@]}"; do
   fi
 
   # Wait for a connection to https://domain then grab the served certificate fingerprint.
-  wait_for_conn "$domain"
+  wait_for_conn --domain "$domain"
   served_cert_fingerprint="$(echo \
     | openssl s_client -showcerts -servername "$domain" -connect "$domain:443" 2>/dev/null \
     | openssl x509 -fingerprint -noout)"

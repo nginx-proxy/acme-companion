@@ -8,6 +8,7 @@ function get_base_domain {
 }
 export -f get_base_domain
 
+
 # Run a letsencrypt-nginx-proxy-companion container
 function run_le_container {
   local image="${1:?}"
@@ -30,6 +31,7 @@ function run_le_container {
 }
 export -f run_le_container
 
+
 # Wait for the /etc/nginx/certs/$1.crt symlink to exist inside container $2
 function wait_for_symlink {
   local domain="${1:?}"
@@ -50,6 +52,7 @@ function wait_for_symlink {
 }
 export -f wait_for_symlink
 
+
 # Wait for the /etc/nginx/certs/$1.crt file to be removed inside container $2
 function wait_for_symlink_rm {
   local domain="${1:?}"
@@ -67,11 +70,104 @@ function wait_for_symlink_rm {
 }
 export -f wait_for_symlink_rm
 
-# Wait for a successful https connection to domain $1
+
+# Attempt to grab the certificate from domain passed with -d/--domain
+# then check if the subject either match or doesn't match the pattern
+# passed with either -m/--match or -nm/--no-match
+# If domain can't be reached return 1
+function check_cert_subj {
+  while [[ $# -gt 0 ]]; do
+  local flag="$1"
+
+    case $flag in
+      -d|--domain)
+      local domain="${2:?}"
+      shift
+      shift
+      ;;
+
+      -m|--match)
+      local re="${2:?}"
+      local match_rc=0
+      local no_match_rc=1
+      shift
+      shift
+      ;;
+
+      -n|--no-match)
+      local re="${2:?}"
+      local match_rc=1
+      local no_match_rc=0
+      shift
+      shift
+      ;;
+
+      *) #Unknown option
+      shift
+      ;;
+    esac
+  done
+
+  if curl -k https://"$domain" > /dev/null 2>&1; then
+    local cert_subject
+    cert_subject="$(echo \
+      | openssl s_client -showcerts -servername "$domain" -connect "$domain:443" 2>/dev/null \
+      | openssl x509 -subject -noout)"
+  else
+    return 1
+  fi
+
+  if [[ "$cert_subject" =~ $re ]]; then
+    return $match_rc
+  else
+    return $no_match_rc
+  fi
+}
+export -f check_cert_subj
+
+
+# Wait for a successful https connection to domain passed with -d/--domain then wait
+#   - until the served certificate isn't the default one (default behavior)
+#   - until the served certificate is the default one (--default-cert)
+#   - until the served certificate subject match a string (--subject-match)
 function wait_for_conn {
-  local domain="${1:?}"
+  local action
+  local domain
+  local string
+
+  while [[ $# -gt 0 ]]; do
+  local flag="$1"
+
+    case $flag in
+      -d|--domain)
+      domain="${2:?}"
+      shift
+      shift
+      ;;
+
+      --default-cert)
+      action='--match'
+      shift
+      ;;
+
+      --subject-match)
+      action='--match'
+      string="$2"
+      shift
+      shift
+      ;;
+
+      *) #Unknown option
+      shift
+      ;;
+    esac
+  done
+
   local i=0
-  until curl -k https://"$domain" > /dev/null 2>&1; do
+  action="${action:---no-match}"
+  string="${string:-letsencrypt-nginx-proxy-companion}"
+
+  until check_cert_subj --domain "$domain" "$action" "$string"; do
     if [ $i -gt 120 ]; then
       echo "Could not connect to $domain using https under two minutes, timing out."
       return 1
@@ -82,6 +178,7 @@ function wait_for_conn {
   echo "Connection to $domain using https was successful."
 }
 export -f wait_for_conn
+
 
 # Get the expiration date in unix epoch of domain $1 inside container $2
 function get_cert_expiration_epoch {
