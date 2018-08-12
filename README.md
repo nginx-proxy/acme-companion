@@ -11,7 +11,8 @@ Please note that [letsencrypt-nginx-proxy-companion does not work with ACME v2 e
 ### Features:
 * Automatic creation/renewal of Let's Encrypt certificates using original nginx-proxy container.
 * Support creation of Multi-Domain ([SAN](https://www.digicert.com/subject-alternative-name.htm)) Certificates.
-* Automatically creation of a Strong Diffie-Hellman Group (for having an A+ Rate on the [Qualsys SSL Server Test](https://www.ssllabs.com/ssltest/)).
+* Automatic creation of a Strong Diffie-Hellman Group (for having an A+ Rate on the [Qualsys SSL Server Test](https://www.ssllabs.com/ssltest/)).
+* Automatic creation of a self-signed [default certificate](https://github.com/jwilder/nginx-proxy#how-ssl-support-works) if a user-provided one can't be found.
 * Work with all versions of docker.
 
 ![schema](./schema.png)
