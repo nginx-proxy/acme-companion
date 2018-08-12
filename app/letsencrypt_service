@@ -52,7 +52,7 @@ function cleanup_links {
     # Create an array containing domains for which a
     # symlinked private key exists in /etc/nginx/certs.
     for symlinked_domain in /etc/nginx/certs/*.crt; do
-        [[ -f "$symlinked_domain" ]] || continue
+        [[ -L "$symlinked_domain" ]] || continue
         symlinked_domain="${symlinked_domain##*/}"
         symlinked_domain="${symlinked_domain%*.crt}"
         SYMLINKED_DOMAINS+=("$symlinked_domain")
