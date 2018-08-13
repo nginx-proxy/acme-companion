@@ -1,6 +1,6 @@
 #!/bin/bash
 
-## Test for single domain certificates.
+## Test for default certificate creation.
 
 if [[ -z $TRAVIS_CI ]]; then
   le_container_name="$(basename ${0%/*})_$(date "+%Y-%m-%d_%H.%M.%S")"
