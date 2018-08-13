@@ -115,8 +115,7 @@ function check_default_cert_key {
             -keyout /etc/nginx/certs/default.key.new \
             -out /etc/nginx/certs/default.crt.new \
         && mv /etc/nginx/certs/default.key.new /etc/nginx/certs/default.key \
-        && mv /etc/nginx/certs/default.crt.new /etc/nginx/certs/default.crt \
-        && reload_nginx
+        && mv /etc/nginx/certs/default.crt.new /etc/nginx/certs/default.crt
         echo "Info: a default key and certificate have been created at /etc/nginx/certs/default.key and /etc/nginx/certs/default.crt."
     elif [[ $DEBUG == true && "${default_cert_cn:-}" =~ $cn ]]; then
         echo "Debug: the self generated default certificate is still valid for more than three months. Skipping default certificate creation."
@@ -161,6 +160,7 @@ if [[ "$*" == "/bin/bash /app/start.sh" ]]; then
     check_deprecated_env_var
     check_default_cert_key
     check_dh_group
+    reload_nginx
 fi
 
 exec "$@"
