@@ -12,6 +12,24 @@ run_le_container ${1:?} "$le_container_name"
 # Create the $domains array from comma separated domains in TEST_DOMAINS.
 IFS=',' read -r -a domains <<< "$TEST_DOMAINS"
 
+# Cleanup function with EXIT trap
+function cleanup {
+  # Remove all remaining nginx containers silently
+  docker rm --force \
+    symlink-le1-le2 \
+    symlink-le1-le2-le3 \
+    symlink-le2 \
+    symlink-le3 \
+    symlink-lim-le2 \
+    > /dev/null 2>&1
+  # Cleanup the files created by this run of the test to avoid foiling following test(s).
+  docker exec "$le_container_name" bash -c 'rm -rf /etc/nginx/certs/le?.wtf*'
+  docker exec "$le_container_name" bash -c 'rm -rf /etc/nginx/certs/lim.it*'
+  # Stop the LE container
+  docker stop "$le_container_name" > /dev/null
+}
+trap cleanup EXIT
+
 # Run a nginx container for the firs two domain in the $domains array ...
 docker run --rm -d \
   --name "symlink-le1-le2" \
@@ -99,7 +117,3 @@ docker stop "symlink-lim-le2" > /dev/null
 # Check if the custom certificate is still there
 docker exec "$le_container_name" [ -f /etc/nginx/certs/le4.wtf.crt ] \
   || echo "Custom certificate for le4.wtf was removed."
-
-# Cleanup the files created by this run of the test to avoid foiling following test(s).
-docker exec "$le_container_name" sh -c 'rm -rf /etc/nginx/certs/le?.wtf*'
-docker stop "$le_container_name" > /dev/null
