@@ -1,6 +1,6 @@
 #!/bin/bash
 
-## Test for single domain certificates.
+## Test for default certificate creation.
 
 if [[ -z $TRAVIS_CI ]]; then
   le_container_name="$(basename ${0%/*})_$(date "+%Y-%m-%d_%H.%M.%S")"
@@ -15,7 +15,7 @@ IFS=',' read -r -a domains <<< "$TEST_DOMAINS"
 # Cleanup function with EXIT trap
 function cleanup {
   # Cleanup the files created by this run of the test to avoid foiling following test(s).
-  docker exec "$le_container_name" sh -c 'rm -rf /etc/nginx/certs/default.*'
+  docker exec "$le_container_name" bash -c 'rm -f /etc/nginx/certs/default.*'
   docker stop "$le_container_name" > /dev/null
 }
 trap cleanup EXIT
@@ -63,7 +63,7 @@ done
 
 # Test if the default certificate get re-created when
 # the certificate expire in less than three months
-docker exec "$le_container_name" sh -c 'rm -rf /etc/nginx/certs/default.*'
+docker exec "$le_container_name" bash -c 'rm -rf /etc/nginx/certs/default.*'
 docker exec "$le_container_name" openssl req -x509 \
   -newkey rsa:4096 -sha256 -nodes -days 60 \
   -subj "/CN=letsencrypt-nginx-proxy-companion" \
@@ -82,7 +82,7 @@ while [[ "$(default_cert_fingerprint)" == "$old_default_cert_fingerprint" ]]; do
 done
 
 # Test that a user provided default certificate isn't overwrited
-docker exec "$le_container_name" sh -c 'rm -rf /etc/nginx/certs/default.*'
+docker exec "$le_container_name" bash -c 'rm -rf /etc/nginx/certs/default.*'
 docker exec "$le_container_name" openssl req -x509 \
   -newkey rsa:4096 -sha256 -nodes -days 60 \
   -subj "/CN=$user_cn" \

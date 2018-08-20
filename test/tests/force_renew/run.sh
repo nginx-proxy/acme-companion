@@ -12,6 +12,17 @@ run_le_container ${1:?} "$le_container_name"
 # Create the $domains array from comma separated domains in TEST_DOMAINS.
 IFS=',' read -r -a domains <<< "$TEST_DOMAINS"
 
+# Cleanup function with EXIT trap
+function cleanup {
+  # Remove the Nginx container silently.
+  docker rm --force "${domains[0]}" > /dev/null 2>&1
+  # Cleanup the files created by this run of the test to avoid foiling following test(s).
+  docker exec "$le_container_name" bash -c 'rm -rf /etc/nginx/certs/le?.wtf*'
+  # Stop the LE container
+  docker stop "$le_container_name" > /dev/null
+}
+trap cleanup EXIT
+
 # Run a nginx container for ${domains[0]}.
 docker run --rm -d \
   --name "${domains[0]}" \
@@ -39,10 +50,3 @@ else
   echo "First certificate expiration epoch : $first_cert_expire."
   echo "Second certificate expiration epoch : $second_cert_expire."
 fi
-
-# Stop the Nginx container silently.
-docker stop "${domains[0]}" > /dev/null
-
-# Cleanup the files created by this run of the test to avoid foiling following test(s).
-docker exec "$le_container_name" sh -c 'rm -rf /etc/nginx/certs/le?.wtf*'
-docker stop "$le_container_name" > /dev/null

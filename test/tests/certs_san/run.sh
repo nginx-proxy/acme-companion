@@ -12,6 +12,21 @@ run_le_container ${1:?} "$le_container_name"
 # Create the $domains array from comma separated domains in TEST_DOMAINS.
 IFS=',' read -r -a domains <<< "$TEST_DOMAINS"
 
+# Cleanup function with EXIT trap
+function cleanup {
+  # Remove any remaining Nginx container(s) silently.
+  i=1
+  for hosts in "${letsencrypt_hosts[@]}"; do
+    docker rm --force "test$i" > /dev/null 2>&1
+    i=$(( $i + 1 ))
+  done
+  # Cleanup the files created by this run of the test to avoid foiling following test(s).
+  docker exec "$le_container_name" bash -c 'rm -rf /etc/nginx/certs/le?.wtf*'
+  # Stop the LE container
+  docker stop "$le_container_name" > /dev/null
+}
+trap cleanup EXIT
+
 # Create three different comma separated list from the first three domains in $domains.
 # testing for regression on spaced lists https://github.com/JrCs/docker-letsencrypt-nginx-proxy-companion/issues/288
 # and with trailing comma https://github.com/JrCs/docker-letsencrypt-nginx-proxy-companion/issues/254
@@ -75,13 +90,8 @@ for hosts in "${letsencrypt_hosts[@]}"; do
     fi
   done
 
-  # Stop the Nginx container silently.
-  docker stop "$container" > /dev/null
-
-  # Cleanup the files created by this run of the test to avoid foiling following test(s).
-  docker exec "$le_container_name" sh -c 'rm -rf /etc/nginx/certs/le?.wtf*'
+  docker stop "$container" > /dev/null 2>&1
+  docker exec "$le_container_name" bash -c 'rm -rf /etc/nginx/certs/le?.wtf*'
   i=$(( $i + 1 ))
 
 done
-
-docker stop "$le_container_name" > /dev/null

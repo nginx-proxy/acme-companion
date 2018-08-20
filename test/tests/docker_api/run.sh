@@ -11,6 +11,19 @@ docker_gen_lbl='docker-gen-label'
 case $SETUP in
 
   2containers)
+  # Cleanup function with EXIT trap
+  function cleanup {
+    # Kill the Docker events listener
+    kill $docker_events_pid && wait $docker_events_pid 2>/dev/null
+    # Remove the remaining containers silently
+    docker rm --force \
+      "$nginx_vol" \
+      "$nginx_env" \
+      "$nginx_lbl" \
+      > /dev/null 2>&1
+  }
+  trap cleanup EXIT
+
   # Listen to Docker exec_start events
   docker events \
     --filter event=exec_start \
@@ -71,14 +84,6 @@ case $SETUP in
             check_nginx_proxy_container_run; \
             get_nginx_proxy_container' 2>&1
 
-  # Cleanup
-  kill $docker_events_pid && wait $docker_events_pid 2>/dev/null
-  docker stop \
-    "$nginx_vol" \
-    "$nginx_env" \
-    "$nginx_lbl" \
-    > /dev/null
-
   cat > ${TRAVIS_BUILD_DIR}/test/tests/docker_api/expected-std-out.txt <<EOF
 Container $nginx_vol received exec_start: sh -c /app/docker-entrypoint.sh /usr/local/bin/docker-gen /app/nginx.tmpl /etc/nginx/conf.d/default.conf; /usr/sbin/nginx -s reload
 $nginx_vol
@@ -90,6 +95,21 @@ EOF
   ;;
 
   3containers)
+  # Cleanup function with EXIT trap
+  function cleanup {
+    # Kill the Docker events listener
+    kill $docker_events_pid && wait $docker_events_pid 2>/dev/
+    # Remove the remaining containers silently
+    docker stop \
+      "$nginx_vol" \
+      "$nginx_env" \
+      "$nginx_lbl" \
+      "$docker_gen" \
+      "$docker_gen_lbl" \
+      > /dev/null 2>&1
+  }
+  trap cleanup EXIT
+
   # Listen to Docker kill events
   docker events \
     --filter event=kill \
@@ -226,15 +246,6 @@ EOF
             check_nginx_proxy_container_run; \
             get_docker_gen_container; \
             get_nginx_proxy_container;' 2>&1
-
-  # Cleanup
-  kill $docker_events_pid && wait $docker_events_pid 2>/dev/null
-  docker stop \
-    "$nginx_vol" \
-    "$nginx_env" \
-    "$nginx_lbl" \
-    "$docker_gen" \
-    "$docker_gen_lbl" > /dev/null 2>&1
 
     cat > ${TRAVIS_BUILD_DIR}/test/tests/docker_api/expected-std-out.txt <<EOF
 Container $docker_gen received signal 1
