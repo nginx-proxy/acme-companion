@@ -178,8 +178,10 @@ function update_certs {
         [[ $REUSE_PRIVATE_KEYS == true ]] && params_d_str+=" --reuse_key"
         [[ "${1}" == "--force-renew" ]] && params_d_str+=" --valid_min 7776000"
 
-        # Create directory for the first domain and make it the cwd
+        # Create directory for the first domain,
+        # make it root readable only and make it the cwd
         mkdir -p "$certificate_dir"
+        set_root_ownership_and_permissions "$certificate_dir"
         pushd "$certificate_dir" || return
 
         for domain in "${!hosts_array}"; do
@@ -227,6 +229,14 @@ function update_certs {
 
         popd || return
 
+        # Make the account key and its parent folders (up to
+        # /etc/nginx/certs/accounts included) root readable only
+        account_key_perm_path="/etc/nginx/certs/accounts/${acme_ca_uri#*://}/${account_alias}.json"
+        until [[ "$account_key_perm_path" == /etc/nginx/certs ]]; do
+          set_root_ownership_and_permissions "$account_key_perm_path"
+          account_key_perm_path="$(dirname "$account_key_perm_path")"
+        done
+
         if [[ $simp_le_return -ne 2 ]]; then
           for domain in "${!hosts_array}"; do
             if [[ "$acme_ca_uri" == "$le_staging_uri" ]]; then
@@ -235,6 +245,8 @@ function update_certs {
               create_links "$base_domain" "$domain" && should_reload_nginx='true'
             fi
           done
+          # Make private key root readable only
+          set_root_ownership_and_permissions "${certificate_dir}/key.pem"
           # Queue nginx reload if a certificate was issued or renewed
           [[ $simp_le_return -eq 0 ]] && should_reload_nginx='true'
         fi
