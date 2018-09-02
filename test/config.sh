@@ -12,6 +12,7 @@ imageTests+=(
 	certs_single
 	certs_san
 	force_renew
+	permissions
 	symlinks
 	'
 )
