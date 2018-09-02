@@ -28,6 +28,7 @@ docker run --rm -d \
   --name "${domains[0]}" \
   -e "VIRTUAL_HOST=${domains[0]}" \
   -e "LETSENCRYPT_HOST=${domains[0]}" \
+  --network boulder_bluenet \
   nginx:alpine > /dev/null && echo "Started test web server for ${domains[0]}"
 
 # Wait for a symlink at /etc/nginx/certs/${domains[0]}.crt

@@ -12,6 +12,7 @@ case $SETUP in
       -v /usr/share/nginx/html \
       -v /var/run/docker.sock:/tmp/docker.sock:ro \
       --label com.github.jrcs.letsencrypt_nginx_proxy_companion.test_suite \
+      --network boulder_bluenet \
       jwilder/nginx-proxy
     ;;
 
@@ -25,6 +26,7 @@ case $SETUP in
       -v /etc/nginx/vhost.d \
       -v /usr/share/nginx/html \
       --label com.github.jrcs.letsencrypt_nginx_proxy_companion.test_suite \
+      --network boulder_bluenet \
       nginx:alpine
 
     docker run -d \
@@ -33,6 +35,7 @@ case $SETUP in
       -v ${TRAVIS_BUILD_DIR}/nginx.tmpl:/etc/docker-gen/templates/nginx.tmpl:ro \
       -v /var/run/docker.sock:/tmp/docker.sock:ro \
       --label com.github.jrcs.letsencrypt_nginx_proxy_companion.test_suite \
+      --network boulder_bluenet \
       jwilder/docker-gen \
       -notify-sighup $NGINX_CONTAINER_NAME -watch -wait 5s:30s /etc/docker-gen/templates/nginx.tmpl /etc/nginx/conf.d/default.conf
     ;;

@@ -198,7 +198,7 @@
 
 set -e
 
-## Next thirteen lines were added by jrcs/docker-letsencrypt-nginx-proxy-companion
+## Next eleven lines were added by jrcs/docker-letsencrypt-nginx-proxy-companion
 dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 self="$(basename "$0")"
 
@@ -206,8 +206,6 @@ if [[ -z $TRAVIS_CI ]] && [[ -f "$dir/local_test_env.sh" ]]; then
 	# shellcheck source=/dev/null
 	source "$dir/local_test_env.sh"
 fi
-
-BOULDER_IP="10.77.77.1" && export BOULDER_IP
 
 # shellcheck source=./tests/test-functions.sh
 source "$dir/tests/test-functions.sh"
