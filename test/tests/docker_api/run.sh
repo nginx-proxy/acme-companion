@@ -98,7 +98,7 @@ EOF
   # Cleanup function with EXIT trap
   function cleanup {
     # Kill the Docker events listener
-    kill $docker_events_pid && wait $docker_events_pid 2>/dev/
+    kill $docker_events_pid && wait $docker_events_pid 2>/dev/null
     # Remove the remaining containers silently
     docker stop \
       "$nginx_vol" \

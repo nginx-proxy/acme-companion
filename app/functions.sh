@@ -199,6 +199,27 @@ function reload_nginx {
     fi
 }
 
+function set_root_ownership_and_permissions {
+  local path="${1:?}"
+
+  if [[ $(stat -c %U:%G "$path" ) != root:root ]]; then
+    chown root:root "$path"
+    [[ $DEBUG == true ]] && echo "Debug: setting $path ownership to root:root."
+  fi
+
+  if [[ -d "$path" ]]; then
+    if [[ $(stat -c %a "$path") != 700 ]]; then
+      chmod 700 "$path"
+      [[ $DEBUG == true ]] && echo "Debug: setting $path permissions to 700."
+    fi
+  elif [[ -f "$path" ]]; then
+    if [[ $(stat -c %a "$path") != 600 ]]; then
+      chmod 600 "$path"
+      [[ $DEBUG == true ]] && echo "Debug: setting $path permissions to 600."
+    fi
+  fi
+}
+
 # Convert argument to lowercase (bash 4 only)
 function lc {
 	echo "${@,,}"

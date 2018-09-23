@@ -35,6 +35,7 @@ docker run --rm -d \
   --name "symlink-le1-le2" \
   -e "VIRTUAL_HOST=${domains[0]},${domains[1]}" \
   -e "LETSENCRYPT_HOST=${domains[0]},${domains[1]}" \
+  --network boulder_bluenet \
   nginx:alpine > /dev/null && echo "Started test web server for ${domains[0]},${domains[1]}"
 
 # ... plus another nginx container for the third domain.
@@ -42,6 +43,7 @@ docker run --rm -d \
   --name "symlink-le3" \
   -e "VIRTUAL_HOST=${domains[2]}" \
   -e "LETSENCRYPT_HOST=${domains[2]}" \
+  --network boulder_bluenet \
   nginx:alpine > /dev/null && echo "Started test web server for ${domains[2]}"
 
 # Wait for a file at /etc/nginx/certs/$domain/cert.pem
@@ -74,6 +76,7 @@ docker run --rm -d \
   --name "symlink-le1-le2-le3" \
   -e "VIRTUAL_HOST=${domains[0]},${domains[1]},${domains[2]}" \
   -e "LETSENCRYPT_HOST=${domains[0]},${domains[1]},${domains[2]}" \
+  --network boulder_bluenet \
   nginx:alpine > /dev/null && echo "Started test web server for ${domains[0]},${domains[1]},${domains[2]}"
 
 # Check where the symlink points (should be ./le1.wtf/fullchain.pem)
@@ -92,6 +95,7 @@ docker run --rm -d \
   --name "symlink-le2" \
   -e "VIRTUAL_HOST=${domains[1]}" \
   -e "LETSENCRYPT_HOST=${domains[1]}" \
+  --network boulder_bluenet \
   nginx:alpine > /dev/null && echo "Started test web server for ${domains[1]}"
 
 # Check where the symlink points (should be ./le2.wtf/fullchain.pem)
@@ -104,6 +108,7 @@ docker run --rm -d \
   --name "symlink-lim-le2" \
   -e "VIRTUAL_HOST=lim.it,${domains[1]}" \
   -e "LETSENCRYPT_HOST=lim.it,${domains[1]}" \
+  --network boulder_bluenet \
   nginx:alpine > /dev/null && echo "Started test web server for lim.it,${domains[1]}"
 
 # The symlink creation for lim.it should time out, and the ${domains[1]}

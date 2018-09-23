@@ -32,6 +32,7 @@ for domain in "${domains[@]}"; do
     --name "$domain" \
     -e "VIRTUAL_HOST=${domain}" \
     -e "LETSENCRYPT_HOST=${domain}" \
+    --network boulder_bluenet \
     nginx:alpine > /dev/null && echo "Started test web server for $domain"
 done
 

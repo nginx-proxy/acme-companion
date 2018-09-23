@@ -5,9 +5,6 @@ set -e
 acme_endpoint='http://boulder:4000/directory'
 
 setup_boulder() {
-  # Per the boulder README:
-  nginx_proxy_ip="$(docker inspect --format='{{range .NetworkSettings.Networks}}{{.Gateway}}{{end}}' "$NGINX_CONTAINER_NAME")"
-
   export GOPATH=${TRAVIS_BUILD_DIR}/go
   [[ ! -d $GOPATH/src/github.com/letsencrypt/boulder ]] \
     && git clone --depth=1 https://github.com/letsencrypt/boulder \
@@ -26,7 +23,7 @@ setup_boulder() {
   docker-compose run -d \
     --use-aliases \
     --name boulder \
-    -e FAKE_DNS=${nginx_proxy_ip:?} \
+    -e FAKE_DNS=10.77.77.1 \
     --service-ports \
     boulder
   popd

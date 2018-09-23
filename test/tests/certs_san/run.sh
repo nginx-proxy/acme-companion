@@ -48,6 +48,7 @@ for hosts in "${letsencrypt_hosts[@]}"; do
     --name "$container" \
     -e "VIRTUAL_HOST=${TEST_DOMAINS}" \
     -e "LETSENCRYPT_HOST=${hosts}" \
+    --network boulder_bluenet \
     nginx:alpine > /dev/null && echo "Started test web server for $hosts"
 
   # Wait for a symlink at /etc/nginx/certs/$base_domain.crt
