@@ -115,14 +115,14 @@ function check_default_cert_key {
             -keyout /etc/nginx/certs/default.key.new \
             -out /etc/nginx/certs/default.crt.new \
         && mv /etc/nginx/certs/default.key.new /etc/nginx/certs/default.key \
-        && mv /etc/nginx/certs/default.crt.new /etc/nginx/certs/default.crt \
-        && set_root_ownership_and_permissions /etc/nginx/certs/default.key
+        && mv /etc/nginx/certs/default.crt.new /etc/nginx/certs/default.crt
         echo "Info: a default key and certificate have been created at /etc/nginx/certs/default.key and /etc/nginx/certs/default.crt."
     elif [[ $DEBUG == true && "${default_cert_cn:-}" =~ $cn ]]; then
         echo "Debug: the self generated default certificate is still valid for more than three months. Skipping default certificate creation."
     elif [[ $DEBUG == true ]]; then
         echo "Debug: the default certificate is user provided. Skipping default certificate creation."
     fi
+    set_ownership_and_permissions "/etc/nginx/certs/default.key"
 }
 
 source /app/functions.sh
