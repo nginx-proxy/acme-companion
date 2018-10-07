@@ -44,7 +44,7 @@ folders=( \
 # Test folder paths
 for folder in  "${folders[@]}"; do
   ownership_and_permissions="$(docker exec "$le_container_name" stat -c %U:%G:%a "$folder")"
-  [[ "$ownership_and_permissions" == root:root:700 ]] || echo "Expected root:root:700 on ${folder}, found ${ownership_and_permissions}."
+  [[ "$ownership_and_permissions" == root:root:755 ]] || echo "Expected root:root:755 on ${folder}, found ${ownership_and_permissions}."
 done
 
 # Array of file paths to test
@@ -57,5 +57,5 @@ files=( \
 # Test file paths
 for file in  "${files[@]}"; do
   ownership_and_permissions="$(docker exec "$le_container_name" stat -c %U:%G:%a "$file")"
-  [[ "$ownership_and_permissions" == root:root:600 ]] || echo "Expected root:root:600 on ${file}, found ${ownership_and_permissions}."
+  [[ "$ownership_and_permissions" == root:root:644 ]] || echo "Expected root:root:644 on ${file}, found ${ownership_and_permissions}."
 done

@@ -201,11 +201,11 @@ function reload_nginx {
 
 function set_ownership_and_permissions {
   local path="${1:?}"
-  # The default ownership is root:root, with 700 permissions for folders and 600 for files.
+  # The default ownership is root:root, with 755 permissions for folders and 644 for files.
   local user="${FILES_UID:-root}"
   local group="${FILES_GID:-$user}"
-  local f_perms="${FILES_PERMS:-600}"
-  local d_perms="${FOLDERS_PERMS:-700}"
+  local f_perms="${FILES_PERMS:-644}"
+  local d_perms="${FOLDERS_PERMS:-755}"
 
   if [[ ! "$f_perms" =~ ^[0-7]{3,4}$ ]]; then
     echo "Warning : the provided files permission octal ($f_perms) is incorrect. Skipping ownership and permissions check."
