@@ -243,9 +243,14 @@ function set_ownership_and_permissions {
   fi
 
   # Check and modify ownership if required.
-  if [[ "$(stat -c %u:%g "$path" )" != "$user_num:$group_num" ]]; then
-    [[ $DEBUG == true ]] && echo "Debug: setting $path ownership to $user:$group."
-    chown "$user_num:$group_num" "$path"
+  if [[ -e "$path" ]]; then
+    if [[ "$(stat -c %u:%g "$path" )" != "$user_num:$group_num" ]]; then
+      [[ $DEBUG == true ]] && echo "Debug: setting $path ownership to $user:$group."
+      chown "$user_num:$group_num" "$path"
+    fi
+  else
+    [[ $DEBUG == true ]] && echo "Debug: $path does not exist. Skipping ownership and permissions check."
+    return 1
   fi
 
   # Check and modify permissions if required.
