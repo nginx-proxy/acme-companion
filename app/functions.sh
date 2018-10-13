@@ -249,7 +249,7 @@ function set_ownership_and_permissions {
       chown "$user_num:$group_num" "$path"
     fi
   else
-    [[ $DEBUG == true ]] && echo "Debug: $path does not exist. Skipping ownership and permissions check."
+    echo "Warning: $path does not exist. Skipping ownership and permissions check."
     return 1
   fi
 
