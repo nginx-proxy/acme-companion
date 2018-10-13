@@ -48,7 +48,8 @@ after_failure:
   - docker logs certs_single
   - docker logs certs_san
   - docker logs force_renew
-  - docker logs permissions
+  - docker logs permissions_default
+  - docker logs permissions_custom
   - docker logs symlinks
   - docker logs boulder
   - if [[ $SETUP = "3containers" ]]; then docker logs $DOCKER_GEN_CONTAINER_NAME; fi

@@ -43,8 +43,8 @@ folders=( \
 
 # Test folder paths
 for folder in  "${folders[@]}"; do
-  ownership_and_permissions="$(docker exec "$le_container_name" stat -c %U:%G:%a "$folder")"
-  [[ "$ownership_and_permissions" == root:root:755 ]] || echo "Expected root:root:755 on ${folder}, found ${ownership_and_permissions}."
+  ownership_and_permissions="$(docker exec "$le_container_name" stat -c %u:%g:%a "$folder")"
+  [[ "$ownership_and_permissions" == 0:0:755 ]] || echo "Expected 0:0:755 on ${folder}, found ${ownership_and_permissions}."
 done
 
 # Array of file paths to test
@@ -56,6 +56,25 @@ files=( \
 
 # Test file paths
 for file in  "${files[@]}"; do
-  ownership_and_permissions="$(docker exec "$le_container_name" stat -c %U:%G:%a "$file")"
-  [[ "$ownership_and_permissions" == root:root:644 ]] || echo "Expected root:root:644 on ${file}, found ${ownership_and_permissions}."
+  ownership_and_permissions="$(docker exec "$le_container_name" stat -c %u:%g:%a "$file")"
+  if [[ "$ownership_and_permissions" != 0:0:644 ]]; then
+    echo "Expected 0:0:644 on ${file}, found ${ownership_and_permissions}."
+  fi
+done
+
+# Array of public files paths to test
+public_files=( \
+  [0]="/etc/nginx/certs/${domains[0]}/cert.pem" \
+  [1]="/etc/nginx/certs/${domains[0]}/chain.pem" \
+  [2]="/etc/nginx/certs/${domains[0]}/fullchain.pem" \
+  [3]="/etc/nginx/certs/default.crt" \
+  [4]="/etc/nginx/certs/dhparam.pem" \
+  )
+
+# Test public file paths
+for file in  "${public_files[@]}"; do
+  ownership_and_permissions="$(docker exec "$le_container_name" stat -c %u:%g:%a "$file")"
+  if [[ "$ownership_and_permissions" != 0:0:644 ]]; then
+    echo "Expected 0:0:644 on ${file}, found ${ownership_and_permissions}."
+  fi
 done
