@@ -44,18 +44,20 @@ folders=( \
 # Test folder paths
 for folder in  "${folders[@]}"; do
   ownership_and_permissions="$(docker exec "$le_container_name" stat -c %u:%g:%a "$folder")"
-  [[ "$ownership_and_permissions" == 0:0:755 ]] || echo "Expected 0:0:755 on ${folder}, found ${ownership_and_permissions}."
+  if [[ "$ownership_and_permissions" != 0:0:755 ]]; then
+    echo "Expected 0:0:755 on ${folder}, found ${ownership_and_permissions}."
+  fi
 done
 
-# Array of file paths to test
-files=( \
+# Array of private file paths to test
+private_files=( \
   [0]="/etc/nginx/certs/default.key" \
   [1]="/etc/nginx/certs/accounts/boulder:4000/directory/default.json" \
   [2]="/etc/nginx/certs/${domains[0]}/key.pem" \
   )
 
-# Test file paths
-for file in  "${files[@]}"; do
+# Test private file paths
+for file in  "${private_files[@]}"; do
   ownership_and_permissions="$(docker exec "$le_container_name" stat -c %u:%g:%a "$file")"
   if [[ "$ownership_and_permissions" != 0:0:644 ]]; then
     echo "Expected 0:0:644 on ${file}, found ${ownership_and_permissions}."

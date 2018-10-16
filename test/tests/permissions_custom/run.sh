@@ -2,13 +2,18 @@
 
 ## Test for sensitive files and folders permissions
 
+files_uid=1000
+files_gid=1001
+files_perms=640
+folders_perms=750
+
 if [[ -z $TRAVIS_CI ]]; then
   le_container_name="$(basename ${0%/*})_$(date "+%Y-%m-%d_%H.%M.%S")"
 else
   le_container_name="$(basename ${0%/*})"
 fi
 run_le_container ${1:?} "$le_container_name" \
-  "--env FILES_UID=1000 --env FILES_GID=1001 --env FILES_PERMS=640 --env FOLDERS_PERMS=750"
+  "--env FILES_UID=$files_uid --env FILES_GID=$files_gid --env FILES_PERMS=$files_perms --env FOLDERS_PERMS=$folders_perms"
 
 # Create the $domains array from comma separated domains in TEST_DOMAINS.
 IFS=',' read -r -a domains <<< "$TEST_DOMAINS"
@@ -45,18 +50,39 @@ folders=( \
 # Test folder paths
 for folder in  "${folders[@]}"; do
   ownership_and_permissions="$(docker exec "$le_container_name" stat -c %u:%g:%a "$folder")"
-  [[ "$ownership_and_permissions" == 1000:1001:750 ]] || echo "Expected 1000:1001:750 on ${folder}, found ${ownership_and_permissions}."
+  if [[ "$ownership_and_permissions" != ${files_uid}:${files_gid}:${folders_perms} ]]; then
+    echo "Expected ${files_uid}:${files_gid}:${folders_perms} on ${folder}, found ${ownership_and_permissions}."
+  fi
 done
 
-# Array of file paths to test
-files=( \
+# Array of private file paths to test
+private_files=( \
   [0]="/etc/nginx/certs/default.key" \
   [1]="/etc/nginx/certs/accounts/boulder:4000/directory/default.json" \
   [2]="/etc/nginx/certs/${domains[0]}/key.pem" \
   )
 
-# Test file paths
-for file in  "${files[@]}"; do
+# Test private file paths
+for file in  "${private_files[@]}"; do
   ownership_and_permissions="$(docker exec "$le_container_name" stat -c %u:%g:%a "$file")"
-  [[ "$ownership_and_permissions" == 1000:1001:640 ]] || echo "Expected 1000:1001:640 on ${file}, found ${ownership_and_permissions}."
+  if [[ "$ownership_and_permissions" != ${files_uid}:${files_gid}:${files_perms} ]]; then
+    echo "Expected ${files_uid}:${files_gid}:${files_perms} on ${file}, found ${ownership_and_permissions}."
+  fi
+done
+
+# Array of public files paths to test
+public_files=( \
+  [0]="/etc/nginx/certs/${domains[0]}/cert.pem" \
+  [1]="/etc/nginx/certs/${domains[0]}/chain.pem" \
+  [2]="/etc/nginx/certs/${domains[0]}/fullchain.pem" \
+  [3]="/etc/nginx/certs/default.crt" \
+  [4]="/etc/nginx/certs/dhparam.pem" \
+  )
+
+# Test public file paths
+for file in  "${public_files[@]}"; do
+  ownership_and_permissions="$(docker exec "$le_container_name" stat -c %u:%g:%a "$file")"
+  if [[ "$ownership_and_permissions" != ${files_uid}:${files_gid}:644 ]]; then
+    echo "Expected ${files_uid}:${files_gid}:644 on ${file}, found ${ownership_and_permissions}."
+  fi
 done

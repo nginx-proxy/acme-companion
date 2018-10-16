@@ -253,16 +253,26 @@ function set_ownership_and_permissions {
     return 1
   fi
 
-  # Check and modify permissions if required.
+  # If the path is a folder, check and modify permissions if required.
   if [[ -d "$path" ]]; then
     if [[ "$(stat -c %a "$path")" != "$d_perms" ]]; then
       [[ $DEBUG == true ]] && echo "Debug: setting $path permissions to $d_perms."
       chmod "$d_perms" "$path"
     fi
-  elif [[ -f "$path" ]]; then
-    if [[ "$(stat -c %a "$path")" != "$f_perms" ]]; then
-      [[ $DEBUG == true ]] && echo "Debug: setting $path permissions to $f_perms."
-      chmod "$f_perms" "$path"
+  # If the path is a file, check and modify permissions if required.
+elif [[ -f "$path" ]]; then
+    # Use different permissions for private files (private keys and ACME account keys) ...
+    if [[ "$path" =~ ^.*(default\.key|key\.pem|\.json)$ ]]; then
+      if [[ "$(stat -c %a "$path")" != "$f_perms" ]]; then
+        [[ $DEBUG == true ]] && echo "Debug: setting $path permissions to $f_perms."
+        chmod "$f_perms" "$path"
+      fi
+    # ... and for public files (certificates, chains, fullchains, DH parameters).
+    else
+      if [[ "$(stat -c %a "$path")" != "644" ]]; then
+        [[ $DEBUG == true ]] && echo "Debug: setting $path permissions to 644."
+        chmod "$f_perms" "$path"
+      fi
     fi
   fi
 }

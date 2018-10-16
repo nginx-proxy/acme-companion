@@ -238,7 +238,9 @@ function update_certs {
             fi
           done
           # Make private key root readable only
-          set_ownership_and_permissions "${certificate_dir}/key.pem"
+          for filename in cert key chain fullchain; do
+            set_ownership_and_permissions "${certificate_dir}/${filename}.pem"
+          done
           # Make the account key and its parent folders (up to
           # /etc/nginx/certs/accounts included) root readable only
           account_key_perm_path="/etc/nginx/certs/accounts/${acme_ca_uri#*://}/${account_alias}.json"
