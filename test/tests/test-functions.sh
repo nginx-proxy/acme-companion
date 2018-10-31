@@ -13,16 +13,15 @@ export -f get_base_domain
 function run_le_container {
   local image="${1:?}"
   local name="${2:?}"
+  local cli_args="${3:-}"
   if [[ "$SETUP" == '3containers' ]]; then
-    docker_gen_arg="--env NGINX_DOCKER_GEN_CONTAINER=$DOCKER_GEN_CONTAINER_NAME"
-  else
-    docker_gen_arg=""
+    cli_args+=" --env NGINX_DOCKER_GEN_CONTAINER=$DOCKER_GEN_CONTAINER_NAME"
   fi
   docker run -d \
     --name "$name" \
     --volumes-from $NGINX_CONTAINER_NAME \
     --volume /var/run/docker.sock:/var/run/docker.sock:ro \
-    $docker_gen_arg \
+    $cli_args \
     --env "DHPARAM_BITS=256" \
     --env "DEBUG=true" \
     --env "ACME_CA_URI=http://boulder:4000/directory" \

@@ -199,23 +199,80 @@ function reload_nginx {
     fi
 }
 
-function set_root_ownership_and_permissions {
+function set_ownership_and_permissions {
   local path="${1:?}"
+  # The default ownership is root:root, with 755 permissions for folders and 644 for files.
+  local user="${FILES_UID:-root}"
+  local group="${FILES_GID:-$user}"
+  local f_perms="${FILES_PERMS:-644}"
+  local d_perms="${FOLDERS_PERMS:-755}"
 
-  if [[ $(stat -c %U:%G "$path" ) != root:root ]]; then
-    chown root:root "$path"
-    [[ $DEBUG == true ]] && echo "Debug: setting $path ownership to root:root."
+  if [[ ! "$f_perms" =~ ^[0-7]{3,4}$ ]]; then
+    echo "Warning : the provided files permission octal ($f_perms) is incorrect. Skipping ownership and permissions check."
+    return 1
+  fi
+  if [[ ! "$d_perms" =~ ^[0-7]{3,4}$ ]]; then
+    echo "Warning : the provided folders permission octal ($d_perms) is incorrect. Skipping ownership and permissions check."
+    return 1
   fi
 
-  if [[ -d "$path" ]]; then
-    if [[ $(stat -c %a "$path") != 700 ]]; then
-      chmod 700 "$path"
-      [[ $DEBUG == true ]] && echo "Debug: setting $path permissions to 700."
+  # Find the user numeric ID if the FILES_UID environment variable isn't numeric.
+  if [[ "$user" =~ ^[0-9]+$ ]]; then
+    user_num="$user"
+  # Check if this user exist inside the container
+  elif id -u "$user" > /dev/null 2>&1; then
+    # Convert the user name to numeric ID
+    local user_num="$(id -u "$user")"
+    [[ $DEBUG == true ]] && echo "Debug: numeric ID of user $user is $user_num."
+  else
+    echo "Warning: user $user not found in the container, please use a numeric user ID instead of a user name. Skipping ownership and permissions check."
+    return 1
+  fi
+
+  # Find the group numeric ID if the FILES_GID environment variable isn't numeric.
+  if [[ "$group" =~ ^[0-9]+$ ]]; then
+    group_num="$group"
+  # Check if this group exist inside the container
+  elif getent group "$group" > /dev/null 2>&1; then
+    # Convert the group name to numeric ID
+    local group_num="$(getent group "$group" | awk -F ':' '{print $3}')"
+    [[ $DEBUG == true ]] && echo "Debug: numeric ID of group $group is $group_num."
+  else
+    echo "Warning: group $group not found in the container, please use a numeric group ID instead of a group name. Skipping ownership and permissions check."
+    return 1
+  fi
+
+  # Check and modify ownership if required.
+  if [[ -e "$path" ]]; then
+    if [[ "$(stat -c %u:%g "$path" )" != "$user_num:$group_num" ]]; then
+      [[ $DEBUG == true ]] && echo "Debug: setting $path ownership to $user:$group."
+      chown "$user_num:$group_num" "$path"
     fi
-  elif [[ -f "$path" ]]; then
-    if [[ $(stat -c %a "$path") != 600 ]]; then
-      chmod 600 "$path"
-      [[ $DEBUG == true ]] && echo "Debug: setting $path permissions to 600."
+  else
+    echo "Warning: $path does not exist. Skipping ownership and permissions check."
+    return 1
+  fi
+
+  # If the path is a folder, check and modify permissions if required.
+  if [[ -d "$path" ]]; then
+    if [[ "$(stat -c %a "$path")" != "$d_perms" ]]; then
+      [[ $DEBUG == true ]] && echo "Debug: setting $path permissions to $d_perms."
+      chmod "$d_perms" "$path"
+    fi
+  # If the path is a file, check and modify permissions if required.
+elif [[ -f "$path" ]]; then
+    # Use different permissions for private files (private keys and ACME account keys) ...
+    if [[ "$path" =~ ^.*(default\.key|key\.pem|\.json)$ ]]; then
+      if [[ "$(stat -c %a "$path")" != "$f_perms" ]]; then
+        [[ $DEBUG == true ]] && echo "Debug: setting $path permissions to $f_perms."
+        chmod "$f_perms" "$path"
+      fi
+    # ... and for public files (certificates, chains, fullchains, DH parameters).
+    else
+      if [[ "$(stat -c %a "$path")" != "644" ]]; then
+        [[ $DEBUG == true ]] && echo "Debug: setting $path permissions to 644."
+        chmod "$f_perms" "$path"
+      fi
     fi
   fi
 }

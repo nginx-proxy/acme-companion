@@ -62,6 +62,7 @@ function check_dh_group {
         local CURRENT_HASH=$(sha256sum "$DHPARAM_FILE" | cut -d ' ' -f1)
         if [[ "$PREGEN_HASH" != "$CURRENT_HASH" ]]; then
             # There is already a dhparam, and it's not the default
+            set_ownership_and_permissions "$DHPARAM_FILE"
             echo "Info: Custom Diffie-Hellman group found, generation skipped."
             return 0
           fi
@@ -78,6 +79,7 @@ is being created."
 
     # Put the default dhparam file in place so we can start immediately
     cp "$PREGEN_DHPARAM_FILE" "$DHPARAM_FILE"
+    set_ownership_and_permissions "$DHPARAM_FILE"
     touch "$GEN_LOCKFILE"
 
     # Generate a new dhparam in the background in a low priority and reload nginx when finished (grep removes the progress indicator).
@@ -85,6 +87,7 @@ is being created."
         (
             nice -n +5 openssl dhparam -out "$DHPARAM_FILE" "$DHPARAM_BITS" 2>&1 \
             && echo "Info: Diffie-Hellman group creation complete, reloading nginx." \
+            && set_ownership_and_permissions "$DHPARAM_FILE" \
             && reload_nginx
         ) | grep -vE '^[\.+]+'
         rm "$GEN_LOCKFILE"
@@ -115,14 +118,15 @@ function check_default_cert_key {
             -keyout /etc/nginx/certs/default.key.new \
             -out /etc/nginx/certs/default.crt.new \
         && mv /etc/nginx/certs/default.key.new /etc/nginx/certs/default.key \
-        && mv /etc/nginx/certs/default.crt.new /etc/nginx/certs/default.crt \
-        && set_root_ownership_and_permissions /etc/nginx/certs/default.key
+        && mv /etc/nginx/certs/default.crt.new /etc/nginx/certs/default.crt
         echo "Info: a default key and certificate have been created at /etc/nginx/certs/default.key and /etc/nginx/certs/default.crt."
     elif [[ $DEBUG == true && "${default_cert_cn:-}" =~ $cn ]]; then
         echo "Debug: the self generated default certificate is still valid for more than three months. Skipping default certificate creation."
     elif [[ $DEBUG == true ]]; then
         echo "Debug: the default certificate is user provided. Skipping default certificate creation."
     fi
+    set_ownership_and_permissions "/etc/nginx/certs/default.key"
+    set_ownership_and_permissions "/etc/nginx/certs/default.crt"
 }
 
 source /app/functions.sh
