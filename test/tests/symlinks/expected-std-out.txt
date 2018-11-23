@@ -20,6 +20,6 @@ Started test web server for le2.wtf
 Symlink to le2.wtf certificate has been generated.
 The link is pointing to the file ./le2.wtf/fullchain.pem
 Started test web server for lim.it,le2.wtf
-Symlink for lim.it certificate was not generated under three minutes, timing out.
+Symlink for lim.it certificate was not generated under one minute, timing out.
 Symlink to le2.wtf certificate has been generated.
 The link is pointing to the file ./le2.wtf/fullchain.pem

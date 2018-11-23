@@ -39,8 +39,8 @@ function wait_for_symlink {
   local i=0
   local target
   until docker exec "$name" [ -L "/etc/nginx/certs/$domain.crt" ]; do
-    if [ $i -gt 180 ]; then
-      echo "Symlink for $domain certificate was not generated under three minutes, timing out."
+    if [ $i -gt 60 ]; then
+      echo "Symlink for $domain certificate was not generated under one minute, timing out."
       return 1
     fi
     i=$((i + 2))
@@ -58,9 +58,9 @@ function wait_for_symlink_rm {
   local domain="${1:?}"
   local name="${2:?}"
   local i=0
-    if [ $i -gt 120 ]; then
-      echo "Certificate symlink for $domain was not removed under two minutes, timing out."
   until docker exec "$name" [ ! -L "/etc/nginx/certs/$domain.crt" ]; do
+    if [ $i -gt 60 ]; then
+      echo "Certificate symlink for $domain was not removed under one minute, timing out."
       return 1
     fi
     i=$((i + 2))
