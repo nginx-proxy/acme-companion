@@ -53,14 +53,14 @@ function wait_for_symlink {
 export -f wait_for_symlink
 
 
-# Wait for the /etc/nginx/certs/$1.crt file to be removed inside container $2
+# Wait for the /etc/nginx/certs/$1.crt symlink to be removed inside container $2
 function wait_for_symlink_rm {
   local domain="${1:?}"
   local name="${2:?}"
   local i=0
-  until docker exec "$name" [ ! -f "/etc/nginx/certs/$domain.crt" ]; do
     if [ $i -gt 120 ]; then
       echo "Certificate symlink for $domain was not removed under two minutes, timing out."
+  until docker exec "$name" [ ! -L "/etc/nginx/certs/$domain.crt" ]; do
       return 1
     fi
     i=$((i + 2))
