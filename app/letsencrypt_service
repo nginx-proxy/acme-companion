@@ -88,31 +88,26 @@ function cleanup_links {
     # Remove disabled domains symlinks if present.
     # Return 1 if nothing was removed and 0 otherwise.
     if [[ ${#DISABLED_DOMAINS[@]} -gt 0 ]]; then
-      [[ $DEBUG == true ]] && echo "Some domains are disabled. Check them to remove unused symlinks."
+      [[ $DEBUG == true ]] && echo "Some domains are disabled :"
       for disabled_domain in "${DISABLED_DOMAINS[@]}"; do
-          [[ $DEBUG == true ]] && echo -e -n "\nChecking domain ${disabled_domain}: "
-          certfile="/etc/nginx/certs/${disabled_domain}.crt"
-          # If certificate is not letsencrypt, don't ever try to remove it
-          if [[ -f "${certfile}" ]]; then
-              issuer="$(openssl x509 -noout -issuer -in ${certfile})"
-              le_regex="Let's Encrypt"
-              ci_regex="h[a,2]ppy h[a,2]cker fake CA"
-              if [[ ! "$issuer" =~ $le_regex ]] && [[ ! "$issuer" =~ $ci_regex ]]; then
-                  [[ $DEBUG == true ]] && echo "certificate is not LE. Skipping."
-                  continue
-              fi
+          [[ $DEBUG == true ]] && echo "Checking domain ${disabled_domain}"
+          cert_folder="$(readlink -f /etc/nginx/certs/${disabled_domain}.crt)"
+          # If the dotfile is absent, skip domain.
+          if [[ ! -e "${cert_folder%/*}/.companion" ]]; then
+              [[ $DEBUG == true ]] && echo "No .companion file found in ${cert_folder}. ${disabled_domain} is not managed by letsencrypt-nginx-proxy-companion. Skipping domain."
+              continue
+          else
+              [[ $DEBUG == true ]] && echo "${disabled_domain} is managed by letsencrypt-nginx-proxy-companion. Removing unused symlinks."
           fi
 
           for extension in .crt .key .dhparam.pem .chain.pem; do
               file="${disabled_domain}${extension}"
-              [[ $DEBUG == true ]] && echo -n -e "\nChecking ${file}"
               if [[ -n "${file// }" ]] && [[ -L "/etc/nginx/certs/${file}" ]]; then
-                  [[ $DEBUG == true ]] && echo -n " - removing."
+                  [[ $DEBUG == true ]] && echo "Removing /etc/nginx/certs/${file}"
                   rm -f "/etc/nginx/certs/${file}"
               fi
           done
       done
-      [[ $DEBUG == true ]] && echo -e "\nUnused domains checking is finished."
       return 0
     else
       return 1
@@ -236,6 +231,8 @@ function update_certs {
             else
               create_links "$base_domain" "$domain" && should_reload_nginx='true'
             fi
+            touch "${certificate_dir}/.companion"
+            set_ownership_and_permissions "${certificate_dir}/.companion"
           done
           # Make private key root readable only
           for filename in cert key chain fullchain; do
