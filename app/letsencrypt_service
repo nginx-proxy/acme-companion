@@ -13,7 +13,7 @@ function create_link {
     local -r source=${1?missing source argument}
     local -r target=${2?missing target argument}
     if [[ -f "$target" ]] && [[ "$(readlink "$target")" == "$source" ]]; then
-      [[ $DEBUG == true ]] && echo "$target already linked to $source"
+      [[ "$(lc $DEBUG)" == true ]] && echo "$target already linked to $source"
       return 1
     else
       ln -sf "$source" "$target"
@@ -57,7 +57,7 @@ function cleanup_links {
         symlinked_domain="${symlinked_domain%*.crt}"
         SYMLINKED_DOMAINS+=("$symlinked_domain")
     done
-    [[ $DEBUG == true ]] && echo "Symlinked domains: ${SYMLINKED_DOMAINS[*]}"
+    [[ "$(lc $DEBUG)" == true ]] && echo "Symlinked domains: ${SYMLINKED_DOMAINS[*]}"
 
     # Create an array containing domains that are considered
     # enabled (ie present on /app/letsencrypt_service_data).
@@ -71,7 +71,7 @@ function cleanup_links {
         ENABLED_DOMAINS+=("$domain")
       done
     done
-    [[ $DEBUG == true ]] && echo "Enabled domains: ${ENABLED_DOMAINS[*]}"
+    [[ "$(lc $DEBUG)" == true ]] && echo "Enabled domains: ${ENABLED_DOMAINS[*]}"
 
     # Create an array containing only domains for which a symlinked private key exists
     # in /etc/nginx/certs but that no longer have a corresponding LETSENCRYPT_HOST set
@@ -82,28 +82,28 @@ function cleanup_links {
                                              "${ENABLED_DOMAINS[@]}" \
                                              | tr ' ' '\n' | sort | uniq -u)
     fi
-    [[ $DEBUG == true ]] && echo "Disabled domains: ${DISABLED_DOMAINS[*]}"
+    [[ "$(lc $DEBUG)" == true ]] && echo "Disabled domains: ${DISABLED_DOMAINS[*]}"
 
 
     # Remove disabled domains symlinks if present.
     # Return 1 if nothing was removed and 0 otherwise.
     if [[ ${#DISABLED_DOMAINS[@]} -gt 0 ]]; then
-      [[ $DEBUG == true ]] && echo "Some domains are disabled :"
+      [[ "$(lc $DEBUG)" == true ]] && echo "Some domains are disabled :"
       for disabled_domain in "${DISABLED_DOMAINS[@]}"; do
-          [[ $DEBUG == true ]] && echo "Checking domain ${disabled_domain}"
+          [[ "$(lc $DEBUG)" == true ]] && echo "Checking domain ${disabled_domain}"
           cert_folder="$(readlink -f /etc/nginx/certs/${disabled_domain}.crt)"
           # If the dotfile is absent, skip domain.
           if [[ ! -e "${cert_folder%/*}/.companion" ]]; then
-              [[ $DEBUG == true ]] && echo "No .companion file found in ${cert_folder}. ${disabled_domain} is not managed by letsencrypt-nginx-proxy-companion. Skipping domain."
+              [[ "$(lc $DEBUG)" == true ]] && echo "No .companion file found in ${cert_folder}. ${disabled_domain} is not managed by letsencrypt-nginx-proxy-companion. Skipping domain."
               continue
           else
-              [[ $DEBUG == true ]] && echo "${disabled_domain} is managed by letsencrypt-nginx-proxy-companion. Removing unused symlinks."
+              [[ "$(lc $DEBUG)" == true ]] && echo "${disabled_domain} is managed by letsencrypt-nginx-proxy-companion. Removing unused symlinks."
           fi
 
           for extension in .crt .key .dhparam.pem .chain.pem; do
               file="${disabled_domain}${extension}"
               if [[ -n "${file// }" ]] && [[ -L "/etc/nginx/certs/${file}" ]]; then
-                  [[ $DEBUG == true ]] && echo "Removing /etc/nginx/certs/${file}"
+                  [[ "$(lc $DEBUG)" == true ]] && echo "Removing /etc/nginx/certs/${file}"
                   rm -f "/etc/nginx/certs/${file}"
               fi
           done
@@ -169,7 +169,7 @@ function update_certs {
             account_alias=default
         fi
 
-        [[ $DEBUG == true ]] && params_d_str+=" -v"
+        [[ "$(lc $DEBUG)" == true ]] && params_d_str+=" -v"
         [[ $REUSE_PRIVATE_KEYS == true ]] && params_d_str+=" --reuse_key"
         [[ "${1}" == "--force-renew" ]] && params_d_str+=" --valid_min 7776000"
 
