@@ -103,7 +103,7 @@ function check_default_cert_key {
         # than 3 months / 7776000 seconds (60 x 60 x 24 x 30 x 3).
         check_cert_min_validity /etc/nginx/certs/default.crt 7776000
         cert_validity=$?
-        [[ $DEBUG == true ]] && echo "Debug: a default certificate with $default_cert_cn is present."
+        [[ "$(lc $DEBUG)" == true ]] && echo "Debug: a default certificate with $default_cert_cn is present."
     fi
 
     # Create a default cert and private key if:
@@ -120,9 +120,9 @@ function check_default_cert_key {
         && mv /etc/nginx/certs/default.key.new /etc/nginx/certs/default.key \
         && mv /etc/nginx/certs/default.crt.new /etc/nginx/certs/default.crt
         echo "Info: a default key and certificate have been created at /etc/nginx/certs/default.key and /etc/nginx/certs/default.crt."
-    elif [[ $DEBUG == true && "${default_cert_cn:-}" =~ $cn ]]; then
+    elif [[ "$(lc $DEBUG)" == true && "${default_cert_cn:-}" =~ $cn ]]; then
         echo "Debug: the self generated default certificate is still valid for more than three months. Skipping default certificate creation."
-    elif [[ $DEBUG == true ]]; then
+    elif [[ "$(lc $DEBUG)" == true ]]; then
         echo "Debug: the default certificate is user provided. Skipping default certificate creation."
     fi
     set_ownership_and_permissions "/etc/nginx/certs/default.key"
