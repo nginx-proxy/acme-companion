@@ -246,34 +246,37 @@ function set_ownership_and_permissions {
   if [[ -e "$path" ]]; then
     if [[ "$(stat -c %u:%g "$path" )" != "$user_num:$group_num" ]]; then
       [[ "$(lc $DEBUG)" == true ]] && echo "Debug: setting $path ownership to $user:$group."
-      chown "$user_num:$group_num" "$path"
+      if [[ -L "$path" ]]; then
+        chown -h "$user_num:$group_num" "$path"
+      else
+        chown "$user_num:$group_num" "$path"
+      fi
+    fi
+    # If the path is a folder, check and modify permissions if required.
+    if [[ -d "$path" ]]; then
+      if [[ "$(stat -c %a "$path")" != "$d_perms" ]]; then
+        [[ "$(lc $DEBUG)" == true ]] && echo "Debug: setting $path permissions to $d_perms."
+        chmod "$d_perms" "$path"
+      fi
+    # If the path is a file, check and modify permissions if required.
+    elif [[ -f "$path" ]]; then
+      # Use different permissions for private files (private keys and ACME account keys) ...
+      if [[ "$path" =~ ^.*(default\.key|key\.pem|\.json)$ ]]; then
+        if [[ "$(stat -c %a "$path")" != "$f_perms" ]]; then
+          [[ "$(lc $DEBUG)" == true ]] && echo "Debug: setting $path permissions to $f_perms."
+          chmod "$f_perms" "$path"
+        fi
+      # ... and for public files (certificates, chains, fullchains, DH parameters).
+      else
+        if [[ "$(stat -c %a "$path")" != "644" ]]; then
+          [[ "$(lc $DEBUG)" == true ]] && echo "Debug: setting $path permissions to 644."
+          chmod "644" "$path"
+        fi
+      fi
     fi
   else
     echo "Warning: $path does not exist. Skipping ownership and permissions check."
     return 1
-  fi
-
-  # If the path is a folder, check and modify permissions if required.
-  if [[ -d "$path" ]]; then
-    if [[ "$(stat -c %a "$path")" != "$d_perms" ]]; then
-      [[ "$(lc $DEBUG)" == true ]] && echo "Debug: setting $path permissions to $d_perms."
-      chmod "$d_perms" "$path"
-    fi
-  # If the path is a file, check and modify permissions if required.
-elif [[ -f "$path" ]]; then
-    # Use different permissions for private files (private keys and ACME account keys) ...
-    if [[ "$path" =~ ^.*(default\.key|key\.pem|\.json)$ ]]; then
-      if [[ "$(stat -c %a "$path")" != "$f_perms" ]]; then
-        [[ "$(lc $DEBUG)" == true ]] && echo "Debug: setting $path permissions to $f_perms."
-        chmod "$f_perms" "$path"
-      fi
-    # ... and for public files (certificates, chains, fullchains, DH parameters).
-    else
-      if [[ "$(stat -c %a "$path")" != "644" ]]; then
-        [[ "$(lc $DEBUG)" == true ]] && echo "Debug: setting $path permissions to 644."
-        chmod "$f_perms" "$path"
-      fi
-    fi
   fi
 }
 

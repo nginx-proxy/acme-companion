@@ -13,10 +13,12 @@ function create_link {
     local -r source=${1?missing source argument}
     local -r target=${2?missing target argument}
     if [[ -f "$target" ]] && [[ "$(readlink "$target")" == "$source" ]]; then
+      set_ownership_and_permissions "$target"
       [[ "$(lc $DEBUG)" == true ]] && echo "$target already linked to $source"
       return 1
     else
-      ln -sf "$source" "$target"
+      ln -sf "$source" "$target" \
+        && set_ownership_and_permissions "$target"
     fi
 }
 
@@ -194,10 +196,12 @@ function update_certs {
             if [[ -f "$account_key_full_path" ]]; then
                 # If there is no symlink to the account key, create it
                 if [[ ! -L ./account_key.json ]]; then
-                    ln -sf "$account_key_full_path" ./account_key.json
+                    ln -sf "$account_key_full_path" ./account_key.json \
+                      && set_ownership_and_permissions ./account_key.json
                 # If the symlink target the wrong account key, replace it
                 elif [[ "$(readlink -f ./account_key.json)" != "$account_key_full_path" ]]; then
-                    ln -sf "$account_key_full_path" ./account_key.json
+                    ln -sf "$account_key_full_path" ./account_key.json \
+                      && set_ownership_and_permissions ./account_key.json
                 fi
             fi
         fi
@@ -235,8 +239,8 @@ function update_certs {
             set_ownership_and_permissions "${certificate_dir}/.companion"
           done
           # Make private key root readable only
-          for filename in cert key chain fullchain; do
-            set_ownership_and_permissions "${certificate_dir}/${filename}.pem"
+          for file in cert.pem key.pem chain.pem fullchain.pem account_key.json; do
+            set_ownership_and_permissions "${certificate_dir}/${file}"
           done
           # Make the account key and its parent folders (up to
           # /etc/nginx/certs/accounts included) root readable only
