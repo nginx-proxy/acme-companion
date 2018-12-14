@@ -28,6 +28,7 @@ ENV DEBUG=false \
 RUN apk add --update \
         bash \
         ca-certificates \
+        coreutils \
         curl \
         jq \
         openssl \
