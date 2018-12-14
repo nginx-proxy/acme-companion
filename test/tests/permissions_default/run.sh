@@ -49,6 +49,23 @@ for folder in  "${folders[@]}"; do
   fi
 done
 
+# Array of symlinks paths to test
+symlinks=( \
+  [0]="/etc/nginx/certs/${domains[0]}.crt" \
+  [1]="/etc/nginx/certs/${domains[0]}.key" \
+  [2]="/etc/nginx/certs/${domains[0]}.chain.pem" \
+  [3]="/etc/nginx/certs/${domains[0]}.dhparam.pem" \
+  [4]="/etc/nginx/certs/${domains[0]}/account_key.json" \
+  )
+
+  # Test symlinks paths
+  for symlink in  "${symlinks[@]}"; do
+    ownership="$(docker exec "$le_container_name" stat -c %u:%g "$symlink")"
+    if [[ "$ownership" != 0:0 ]]; then
+      echo "Expected 0:0 on ${symlink}, found ${ownership}."
+    fi
+  done
+
 # Array of private file paths to test
 private_files=( \
   [0]="/etc/nginx/certs/default.key" \
