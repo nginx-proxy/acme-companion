@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 function get_environment {
   dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
@@ -75,23 +77,23 @@ EOF
     docker pull nginx:alpine
 
     # Prepare the test setup using the setup scripts
-    "${TRAVIS_BUILD_DIR}/test/setup/setup-nginx-proxy.sh"
     "${TRAVIS_BUILD_DIR}/test/setup/setup-boulder.sh"
+    "${TRAVIS_BUILD_DIR}/test/setup/setup-nginx-proxy.sh"
     ;;
 
   --teardown)
     get_environment
-
-    # Stop and remove boulder
-    docker-compose --project-name 'boulder' \
-      --file "${TRAVIS_BUILD_DIR}/go/src/github.com/letsencrypt/boulder/docker-compose.yml" \
-      down --volumes
 
     # Stop and remove nginx-proxy and (if required) docker-gen
     for cid in $(docker ps -a --filter "label=com.github.jrcs.letsencrypt_nginx_proxy_companion.test_suite" --format "{{.ID}}"); do
       docker stop "$cid"
       docker rm --volumes "$cid"
     done
+
+    # Stop and remove boulder
+    docker-compose --project-name 'boulder' \
+      --file "${TRAVIS_BUILD_DIR}/go/src/github.com/letsencrypt/boulder/docker-compose.yml" \
+      down --volumes
 
     # Cleanup files created by the setup
     if [[ -n "${TRAVIS_BUILD_DIR// }" ]]; then
