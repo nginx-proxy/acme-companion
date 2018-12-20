@@ -34,6 +34,7 @@ i=0
 until docker exec "$le_container_name" [[ -f /etc/nginx/certs/default.crt ]]; do
   if [ $i -gt 60 ]; then
     echo "Default cert wasn't created under one minute at container first launch."
+    break
   fi
   i=$((i + 2))
   sleep 2
