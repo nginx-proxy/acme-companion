@@ -8,3 +8,4 @@ go/
 nginx.tmpl
 test/local_test_env.sh
 test/tests/docker_api/expected-std-out.txt
+test/tests/container_restart/docker_event_out.txt
