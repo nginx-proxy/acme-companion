@@ -1,0 +1,7 @@
+Started letsencrypt container for test container_restart
+Started test web server for le1.wtf
+Started test web server for le2.wtf
+Started test web server for le3.wtf
+Container le1.wtf restarted
+Container le2.wtf restarted
+Container le3.wtf restarted

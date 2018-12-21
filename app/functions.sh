@@ -114,6 +114,11 @@ function docker_exec {
     fi
 }
 
+function docker_restart {
+    local id="${1?missing id}"
+    docker_api "/containers/$id/restart" "POST"
+}
+
 function docker_kill {
     local id="${1?missing id}"
     local signal="${2?missing signal}"

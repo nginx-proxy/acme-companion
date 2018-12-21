@@ -175,6 +175,9 @@ If needed, you can force a running letsencrypt-nginx-proxy-companion container t
 $ docker exec nginx-letsencrypt /app/force_renew
 ```
 
+##### Restart container on certificate renewal
+Per default letsencrypt-nginx-proxy-companion only reloads the nginx-proxy container when new certificates are issued or renewed. But it may be desirable to use the certificates inside the containers for other purposes than HTTPS (e.g. FTPS Server), and that would require to also restart the containers using the certificates, whenever these certificates are renewed. This can be achieved by defining the `LETSENCRYPT_RESTART_CONTAINER` environment variable with a value of `true` for the containers that you want to be restarted on certificate renewal (and have the `LETSENCRYPT_HOST` variable set).
+
 ##### Show certificates informations
 To display informations about your existing certificates, use the following command:
 

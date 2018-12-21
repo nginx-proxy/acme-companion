@@ -129,6 +129,7 @@ function update_certs {
 
     should_reload_nginx='false'
     for cid in "${LETSENCRYPT_CONTAINERS[@]}"; do
+        should_restart_container='false'
         # Derive host and email variable names
         host_varname="LETSENCRYPT_${cid}_HOST"
         # Array variable indirection hack: http://stackoverflow.com/a/25880676/350221
@@ -231,9 +232,9 @@ function update_certs {
         if [[ $simp_le_return -ne 2 ]]; then
           for domain in "${!hosts_array}"; do
             if [[ "$acme_ca_uri" == "$le_staging_uri" ]]; then
-              create_links "_test_$base_domain" "$domain" && should_reload_nginx='true'
+              create_links "_test_$base_domain" "$domain" && should_reload_nginx='true' && should_restart_container='true'
             else
-              create_links "$base_domain" "$domain" && should_reload_nginx='true'
+              create_links "$base_domain" "$domain" && should_reload_nginx='true' && should_restart_container='true'
             fi
             touch "${certificate_dir}/.companion"
             set_ownership_and_permissions "${certificate_dir}/.companion"
@@ -250,7 +251,14 @@ function update_certs {
             account_key_perm_path="$(dirname "$account_key_perm_path")"
           done
           # Queue nginx reload if a certificate was issued or renewed
-          [[ $simp_le_return -eq 0 ]] && should_reload_nginx='true'
+          [[ $simp_le_return -eq 0 ]] && should_reload_nginx='true' && should_restart_container='true'
+        fi
+
+        # Restart container if certs are updated and the respective environmental variable is set
+        restart_container_var="LETSENCRYPT_${cid}_RESTART_CONTAINER"
+        if [[ $(lc "${!restart_container_var:-}") == true ]] && [[ "$should_restart_container" == 'true' ]]; then
+            echo "Restarting container (${cid})..."
+            docker_restart "${cid}"
         fi
 
     done

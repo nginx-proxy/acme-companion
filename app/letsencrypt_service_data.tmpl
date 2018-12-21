@@ -10,6 +10,7 @@ LETSENCRYPT_{{ $cid }}_EMAIL="{{ $container.Env.LETSENCRYPT_EMAIL }}"
 LETSENCRYPT_{{ $cid }}_KEYSIZE="{{ $container.Env.LETSENCRYPT_KEYSIZE }}"
 LETSENCRYPT_{{ $cid }}_TEST="{{ $container.Env.LETSENCRYPT_TEST }}"
 LETSENCRYPT_{{ $cid }}_ACCOUNT_ALIAS="{{ $container.Env.LETSENCRYPT_ACCOUNT_ALIAS }}"
+LETSENCRYPT_{{ $cid }}_RESTART_CONTAINER="{{ $container.Env.LETSENCRYPT_RESTART_CONTAINER }}"
 {{ end }}
 
 {{ end }}

@@ -12,6 +12,7 @@ imageTests+=(
 	certs_single
 	certs_san
 	force_renew
+	container_restart
 	permissions_default
 	permissions_custom
 	symlinks
