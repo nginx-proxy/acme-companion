@@ -126,7 +126,7 @@ function update_certs {
     unset LETSENCRYPT_CONTAINERS
     # shellcheck source=/dev/null
     source /app/letsencrypt_service_data
-    
+
     should_reload_nginx='false'
     for cid in "${LETSENCRYPT_CONTAINERS[@]}"; do
         should_restart_container='false'
@@ -151,7 +151,7 @@ function update_certs {
         if [[ "$cert_keysize" == "<no value>" ]]; then
             cert_keysize=$DEFAULT_KEY_SIZE
         fi
-        
+
         test_certificate_varname="LETSENCRYPT_${cid}_TEST"
         le_staging_uri="https://acme-staging.api.letsencrypt.org/directory"
         if [[ $(lc "${!test_certificate_varname:-}") == true ]] || \
@@ -253,13 +253,14 @@ function update_certs {
           # Queue nginx reload if a certificate was issued or renewed
           [[ $simp_le_return -eq 0 ]] && should_reload_nginx='true' && should_restart_container='true'
         fi
-        
+
         # Restart container if certs are updated and the respective environmental variable is set
         restart_container_var="LETSENCRYPT_${cid}_RESTART_CONTAINER"
         if [[ $(lc "${!restart_container_var:-}") == true ]] && [[ "$should_restart_container" == 'true' ]]; then
             echo "Restarting container (${cid})..."
             docker_restart "${cid}"
         fi
+
     done
 
     cleanup_links && should_reload_nginx='true'
