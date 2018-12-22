@@ -11,12 +11,22 @@ setup_boulder() {
       $GOPATH/src/github.com/letsencrypt/boulder
   pushd $GOPATH/src/github.com/letsencrypt/boulder
   if [[ "$(uname)" == 'Darwin' ]]; then
+    # Set Standard Ports
     sed -i '' 's/ 5002/ 80/g' test/config/va.json
     sed -i '' 's/ 5001/ 443/g' test/config/va.json
+    # Set certificate lifetime to 88 days
+    sed -i '' 's/2160h/2112h/g' test/config/ca-a.json
+    sed -i '' 's/2160h/2112h/g' test/config/ca-b.json
+    # Modify custom rate limit
     sed -i '' 's/le.wtf,le1.wtf/le1.wtf,le2.wtf,le3.wtf/g' test/rate-limit-policies.yml
   else
+    # Set Standard Ports
     sed --in-place 's/ 5002/ 80/g' test/config/va.json
     sed --in-place 's/ 5001/ 443/g' test/config/va.json
+    # Set certificate lifetime to 88 days
+    sed --in-place 's/2160h/2112h/g' test/config/ca-a.json
+    sed --in-place 's/2160h/2112h/g' test/config/ca-b.json
+    # Modify custom rate limit
     sed --in-place 's/le.wtf,le1.wtf/le1.wtf,le2.wtf,le3.wtf/g' test/rate-limit-policies.yml
   fi
   docker-compose build --pull
