@@ -21,7 +21,7 @@ env:
 
 before_install:
   - sudo rm /usr/local/bin/docker-compose
-  - curl -L https://github.com/docker/compose/releases/download/1.21.1/docker-compose-`uname -s`-`uname -m` > docker-compose.temp
+  - curl -L https://github.com/docker/compose/releases/download/1.23.2/docker-compose-`uname -s`-`uname -m` > docker-compose.temp
   - chmod +x docker-compose.temp
   - sudo mv docker-compose.temp /usr/local/bin/docker-compose
 
