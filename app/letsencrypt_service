@@ -2,20 +2,18 @@
 
 # shellcheck source=functions.sh
 source /app/functions.sh
-DEBUG="$(lc "$DEBUG")"
 
 seconds_to_wait=3600
 ACME_CA_URI="${ACME_CA_URI:-https://acme-v02.api.letsencrypt.org/directory}"
-DEFAULT_KEY_SIZE=4096
-REUSE_ACCOUNT_KEYS="$(lc "${REUSE_ACCOUNT_KEYS:-true}")"
-REUSE_PRIVATE_KEYS="$(lc "${REUSE_PRIVATE_KEYS:-false}")"
+DEFAULT_KEY_SIZE="${DEFAULT_KEY_SIZE:-4096}"
+RENEW_PRIVATE_KEYS="$(lc "${RENEW_PRIVATE_KEYS:-true}")"
 
 function create_link {
     local -r source=${1?missing source argument}
     local -r target=${2?missing target argument}
     if [[ -f "$target" ]] && [[ "$(readlink "$target")" == "$source" ]]; then
       set_ownership_and_permissions "$target"
-      [[ "$DEBUG" == true ]] && echo "$target already linked to $source"
+      [[ "$DEBUG" == 1 ]] && echo "$target already linked to $source"
       return 1
     else
       ln -sf "$source" "$target" \
@@ -62,7 +60,7 @@ function cleanup_links {
         symlinked_domain="${symlinked_domain%*.crt}"
         SYMLINKED_DOMAINS+=("$symlinked_domain")
     done
-    [[ "$DEBUG" == true ]] && echo "Symlinked domains: ${SYMLINKED_DOMAINS[*]}"
+    [[ "$DEBUG" == 1 ]] && echo "Symlinked domains: ${SYMLINKED_DOMAINS[*]}"
 
     # Create an array containing domains that are considered
     # enabled (ie present on /app/letsencrypt_service_data or /app/letsencrypt_user_data).
@@ -77,7 +75,7 @@ function cleanup_links {
         ENABLED_DOMAINS+=("$domain")
       done
     done
-    [[ "$DEBUG" == true ]] && echo "Enabled domains: ${ENABLED_DOMAINS[*]}"
+    [[ "$DEBUG" == 1 ]] && echo "Enabled domains: ${ENABLED_DOMAINS[*]}"
 
     # Create an array containing only domains for which a symlinked private key exists
     # in /etc/nginx/certs but that no longer have a corresponding LETSENCRYPT_HOST set
@@ -88,28 +86,28 @@ function cleanup_links {
                                              "${ENABLED_DOMAINS[@]}" \
                                              | tr ' ' '\n' | sort | uniq -u)
     fi
-    [[ "$DEBUG" == true ]] && echo "Disabled domains: ${DISABLED_DOMAINS[*]}"
+    [[ "$DEBUG" == 1 ]] && echo "Disabled domains: ${DISABLED_DOMAINS[*]}"
 
 
     # Remove disabled domains symlinks if present.
     # Return 1 if nothing was removed and 0 otherwise.
     if [[ ${#DISABLED_DOMAINS[@]} -gt 0 ]]; then
-      [[ "$DEBUG" == true ]] && echo "Some domains are disabled :"
+      [[ "$DEBUG" == 1 ]] && echo "Some domains are disabled :"
       for disabled_domain in "${DISABLED_DOMAINS[@]}"; do
-          [[ "$DEBUG" == true ]] && echo "Checking domain ${disabled_domain}"
-          cert_folder="$(readlink -f /etc/nginx/certs/"${disabled_domain}".crt)"
+          [[ "$DEBUG" == 1 ]] && echo "Checking domain ${disabled_domain}"
+          cert_folder="$(readlink -f "/etc/nginx/certs/${disabled_domain}.crt")"
           # If the dotfile is absent, skip domain.
           if [[ ! -e "${cert_folder%/*}/.companion" ]]; then
-              [[ "$DEBUG" == true ]] && echo "No .companion file found in ${cert_folder}. ${disabled_domain} is not managed by letsencrypt-nginx-proxy-companion. Skipping domain."
+              [[ "$DEBUG" == 1 ]] && echo "No .companion file found in ${cert_folder}. ${disabled_domain} is not managed by letsencrypt-nginx-proxy-companion. Skipping domain."
               continue
           else
-              [[ "$DEBUG" == true ]] && echo "${disabled_domain} is managed by letsencrypt-nginx-proxy-companion. Removing unused symlinks."
+              [[ "$DEBUG" == 1 ]] && echo "${disabled_domain} is managed by letsencrypt-nginx-proxy-companion. Removing unused symlinks."
           fi
 
           for extension in .crt .key .dhparam.pem .chain.pem; do
               file="${disabled_domain}${extension}"
               if [[ -n "${file// }" ]] && [[ -L "/etc/nginx/certs/${file}" ]]; then
-                  [[ "$DEBUG" == true ]] && echo "Removing /etc/nginx/certs/${file}"
+                  [[ "$DEBUG" == 1 ]] && echo "Removing /etc/nginx/certs/${file}"
                   rm -f "/etc/nginx/certs/${file}"
               fi
           done
@@ -124,6 +122,7 @@ function update_certs {
     local -a LETSENCRYPT_CONTAINERS
     local -a LETSENCRYPT_STANDALONE_CERTS
 
+    pushd /etc/nginx/certs > /dev/null || return
     check_nginx_proxy_container_run || return
 
     # Load relevant container settings
@@ -163,18 +162,10 @@ function update_certs {
 
         params_d_arr=()
 
-        # Use container's LETSENCRYPT_EMAIL if set, fallback to DEFAULT_EMAIL
-        email_varname="LETSENCRYPT_${cid}_EMAIL"
-        email_address="${!email_varname:-"<no value>"}"
-        if [[ "$email_address" != "<no value>" ]]; then
-            params_d_arr+=(--email "$email_address")
-        elif [[ -n "${DEFAULT_EMAIL:-}" ]]; then
-            params_d_arr+=(--email "$DEFAULT_EMAIL")
-        fi
-
         keysize_varname="LETSENCRYPT_${cid}_KEYSIZE"
         cert_keysize="${!keysize_varname:-"<no value>"}"
-        if [[ "$cert_keysize" == "<no value>" ]]; then
+        if [[ "$cert_keysize" == "<no value>" ]] || \
+          [[ ! "$cert_keysize" =~ ^(2048|3072|4096|8192|ec-256|ec-384)$ ]]; then
             cert_keysize=$DEFAULT_KEY_SIZE
         fi
 
@@ -192,114 +183,61 @@ function update_certs {
             certificate_dir="/etc/nginx/certs/$base_domain"
         fi
 
-        account_varname="LETSENCRYPT_${cid}_ACCOUNT_ALIAS"
-        account_alias="${!account_varname:-"<no value>"}"
-        if [[ "$account_alias" == "<no value>" ]]; then
-            account_alias=default
+        config_varname="LETSENCRYPT_${cid}_ACMESH_CONFIG"
+        config_name="${!config_varname:-"<no value>"}"
+        if [[ "$config_name" == "<no value>" ]]; then
+            config_name=default
+        else
+            [[ ! -d "/etc/acme.sh/$config_name" ]] && mkdir -p "/etc/acme.sh/$config_name"
         fi
 
-        [[ "$DEBUG" == true ]] && params_d_arr+=(-v)
-        [[ $REUSE_PRIVATE_KEYS == true ]] && params_d_arr+=(--reuse_key)
-        [[ "${1}" == "--force-renew" ]] && params_d_arr+=(--valid_min 7776000)
+        [[ "$DEBUG" == 1 ]] && params_d_arr+=("--debug")
+        [[ "$RENEW_PRIVATE_KEYS" == true ]] && params_d_arr+=("--always-force-new-domain-key")
+        [[ "$1" == "--force-renew" ]] && params_d_arr+=("--force")
 
-        # Create directory for the first domain,
-        # make it root readable only and make it the cwd
+        # Create directory for the first domain
         mkdir -p "$certificate_dir"
         set_ownership_and_permissions "$certificate_dir"
-        pushd "$certificate_dir" || return
 
         for domain in "${!hosts_array}"; do
             # Add all the domains to certificate
-            params_d_arr+=(-d "$domain")
+            params_d_arr+=("--domain" "$domain")
             # Add location configuration for the domain
             add_location_configuration "$domain" || reload_nginx
         done
 
-        if [[ -e "./account_key.json" ]] && [[ ! -e "./account_reg.json" ]]; then
-          # If there is an account key present without account registration, this is
-          # a leftover from the ACME v1 version of simp_le. Remove this account key.
-          rm -f ./account_key.json
-          [[ "$DEBUG" == true ]] \
-            && echo "Debug: removed ACME v1 account key $certificate_dir/account_key.json"
-        fi
-
-        # The ACME account key and registration full path are derived from the
-        # endpoint URI + the account alias (set to 'default' if no alias is provided)
-        account_dir="../accounts/${acme_ca_uri#*://}"
-        if [[ $REUSE_ACCOUNT_KEYS == true ]]; then
-            for type in "key" "reg"; do
-                file_full_path="${account_dir}/${account_alias}_${type}.json"
-                simp_le_file="./account_${type}.json"
-                if [[ -f "$file_full_path" ]]; then
-                    # If there is no symlink to the account file, create it
-                    if [[ ! -L "$simp_le_file" ]]; then
-                        ln -sf "$file_full_path" "$simp_le_file" \
-                          && set_ownership_and_permissions "$simp_le_file"
-                    # If the symlink target the wrong account file, replace it
-                    elif [[ "$(readlink -f "$simp_le_file")" != "$file_full_path" ]]; then
-                        ln -sf "$file_full_path" "$simp_le_file" \
-                          && set_ownership_and_permissions "$simp_le_file"
-                    fi
-                fi
-            done
-        fi
-
         echo "Creating/renewal $base_domain certificates... (${hosts_array_expanded[*]})"
-        /usr/bin/simp_le \
-            -f account_key.json -f account_reg.json \
-            -f key.pem -f chain.pem -f fullchain.pem -f cert.pem \
-            "${params_d_arr[@]}" \
-            --cert_key_size="$cert_keysize" \
-            --server="$acme_ca_uri" \
-            --default_root /usr/share/nginx/html/
+        acme.sh --issue \
+                --log /dev/null \
+                --config-home "/etc/acme.sh/$config_name" \
+                "${params_d_arr[@]}" \
+                --keylength "$cert_keysize" \
+                --server "$acme_ca_uri" \
+                --webroot /usr/share/nginx/html \
+                --cert-file "${certificate_dir}/cert.pem" \
+                --key-file "${certificate_dir}/key.pem" \
+                --ca-file "${certificate_dir}/chain.pem" \
+                --fullchain-file "${certificate_dir}/fullchain.pem"
 
-        simp_le_return=$?
+        acmesh_return=$?
 
-        if [[ $REUSE_ACCOUNT_KEYS == true ]]; then
-            mkdir -p "$account_dir"
-            for type in "key" "reg"; do
-                file_full_path="${account_dir}/${account_alias}_${type}.json"
-                simp_le_file="./account_${type}.json"
-                # If the account file to be reused does not exist yet, copy it
-                # from the CWD and replace the file in CWD with a symlink
-                if [[ ! -f "$file_full_path" && -f "$simp_le_file" ]]; then
-                    cp "$simp_le_file" "$file_full_path"
-                    ln -sf "$file_full_path" "$simp_le_file"
-                fi
-            done
-        fi
-
-        popd || return
-
-        if [[ $simp_le_return -ne 2 ]]; then
+        if [[ $acmesh_return -ne 2 ]]; then
           for domain in "${!hosts_array}"; do
-            if [[ "$acme_ca_uri" == "$le_staging_uri" ]]; then
+            if [[ $acme_ca_uri =~ ^https://acme-staging.* ]]; then
               create_links "_test_$base_domain" "$domain" && should_reload_nginx='true' && should_restart_container='true'
             else
               create_links "$base_domain" "$domain" && should_reload_nginx='true' && should_restart_container='true'
             fi
           done
           touch "${certificate_dir}/.companion"
-          # Set ownership and permissions of the files inside $certificate_dir
-          for file in .companion cert.pem key.pem chain.pem fullchain.pem account_key.json account_reg.json; do
+          set_ownership_and_permissions "${certificate_dir}/.companion"
+          # Make private key root readable only
+          for file in cert.pem key.pem chain.pem fullchain.pem; do
             file_path="${certificate_dir}/${file}"
             [[ -e "$file_path" ]] && set_ownership_and_permissions "$file_path"
           done
-          account_path="/etc/nginx/certs/accounts/${acme_ca_uri#*://}"
-          account_key_perm_path="${account_path}/${account_alias}_key.json"
-          account_reg_perm_path="${account_path}/${account_alias}_reg.json"
-          # Account key and registration files do not necessarily exists after
-          # simp_le exit code 1. Check if they exist before perm check (#591).
-          [[ -f "$account_key_perm_path" ]] && set_ownership_and_permissions "$account_key_perm_path"
-          [[ -f "$account_reg_perm_path" ]] && set_ownership_and_permissions "$account_reg_perm_path"
-          # Set ownership and permissions of the ACME account folder and its
-          # parent folders (up to /etc/nginx/certs/accounts included)
-          until [[ "$account_path" == /etc/nginx/certs ]]; do
-            set_ownership_and_permissions "$account_path"
-            account_path="$(dirname "$account_path")"
-          done
           # Queue nginx reload if a certificate was issued or renewed
-          [[ $simp_le_return -eq 0 ]] && should_reload_nginx='true' && should_restart_container='true'
+          [[ $acmesh_return -eq 0 ]] && should_reload_nginx='true' && should_restart_container='true'
         fi
 
         # Restart container if certs are updated and the respective environmental variable is set
@@ -311,7 +249,7 @@ function update_certs {
 
         for domain in "${!hosts_array}"; do
             if [[ -f "/etc/nginx/conf.d/standalone-cert-$domain.conf" ]]; then
-                [[ $DEBUG == true ]] && echo "Debug: removing standalone configuration file /etc/nginx/conf.d/standalone-cert-$domain.conf"
+                [[ "$DEBUG" == 1 ]] && echo "Debug: removing standalone configuration file /etc/nginx/conf.d/standalone-cert-$domain.conf"
                 rm -f "/etc/nginx/conf.d/standalone-cert-$domain.conf" && should_reload_nginx='true'
             fi
         done
@@ -321,6 +259,8 @@ function update_certs {
     cleanup_links && should_reload_nginx='true'
 
     [[ "$should_reload_nginx" == 'true' ]] && reload_nginx
+
+    popd > /dev/null || return
 }
 
 # Allow the script functions to be sourced without starting the Service Loop.

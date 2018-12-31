@@ -21,7 +21,7 @@ function cleanup {
     i=$(( $i + 1 ))
   done
   # Cleanup the files created by this run of the test to avoid foiling following test(s).
-  docker exec "$le_container_name" bash -c 'rm -rf /etc/nginx/certs/le?.wtf*'
+  docker exec "$le_container_name" bash -c 'rm -rf /etc/nginx/certs/le?.wtf* && rm -rf /etc/acme.sh/default/le?.wtf*'
   # Stop the LE container
   docker stop "$le_container_name" > /dev/null
 }
@@ -35,7 +35,7 @@ letsencrypt_hosts=( \
   [0]="${domains[0]},${domains[1]},${domains[2]}" \     #straight comma separated list
   [1]="${domains[1]}, ${domains[2]}, ${domains[0]}" \   #comma separated list with spaces
   [2]="${domains[2]}, ${domains[0]}, ${domains[1]}," \  #comma separated list with spaces and a trailing comma
-  [3]="${domains[0]}.,${domains[1]}.,${domains[2]}" )   #trailing dots
+  [3]="${domains[0]}.,${domains[2]}.,${domains[1]}" )   #trailing dots
 
 i=1
 
@@ -94,7 +94,7 @@ for hosts in "${letsencrypt_hosts[@]}"; do
   done
 
   docker stop "$container" > /dev/null 2>&1
-  docker exec "$le_container_name" bash -c 'rm -rf /etc/nginx/certs/le?.wtf*'
+  docker exec "$le_container_name" bash -c 'rm -rf /etc/nginx/certs/le?.wtf* && rm -rf /etc/acme.sh/default/le?.wtf*'
   i=$(( $i + 1 ))
 
 done

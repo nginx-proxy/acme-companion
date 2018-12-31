@@ -21,7 +21,7 @@ function cleanup {
     i=$(( $i + 1 ))
   done
   # Cleanup the files created by this run of the test to avoid foiling following test(s).
-  docker exec "$le_container_name" bash -c 'rm -rf /etc/nginx/certs/le?.wtf*'
+  docker exec "$le_container_name" bash -c 'rm -rf /etc/nginx/certs/le?.wtf* && rm -rf /etc/acme.sh/default/le?.wtf*'
   # Stop the LE container
   docker stop "$le_container_name" > /dev/null
 }
@@ -99,7 +99,7 @@ for hosts in "${letsencrypt_hosts[@]}"; do
   done
 
   docker stop "$container" > /dev/null 2>&1
-  docker exec "$le_container_name" bash -c 'rm -rf /etc/nginx/certs/le?.wtf*'
+  docker exec "$le_container_name" bash -c 'rm -rf /etc/nginx/certs/le?.wtf* && rm -rf /etc/acme.sh/default/le?.wtf*'
   i=$(( $i + 1 ))
 
 done

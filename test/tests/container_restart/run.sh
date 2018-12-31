@@ -29,7 +29,7 @@ function cleanup {
     docker rm --force "$domain" > /dev/null 2>&1
   done
   # Cleanup the files created by this run of the test to avoid foiling following test(s).
-  docker exec "$le_container_name" bash -c 'rm -rf /etc/nginx/certs/le?.wtf*'
+  docker exec "$le_container_name" bash -c 'rm -rf /etc/nginx/certs/le?.wtf* && rm -rf /etc/acme.sh/default/le?.wtf*'
   # Stop the LE container
   docker stop "$le_container_name" > /dev/null
 }

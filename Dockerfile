@@ -21,32 +21,35 @@ FROM alpine:3.11
 
 LABEL maintainer="Yves Blusseau <90z7oey02@sneakemail.com> (@blusseau)"
 
-ENV DEBUG=false \
-    DOCKER_HOST=unix:///var/run/docker.sock
+ENV DOCKER_HOST=unix:///var/run/docker.sock \
+    PATH=$PATH:/app
 
 # Install packages required by the image
 RUN apk add --update \
         bash \
-        ca-certificates \
         coreutils \
         curl \
         jq \
+        netcat-openbsd \
         openssl \
+        socat \
     && rm /var/cache/apk/*
 
 # Install docker-gen from build stage
 COPY --from=go-builder /go/src/github.com/jwilder/docker-gen/docker-gen /usr/local/bin/
 
 # Install simp_le
-COPY /install_simp_le.sh /app/install_simp_le.sh
-RUN chmod +rx /app/install_simp_le.sh \
+COPY /install_acme.sh /app/install_acme.sh
+RUN chmod +rx /app/install_acme.sh \
     && sync \
-    && /app/install_simp_le.sh \
-    && rm -f /app/install_simp_le.sh
+    && /app/install_acme.sh \
+    && rm -f /app/install_acme.sh
 
 COPY /app/ /app/
 
 WORKDIR /app
+
+VOLUME ["/etc/acme.sh", "/etc/nginx/certs"]
 
 ENTRYPOINT [ "/bin/bash", "/app/entrypoint.sh" ]
 CMD [ "/bin/bash", "/app/start.sh" ]

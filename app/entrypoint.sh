@@ -4,7 +4,6 @@ set -u
 
 # shellcheck source=functions.sh
 source /app/functions.sh
-DEBUG="$(lc "$DEBUG")"
 
 function check_deprecated_env_var {
     if [[ -n "${ACME_TOS_HASH:-}" ]]; then
@@ -109,7 +108,7 @@ function check_default_cert_key {
         # than 3 months / 7776000 seconds (60 x 60 x 24 x 30 x 3).
         check_cert_min_validity /etc/nginx/certs/default.crt 7776000
         cert_validity=$?
-        [[ "$DEBUG" == true ]] && echo "Debug: a default certificate with $default_cert_cn is present."
+        [[ "$DEBUG" == 1 ]] && echo "Debug: a default certificate with $default_cert_cn is present."
     fi
 
     # Create a default cert and private key if:
@@ -126,23 +125,35 @@ function check_default_cert_key {
         && mv /etc/nginx/certs/default.key.new /etc/nginx/certs/default.key \
         && mv /etc/nginx/certs/default.crt.new /etc/nginx/certs/default.crt
         echo "Info: a default key and certificate have been created at /etc/nginx/certs/default.key and /etc/nginx/certs/default.crt."
-    elif [[ "$DEBUG" == true && "${default_cert_cn:-}" =~ $cn ]]; then
+    elif [[ "$DEBUG" == 1 && "${default_cert_cn:-}" =~ $cn ]]; then
         echo "Debug: the self generated default certificate is still valid for more than three months. Skipping default certificate creation."
-    elif [[ "$DEBUG" == true ]]; then
+    elif [[ "$DEBUG" == 1 ]]; then
         echo "Debug: the default certificate is user provided. Skipping default certificate creation."
     fi
     set_ownership_and_permissions "/etc/nginx/certs/default.key"
     set_ownership_and_permissions "/etc/nginx/certs/default.crt"
 }
 
-if [[ "$*" == "/bin/bash /app/start.sh" ]]; then
-    acmev1_r='acme-(v01\|staging)\.api\.letsencrypt\.org'
-    if [[ "${ACME_CA_URI:-}" =~ $acmev1_r ]]; then
-        echo "Error: the ACME v1 API is no longer supported by simp_le."
-        echo "See https://github.com/zenhack/simp_le/pull/119"
-        echo "Please use one of Let's Encrypt ACME v2 endpoints instead."
-        exit 1
+function configure_default_email {
+    # Configure the email used by the default config
+    [[ -d /etc/acme.sh/default ]] || mkdir -p /etc/acme.sh/default
+    if [[ -f /etc/acme.sh/default/account.conf ]]; then
+        if [[ -f /etc/acme.sh/default/ca/acme-v01.api.letsencrypt.org/account.json ]]; then
+            acme.sh --update-account --accountemail "${DEFAULT_EMAIL:-}"
+            return 0
+        elif grep -q ACCOUNT_EMAIL /etc/acme.sh/default/account.conf; then
+            if grep -q "${DEFAULT_EMAIL:-}" /etc/acme.sh/default/account.conf; then
+                return 0
+            else
+                sed -i "s/^ACCOUNT_EMAIL=.*$/ACCOUNT_EMAIL='${DEFAULT_EMAIL:-}'/g" /etc/acme.sh/default/account.conf
+                return 0
+            fi
+        fi
     fi
+    echo "ACCOUNT_EMAIL='${DEFAULT_EMAIL:-}'" >> /etc/acme.sh/default/account.conf
+}
+
+if [[ "$*" == "/bin/bash /app/start.sh" ]]; then
     check_docker_socket
     if [[ -z "$(get_nginx_proxy_container)" ]]; then
         echo "Error: can't get nginx-proxy container ID !" >&2
@@ -160,12 +171,13 @@ if [[ "$*" == "/bin/bash /app/start.sh" ]]; then
     fi
     check_writable_directory '/etc/nginx/certs'
     check_writable_directory '/etc/nginx/vhost.d'
+    check_writable_directory '/etc/acme.sh'
     check_writable_directory '/usr/share/nginx/html'
     [[ -f /app/letsencrypt_user_data ]] && check_writable_directory '/etc/nginx/conf.d'
-    check_deprecated_env_var
     check_default_cert_key
     check_dh_group
     reload_nginx
+    [[ -n ${DEFAULT_EMAIL:-} ]] && configure_default_email
 fi
 
 exec "$@"
