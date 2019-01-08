@@ -1,0 +1,13 @@
+Started letsencrypt container for test certs_validity
+Started test web server for le1.wtf
+Started test web server for le2.wtf
+Started test web server for le3.wtf
+Symlink to le1.wtf certificate has been generated.
+The link is pointing to the file ./le1.wtf/fullchain.pem
+Symlink to le2.wtf certificate has been generated.
+The link is pointing to the file ./le2.wtf/fullchain.pem
+Symlink to le3.wtf certificate has been generated.
+The link is pointing to the file ./le3.wtf/fullchain.pem
+Certificate for le1.wtf was not renewed.
+Certificate for le2.wtf was not renewed.
+Certificate for le3.wtf was renewed.

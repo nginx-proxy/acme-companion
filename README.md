@@ -166,7 +166,10 @@ If you want to create multi-domain ([SAN](https://www.digicert.com/subject-alter
 If you want to create test certificates that don't have the 5 certs/week/domain limits define the `LETSENCRYPT_TEST` environment variable with a value of `true` (in the containers where you request certificates with `LETSENCRYPT_HOST`). If you want to do this globally for all containers, set `ACME_CA_URI` as described below.
 
 ##### Automatic certificate renewal
-Every hour (3600 seconds) the certificates are checked and every certificate that will expire in the next [30 days](https://github.com/kuba/simp_le/blob/ecf4290c4f7863bb5427b50cdd78bc3a5df79176/simp_le.py#L72) (90 days / 3) are renewed.
+Every hour (3600 seconds) the certificates are checked and per default every certificate that will expire in the next [30 days](https://github.com/zenhack/simp_le/blob/a8a8013c097910f8f3cce046f1077b41b745673b/simp_le.py#L73) (90 days / 3) is renewed.
+
+If you want to manually set a different minimum validity for certificates, you can set the `LETSENCRYPT_MIN_VALIDIDTY` environment variable (in each container that defines the `LETSENCRYPT_HOST` variable) to the desired period in seconds.  
+Note that the possible values are internally capped at an upper bound of 7603200 (88 days) and a lower bound of 7200 (2 hours) as a security margin, considering that the Let's Encrypt CA does only issues certificates with a lifetime of [90 days](https://letsencrypt.org/2015/11/09/why-90-days.html) (upper bound), the rate limits imposed on certificate renewals are [5 per week](https://letsencrypt.org/docs/rate-limits/) (upper bound), and the fact that the certificates are checked and renewed accordingly every hour (lower bound).
 
 ##### Force certificates renewal
 If needed, you can force a running letsencrypt-nginx-proxy-companion container to renew all certificates that are currently in use. Replace `nginx-letsencrypt` with the name of your letsencrypt-nginx-proxy-companion container in the following command:
