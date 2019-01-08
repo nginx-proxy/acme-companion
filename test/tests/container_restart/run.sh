@@ -51,15 +51,15 @@ for domain in "${domains[@]}"; do
 
   # Check if container restarted
   timeout="$(date +%s)"
-  timeout="$((timeout + 60))"
+  timeout="$((timeout + 120))"
   until grep "$domain" "${TRAVIS_BUILD_DIR}"/test/tests/container_restart/docker_event_out.txt; do
     if [[ "$(date +%s)" -gt "$timeout" ]]; then
-      echo "Container $domain didn't restart in under one minute."
+      echo "Container $domain didn't restart in under two minute."
       break
     fi
     sleep 0.1
   done
-  
+
   # Stop the Nginx container silently.
   docker stop "$domain" > /dev/null
 done
