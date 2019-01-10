@@ -60,22 +60,15 @@ function check_cert_min_validity {
 }
 
 function get_self_cid {
-    DOCKER_PROVIDER=${DOCKER_PROVIDER:-docker}
-
-    case "${DOCKER_PROVIDER}" in
-    ecs|ECS)
-        # AWS ECS. Enabled in /etc/ecs/ecs.config (http://docs.aws.amazon.com/AmazonECS/latest/developerguide/container-metadata.html)
-        if [[ -n "${ECS_CONTAINER_METADATA_FILE:-}" ]]; then
-            grep ContainerID "${ECS_CONTAINER_METADATA_FILE}" | sed 's/.*: "\(.*\)",/\1/g'
-        else
-            echo "${DOCKER_PROVIDER} specified as 'ecs' but not available. See: http://docs.aws.amazon.com/AmazonECS/latest/developerguide/container-metadata.html" >&2
-            exit 1
-        fi
-        ;;
-    *)
-        sed -nE 's/^.+docker[\/-]([a-f0-9]{64}).*/\1/p' /proc/self/cgroup | head -n 1
-        ;;
-    esac
+    local self_cid
+    self_cid="$(basename "$(cat /proc/1/cpuset)")"
+    if [[ -n "$self_cid" ]]; then
+        echo "$self_cid"
+        return 0
+    else
+        echo "$(date "+%Y/%m/%d %T"), Error: can't get my container ID !" >&2
+        return 1
+    fi
 }
 
 ## Docker API
@@ -162,8 +155,8 @@ function get_nginx_proxy_container {
         if [[ -n "${NGINX_PROXY_CONTAINER:-}" ]]; then
             nginx_cid="$NGINX_PROXY_CONTAINER"
         # ... else try to get the container ID with the volumes_from method.
-        else
-            volumes_from=$(docker_api "/containers/${SELF_CID:-$(get_self_cid)}/json" | jq -r '.HostConfig.VolumesFrom[]' 2>/dev/null)
+        elif [[ $(get_self_cid) ]]; then
+            volumes_from=$(docker_api "/containers/$(get_self_cid)/json" | jq -r '.HostConfig.VolumesFrom[]' 2>/dev/null)
             for cid in $volumes_from; do
                 cid="${cid%:*}" # Remove leading :ro or :rw set by remote docker-compose (thx anoopr)
                 if [[ $(docker_api "/containers/$cid/json" | jq -r '.Config.Env[]' | egrep -c '^NGINX_VERSION=') = "1" ]];then
