@@ -1,33 +1,3 @@
-[![Build Status](https://travis-ci.org/JrCs/docker-letsencrypt-nginx-proxy-companion.svg?branch=master)](https://travis-ci.org/JrCs/docker-letsencrypt-nginx-proxy-companion)
-[![GitHub release](https://img.shields.io/github/release/jrcs/docker-letsencrypt-nginx-proxy-companion.svg)](https://github.com/JrCs/docker-letsencrypt-nginx-proxy-companion/releases)
-[![Image info](https://images.microbadger.com/badges/image/jrcs/letsencrypt-nginx-proxy-companion.svg)](https://hub.docker.com/r/jrcs/letsencrypt-nginx-proxy-companion "Click to view the image on Docker Hub")
-[![Docker stars](https://img.shields.io/docker/stars/jrcs/letsencrypt-nginx-proxy-companion.svg)](https://hub.docker.com/r/jrcs/letsencrypt-nginx-proxy-companion "Click to view the image on Docker Hub")
-[![Docker pulls](https://img.shields.io/docker/pulls/jrcs/letsencrypt-nginx-proxy-companion.svg)](https://hub.docker.com/r/jrcs/letsencrypt-nginx-proxy-companion "Click to view the image on Docker Hub")
-
-**letsencrypt-nginx-proxy-companion** is a lightweight companion container for [**nginx-proxy**](https://github.com/jwilder/nginx-proxy).
-
-It handles the automated creation, renewal and use of Let's Encrypt certificates for proxyed Docker containers.
-
-Please note that [letsencrypt-nginx-proxy-companion does not work with ACME v2 endpoints yet](https://github.com/JrCs/docker-letsencrypt-nginx-proxy-companion/issues/319).
-
-### Features:
-* Automated creation/renewal of Let's Encrypt (or other ACME CAs) certificates using [**simp_le**](https://github.com/zenhack/simp_le).
-* Let's Encrypt / ACME domain validation through `http-01` challenge only.
-* Automated update and reload of nginx config on certificate creation/renewal.
-* Support creation of Multi-Domain (SAN) Certificates.
-* Creation of a Strong Diffie-Hellman Group at startup.
-* Work with all versions of docker.
-
-### Requirements:
-* Your host **must** be publicly reachable on **both** port `80` and `443`.
-* Check your firewall rules and **do not attempt to block port `80`** as that will prevent `http-01` challenges from completing.
-* For the same reason, you can't use nginx-proxy's [`HTTPS_METHOD=nohttp`](https://github.com/jwilder/nginx-proxy#how-ssl-support-works).
-* The (sub)domains you want to issue certificates for must correctly resolve to the host.
-* Your DNS provider must [answers correctly to CAA record requests](https://letsencrypt.org/docs/caa/).
-* If your (sub)domains have AAAA records set, the host must be publicly reachable over IPv6 on port `80` and `443`.
-
-![schema](https://github.com/JrCs/docker-letsencrypt-nginx-proxy-companion/blob/master/schema.png)
-
 ## Basic usage (with the nginx-proxy container)
 
 Three writable volumes must be declared on the **nginx-proxy** container so that they can be shared with the **letsencrypt-nginx-proxy-companion** container:
@@ -106,7 +76,3 @@ $ docker run --detach \
 ```
 
 Repeat [Step 3](#step-3---proxyed-containers) for any other container you want to proxy.
-
-## Additional documentation
-
-Please check the [docs section](https://github.com/JrCs/docker-letsencrypt-nginx-proxy-companion/tree/master/docs) or the [project's wiki](https://github.com/JrCs/docker-letsencrypt-nginx-proxy-companion/wiki).
