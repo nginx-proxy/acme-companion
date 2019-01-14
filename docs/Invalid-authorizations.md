@@ -42,7 +42,7 @@ If you are unsure of your host/hosts's docker IPv6 connectivity, drop the AAAA r
 
 Read https://letsencrypt.org/docs/caa/ and test with https://unboundtest.com/
 
-#### the **nginx-proxy**/**nginx**/**docker-gen**/**letsencrypt-nginx-proxy-companion** containers where misconfigured.
+#### the **nginx-proxy**/**nginx**/**docker-gen**/**letsencrypt-nginx-proxy-companion** containers were misconfigured.
 
 Review [basic usage](./Basic-usage.md) or [advanced usage](./Advanced-usage.md), plus the [nginx-proxy documentation](https://github.com/jwilder/nginx-proxy).
 
