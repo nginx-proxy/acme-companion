@@ -29,6 +29,8 @@ The `LETSENCRYPT_KEYSIZE` environment variable determines the size of the reques
 
 The `LETSENCRYPT_TEST` environment variable, when set to `true` on a proxyed application container, will create a test certificates that don't have the [5 certs/week/domain limits](https://letsencrypt.org/docs/rate-limits/) and are signed by an untrusted intermediate (they won't be trusted by browsers).
 
+If you want to do this globally for all containers, set `ACME_CA_URI` as described in [Container configuration](./Container-configuration.md).
+
 #### Container restart on cert renewal
 
 The `LETSENCRYPT_RESTART_CONTAINER` environment variable, when set to `true` on an application container, will restart this container whenever the corresponding cert (`LETSENCRYPT_HOST`) is renewed. This is useful when certificates are directly used inside a container for other purposes than HTTPS (e.g. an FTPS server), to make sure those containers always use an up to date certificate.
