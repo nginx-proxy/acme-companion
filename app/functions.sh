@@ -61,10 +61,19 @@ function check_cert_min_validity {
 
 function get_self_cid {
     local self_cid
-    self_cid="$(basename "$(cat /proc/1/cpuset)")"
-    if [[ -n "$self_cid" ]]; then
+
+    # Try the /proc files methods first then resort to the Docker API.
+    if [[ -f /proc/1/cpuset ]]; then
+        self_cid="$(basename "$(cat /proc/1/cpuset)")"
+    elif [[ -f /proc/self/cgroup ]]; then
+        self_cid="$(basename "$(cat /proc/self/cgroup | head -n 1)")"
+    else
+        self_cid="$(docker_api "/containers/$(hostname)/json" | jq -r '.Id')"
+    fi
+
+    # If it's not 64 characters long, then it's probably not a container ID.
+    if [[ ${#self_cid} == 64 ]]; then
         echo "$self_cid"
-        return 0
     else
         echo "$(date "+%Y/%m/%d %T"), Error: can't get my container ID !" >&2
         return 1
