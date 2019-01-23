@@ -80,7 +80,7 @@ Certificates will only be issued for containers that have both `VIRTUAL_HOST` an
 
 ```shell
 $ docker run --detach \
-    --name your-proxyed-app
+    --name your-proxyed-app \
     --env "VIRTUAL_HOST=subdomain.yourdomain.tld" \
     --env "LETSENCRYPT_HOST=subdomain.yourdomain.tld" \
     --env "LETSENCRYPT_EMAIL=mail@yourdomain.tld" \
