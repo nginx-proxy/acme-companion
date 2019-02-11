@@ -97,7 +97,7 @@ Example using [Grafana](https://hub.docker.com/r/grafana/grafana/) (expose and l
 
 ```shell
 $ docker run --detach \
-    --name grafana
+    --name grafana \
     --env "VIRTUAL_HOST=othersubdomain.yourdomain.tld" \
     --env "VIRTUAL_PORT=3000" \
     --env "LETSENCRYPT_HOST=othersubdomain.yourdomain.tld" \
