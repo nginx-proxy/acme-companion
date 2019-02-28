@@ -64,10 +64,12 @@ function get_self_cid {
 
     # Try the /proc files methods first then resort to the Docker API.
     if [[ -f /proc/1/cpuset ]]; then
-        self_cid="$(basename "$(cat /proc/1/cpuset)")"
-    elif [[ -f /proc/self/cgroup ]]; then
-        self_cid="$(basename "$(cat /proc/self/cgroup | head -n 1)")"
-    else
+        self_cid="$(grep -Eo '[[:alnum:]]{64}' /proc/1/cpuset)"
+    fi
+    if [[ ( ${#self_cid} != 64 ) && ( -f /proc/self/cgroup ) ]]; then
+        self_cid="$(grep -Eo -m 1 '[[:alnum:]]{64}' /proc/self/cgroup)"
+    fi
+    if [[ ( ${#self_cid} != 64 ) ]]; then
         self_cid="$(docker_api "/containers/$(hostname)/json" | jq -r '.Id')"
     fi
 
