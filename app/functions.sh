@@ -60,7 +60,7 @@ function check_cert_min_validity {
 }
 
 function get_self_cid {
-    local self_cid
+    local self_cid=""
 
     # Try the /proc files methods first then resort to the Docker API.
     if [[ -f /proc/1/cpuset ]]; then
