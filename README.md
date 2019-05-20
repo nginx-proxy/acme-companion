@@ -10,6 +10,8 @@ It handles the automated creation, renewal and use of Let's Encrypt certificates
 
 Please note that [letsencrypt-nginx-proxy-companion does not work with ACME v2 endpoints yet](https://github.com/JrCs/docker-letsencrypt-nginx-proxy-companion/issues/319).
 
+#### Warning : `jwilder/nginx-proxy:latest` currently [has an issue with DH parameters](https://github.com/jwilder/nginx-proxy/issues/1226) that will cause intermittent proxy and certificate generation failure until the nginx-proxy container has generated its DH parameters file. While the issue [has been fixed on GitHub](https://github.com/jwilder/nginx-proxy/pull/1213), the DockerHub image isn't fixed yet [due to an issue with Dockerhub autobuild](https://github.com/jwilder/nginx-proxy/issues/1279). The recommended fixes for the time being are either to use [the three containers setup](https://github.com/JrCs/docker-letsencrypt-nginx-proxy-companion/blob/master/docs/Advanced-usage.md), build your nginx-proxy image from source or mount your own DH parameters file inside the nginx-proxy container to skip its creation.
+
 ### Features:
 * Automated creation/renewal of Let's Encrypt (or other ACME CAs) certificates using [**simp_le**](https://github.com/zenhack/simp_le).
 * Let's Encrypt / ACME domain validation through `http-01` challenge only.
