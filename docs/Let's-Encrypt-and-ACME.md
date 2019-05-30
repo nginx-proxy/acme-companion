@@ -23,6 +23,28 @@ The `LETSENCRYPT_EMAIL` environment variable must be a valid email and will be u
 
 If you want to do this globally for all containers, set `DEFAULT_EMAIL` on the **letsencrypt_nginx_proxy_companion container**.
 
+**Please note that for each separate [ACME account](#acme-account-keys), only the email provided as a container environment variable at the time of this account creation will be subsequently used. If you don't provide an email address when the account is created, this account will remain without a contact address even if you provide an address in the future.**
+
+Examples:
+
+```bash
+$ docker run -d nginx \
+  VIRTUAL_HOST=somedomain.tld \
+  LETSENCRYPT_HOST=somedomain.tld \
+  LETSENCRYPT_EMAIL=contact@somedomain.tld
+
+$ docker run -d nginx \
+  VIRTUAL_HOST=anotherdomain.tld \
+  LETSENCRYPT_HOST=anotherdomain.tld \
+  LETSENCRYPT_EMAIL=someone@anotherdomain.tld
+```
+
+This will result in only the first address being used (contact@somedomain.tld) and it will be used for **all** future certificates issued with the default ACME account.
+
+This incorrect behaviour is due to a misunderstanding about the way ACME handled contact address(es) when the container was changed to re-use ACME account keys ([more info there](https://github.com/JrCs/docker-letsencrypt-nginx-proxy-companion/issues/510#issuecomment-463256716)) and the fact that `simp_le` is silently discarding the unused addresses. Due to this, it is highly recommended to use the [`DEFAULT_EMAIL`](#default-contact-address) environment variable to avoid unwittingly creating ACME accounts without contact addresses.
+
+If you need to use different contact addresses, you'll need to either use different [ACME account aliases](#multiple-account-keys-per-endpoint) or [disable ACME account keys re-utilization entirely](#disable-account-keys-re-utilization).
+
 #### Private key size
 
 The `LETSENCRYPT_KEYSIZE` environment variable determines the size of the requested key (in bit, defaults to 4096).
