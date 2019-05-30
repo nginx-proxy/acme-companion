@@ -21,6 +21,8 @@ The `LETSENCRYPT_MIN_VALIDITY` environment variable can be used to set a differe
 
 The `LETSENCRYPT_EMAIL` environment variable must be a valid email and will be used by Let's Encrypt to warn you of impeding certificate expiration (should the automated renewal fail) and to recover an account. It is **recommended** to provide a valid contact address using this variable.
 
+If you want to do this globally for all containers, set `DEFAULT_EMAIL` on the **letsencrypt_nginx_proxy_companion container**.
+
 #### Private key size
 
 The `LETSENCRYPT_KEYSIZE` environment variable determines the size of the requested key (in bit, defaults to 4096).
@@ -40,6 +42,10 @@ The `LETSENCRYPT_RESTART_CONTAINER` environment variable, when set to `true` on 
 See the [ACME account keys](#multiple-account-keys-per-endpoint) section.
 
 ### global (set on letsencrypt-nginx-proxy-companion container)
+
+#### Default contact address
+
+The `DEFAULT_EMAIL` variable must be a valid email and, when set on the **letsencrypt_nginx_proxy_companion** container, will be used as a fallback when no email address is provided using proxyed container's `LETSENCRYPT_EMAIL` environment variables.
 
 #### Private key re-utilization
 
