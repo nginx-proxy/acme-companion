@@ -25,25 +25,34 @@ fi
 
 function add_location_configuration {
     local domain="${1:-}"
+    # If no domain was passed or if the domain has no custom conf, use default instead
     [[ -z "$domain" || ! -f "${VHOST_DIR}/${domain}" ]] && domain=default
-    [[ -f "${VHOST_DIR}/${domain}" && \
-       -n $(sed -n "/$START_HEADER/,/$END_HEADER/p" "${VHOST_DIR}/${domain}") ]] && return 0
-    echo "$START_HEADER" > "${VHOST_DIR}/${domain}".new
-    cat /app/nginx_location.conf >> "${VHOST_DIR}/${domain}".new
-    echo "$END_HEADER" >> "${VHOST_DIR}/${domain}".new
-    [[ -f "${VHOST_DIR}/${domain}" ]] && cat "${VHOST_DIR}/${domain}" >> "${VHOST_DIR}/${domain}".new
-    mv -f "${VHOST_DIR}/${domain}".new "${VHOST_DIR}/${domain}"
-    return 1
+
+    if [[ -f "${VHOST_DIR}/${domain}" && -n $(sed -n "/$START_HEADER/,/$END_HEADER/p" "${VHOST_DIR}/${domain}") ]]; then
+        # If the config file exist and already have the location configuration, end with exit code 0
+        return 0
+    else
+        # Else write the location configuration to a temp file ...
+        echo "$START_HEADER" > "${VHOST_DIR}/${domain}".new
+        cat /app/nginx_location.conf >> "${VHOST_DIR}/${domain}".new
+        echo "$END_HEADER" >> "${VHOST_DIR}/${domain}".new
+        # ... append the existing file content to the temp one ...
+        [[ -f "${VHOST_DIR}/${domain}" ]] && cat "${VHOST_DIR}/${domain}" >> "${VHOST_DIR}/${domain}".new
+        # ... and copy the temp file to the old one (if the destination file is bind mounted, you can't change
+        # its inode from within the container, so mv won't work and cp has to be used), then remove the temp file.
+        cp -f "${VHOST_DIR}/${domain}".new "${VHOST_DIR}/${domain}" && rm -f "${VHOST_DIR}/${domain}".new
+        return 1
+    fi
 }
 
 function remove_all_location_configurations {
-    local old_shopt_options=$(shopt -p) # Backup shopt options
-    shopt -s nullglob
     for file in "${VHOST_DIR}"/*; do
-        [[ -n $(sed -n "/$START_HEADER/,/$END_HEADER/p" "$file") ]] && \
-         sed -i "/$START_HEADER/,/$END_HEADER/d" "$file"
+        [[ -e "$file" ]] || continue
+        if [[ -n $(sed -n "/$START_HEADER/,/$END_HEADER/p" "$file") ]]; then
+            sed "/$START_HEADER/,/$END_HEADER/d" "$file" > "$file".new
+            cp -f "$file".new "$file" && rm -f "$file".new
+        fi
     done
-    eval "$old_shopt_options" # Restore shopt options
 }
 
 function check_cert_min_validity {
