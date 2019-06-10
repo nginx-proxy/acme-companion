@@ -19,9 +19,7 @@ The `LETSENCRYPT_MIN_VALIDITY` environment variable can be used to set a differe
 
 #### Contact address
 
-The `LETSENCRYPT_EMAIL` environment variable must be a valid email and will be used by Let's Encrypt to warn you of impeding certificate expiration (should the automated renewal fail) and to recover an account. It is **recommended** to provide a valid contact address using this variable.
-
-If you want to do this globally for all containers, set `DEFAULT_EMAIL` on the **letsencrypt_nginx_proxy_companion container**.
+The `LETSENCRYPT_EMAIL` environment variable must be a valid email and will be used by Let's Encrypt to warn you of impeding certificate expiration (should the automated renewal fail) and to recover an account. For reasons detailed below, it is **recommended** to provide a default valid contact address for all containers by setting the [`DEFAULT_EMAIL`](#default-contact-address) environment variable on the **letsencrypt_nginx_proxy_companion container**.
 
 **Please note that for each separate [ACME account](#acme-account-keys), only the email provided as a container environment variable at the time of this account creation will be subsequently used. If you don't provide an email address when the account is created, this account will remain without a contact address even if you provide an address in the future.**
 
