@@ -35,10 +35,13 @@ $ docker run --detach \
     --name nginx-proxy-letsencrypt \
     --volumes-from nginx-proxy \
     --volume /var/run/docker.sock:/var/run/docker.sock:ro \
+    --env "DEFAULT_EMAIL=mail@yourdomain.tld" \
     jrcs/letsencrypt-nginx-proxy-companion
 ```
 
 The host docker socket has to be bound inside this container too, this time to `/var/run/docker.sock`.
+
+Albeit **optional**, it is **recommended** to provide a valid default email address through the `DEFAULT_EMAIL` environment variable, so that Let's Encrypt can warn you about expiring certificates and allow you to recover your account.
 
 ### Step 3 - proxyed container(s)
 
@@ -53,11 +56,8 @@ $ docker run --detach \
     --name your-proxyed-app
     --env "VIRTUAL_HOST=subdomain.yourdomain.tld" \
     --env "LETSENCRYPT_HOST=subdomain.yourdomain.tld" \
-    --env "LETSENCRYPT_EMAIL=mail@yourdomain.tld" \
     nginx
 ```
-
-Albeit **optional**, it is **recommended** to provide a valid email address through the `LETSENCRYPT_EMAIL` environment variable, so that Let's Encrypt can warn you about expiring certificates and allow you to recover your account.
 
 The containers being proxied must expose the port to be proxied, either by using the `EXPOSE` directive in their Dockerfile or by using the `--expose` flag to `docker run` or `docker create`.
 

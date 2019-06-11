@@ -142,10 +142,13 @@ function update_certs {
 
         params_d_str=""
 
+        # Use container's LETSENCRYPT_EMAIL if set, fallback to DEFAULT_EMAIL
         email_varname="LETSENCRYPT_${cid}_EMAIL"
         email_address="${!email_varname}"
         if [[ "$email_address" != "<no value>" ]]; then
             params_d_str+=" --email $email_address"
+        elif [[ -n "${DEFAULT_EMAIL:-}" ]]; then
+            params_d_str+=" --email $DEFAULT_EMAIL"
         fi
 
         keysize_varname="LETSENCRYPT_${cid}_KEYSIZE"

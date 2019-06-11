@@ -62,6 +62,7 @@ $ docker run --detach \
     --volumes-from nginx-proxy \
     --volume /var/run/docker.sock:/var/run/docker.sock:ro \
     --env "NGINX_DOCKER_GEN_CONTAINER=nginx-proxy-gen" \
+    --env "DEFAULT_EMAIL=mail@yourdomain.tld" \
     jrcs/letsencrypt-nginx-proxy-companion
 ```
 
@@ -74,7 +75,6 @@ $ docker run --detach \
     --name your-proxyed-app
     --env "VIRTUAL_HOST=subdomain.yourdomain.tld" \
     --env "LETSENCRYPT_HOST=subdomain.yourdomain.tld" \
-    --env "LETSENCRYPT_EMAIL=mail@yourdomain.tld" \
     nginx
 ```
 
