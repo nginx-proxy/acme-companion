@@ -53,7 +53,7 @@ Certificates will only be issued for containers that have both `VIRTUAL_HOST` an
 
 ```shell
 $ docker run --detach \
-    --name your-proxyed-app
+    --name your-proxyed-app \
     --env "VIRTUAL_HOST=subdomain.yourdomain.tld" \
     --env "LETSENCRYPT_HOST=subdomain.yourdomain.tld" \
     nginx
@@ -67,7 +67,7 @@ Example using [Grafana](https://hub.docker.com/r/grafana/grafana/) (expose and l
 
 ```shell
 $ docker run --detach \
-    --name grafana
+    --name grafana \
     --env "VIRTUAL_HOST=othersubdomain.yourdomain.tld" \
     --env "VIRTUAL_PORT=3000" \
     --env "LETSENCRYPT_HOST=othersubdomain.yourdomain.tld" \
