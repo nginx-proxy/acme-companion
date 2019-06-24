@@ -198,11 +198,12 @@
 
 set -e
 
-## Next eleven lines were added by jrcs/docker-letsencrypt-nginx-proxy-companion
+## Next twelve lines were added by jrcs/docker-letsencrypt-nginx-proxy-companion
 dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 self="$(basename "$0")"
+failed_tests=()
 
-if [[ -z $TRAVIS_CI ]] && [[ -f "$dir/local_test_env.sh" ]]; then
+if [[ -z $TRAVIS ]] && [[ -f "$dir/local_test_env.sh" ]]; then
 	# shellcheck source=/dev/null
 	source "$dir/local_test_env.sh"
 fi
@@ -415,12 +416,18 @@ for dockerImage in "$@"; do
 						if [ -f "$scriptDir/expected-std-out.txt" ] && ! d="$(echo "$output" | diff -u "$scriptDir/expected-std-out.txt" - 2>/dev/null)"; then
 							echo 'failed; unexpected output:'
 							echo "$d"
+							## Next line was added by jrcs/docker-letsencrypt-nginx-proxy-companion
+							failed_tests+=("$(basename $scriptDir)")
+							## End of additional code
 							didFail=1
 						else
 							echo 'passed'
 						fi
 					else
 						echo 'failed'
+						## Next line was added by jrcs/docker-letsencrypt-nginx-proxy-companion
+						failed_tests+=("$(basename $scriptDir)")
+						## End of additional code
 						didFail=1
 					fi
 				fi
@@ -440,5 +447,12 @@ for dockerImage in "$@"; do
 done
 
 if [ "$didFail" ]; then
+	## Next five lines were added by jrcs/docker-letsencrypt-nginx-proxy-companion
+	if [[ $TRAVIS == 'true' ]]; then
+		for test in "${failed_tests[@]}"; do
+			echo "$test" >> "$dir/travis/failed_tests.txt"
+		done
+	fi
+	## End of additional code
 	exit 1
 fi

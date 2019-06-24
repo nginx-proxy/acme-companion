@@ -2,7 +2,7 @@
 
 ## Test for symlink creation / removal.
 
-if [[ -z $TRAVIS_CI ]]; then
+if [[ -z $TRAVIS ]]; then
   le_container_name="$(basename ${0%/*})_$(date "+%Y-%m-%d_%H.%M.%S")"
 else
   le_container_name="$(basename ${0%/*})"

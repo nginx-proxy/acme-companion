@@ -1,3 +1,4 @@
+os: linux
 dist: trusty
 sudo: required
 
@@ -15,15 +16,34 @@ env:
     - NGINX_CONTAINER_NAME=nginx-proxy
     - DOCKER_GEN_CONTAINER_NAME=nginx-proxy-gen
     - TEST_DOMAINS=le1.wtf,le2.wtf,le3.wtf
-  matrix:
-    - SETUP=2containers
-    - SETUP=3containers
+    - DOCKER_COMPOSE_VERSION=1.24.0
+
+matrix:
+  include:
+    - env: SETUP=2containers
+    - env: SETUP=3containers
+    - os: linux
+      dist: xenial
+      sudo: required
+      env: SETUP=2containers
+    - os: linux
+      dist: xenial
+      sudo: required
+      env: SETUP=3containers
+    - os: linux
+      dist: bionic
+      sudo: required
+      env: SETUP=2containers
+    - os: linux
+      dist: bionic
+      sudo: required
+      env: SETUP=3containers
+  allow_failures:
+    - dist: bionic
+  fast_finish: true
 
 before_install:
-  - sudo rm /usr/local/bin/docker-compose
-  - curl -L https://github.com/docker/compose/releases/download/1.23.2/docker-compose-`uname -s`-`uname -m` > docker-compose.temp
-  - chmod +x docker-compose.temp
-  - sudo mv docker-compose.temp /usr/local/bin/docker-compose
+  - test/travis/update-docker-compose.sh
 
 install:
   - docker build -t "$IMAGE" .
@@ -43,13 +63,4 @@ script:
   - test/run.sh "$IMAGE"
 
 after_failure:
-  - docker logs $NGINX_CONTAINER_NAME
-  - docker logs default_cert
-  - docker logs certs_single
-  - docker logs certs_san
-  - docker logs force_renew
-  - docker logs permissions_default
-  - docker logs permissions_custom
-  - docker logs symlinks
-  - docker logs boulder
-  - if [[ $SETUP = "3containers" ]]; then docker logs $DOCKER_GEN_CONTAINER_NAME; fi
+  - test/travis/containers-logs.sh
