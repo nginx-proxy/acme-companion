@@ -29,6 +29,14 @@ matrix:
       dist: xenial
       sudo: required
       env: SETUP=3containers
+    - os: linux
+      dist: bionic
+      sudo: required
+      env: SETUP=2containers
+    - os: linux
+      dist: bionic
+      sudo: required
+      env: SETUP=3containers
 
 before_install:
   - sudo rm /usr/local/bin/docker-compose
