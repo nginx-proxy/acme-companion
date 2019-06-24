@@ -8,7 +8,15 @@ fold_end() {
   echo -e "\ntravis_fold:end:$1\r"
 }
 
-for container in $(docker ps -a --format '{{.Names}}'); do
+if [[ -f "$TRAVIS_BUILD_DIR/test/travis/failed_tests.txt" ]]; then
+  mapfile -t containers < "$TRAVIS_BUILD_DIR/test/travis/failed_tests.txt"
+fi
+
+containers+=("$NGINX_CONTAINER_NAME")
+[[ $SETUP = "3containers" ]] && containers+=("$DOCKER_GEN_CONTAINER_NAME")
+containers+=("boulder")
+
+for container in "${containers[@]}"; do
   fold_start "$container" "Docker container output for $container"
   docker logs "$container"
   fold_end "$container"
