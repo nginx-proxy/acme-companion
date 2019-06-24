@@ -37,6 +37,9 @@ matrix:
       dist: bionic
       sudo: required
       env: SETUP=3containers
+  allow_failures:
+    - dist: bionic
+  fast_finish: true
 
 before_install:
   - sudo rm /usr/local/bin/docker-compose
