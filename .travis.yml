@@ -1,3 +1,4 @@
+os: linux
 dist: trusty
 sudo: required
 
@@ -15,9 +16,19 @@ env:
     - NGINX_CONTAINER_NAME=nginx-proxy
     - DOCKER_GEN_CONTAINER_NAME=nginx-proxy-gen
     - TEST_DOMAINS=le1.wtf,le2.wtf,le3.wtf
-  matrix:
-    - SETUP=2containers
-    - SETUP=3containers
+
+matrix:
+  include:
+    - env: SETUP=2containers
+    - env: SETUP=3containers
+    - os: linux
+      dist: xenial
+      sudo: required
+      env: SETUP=2containers
+    - os: linux
+      dist: xenial
+      sudo: required
+      env: SETUP=3containers
 
 before_install:
   - sudo rm /usr/local/bin/docker-compose
