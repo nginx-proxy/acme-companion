@@ -202,7 +202,7 @@ set -e
 dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 self="$(basename "$0")"
 
-if [[ -z $TRAVIS_CI ]] && [[ -f "$dir/local_test_env.sh" ]]; then
+if [[ -z $TRAVIS ]] && [[ -f "$dir/local_test_env.sh" ]]; then
 	# shellcheck source=/dev/null
 	source "$dir/local_test_env.sh"
 fi

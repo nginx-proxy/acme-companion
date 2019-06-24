@@ -16,7 +16,7 @@ docker exec "$NGINX_CONTAINER_NAME" sh -c "echo '### This is a test comment' > /
 # Zero the default configuration file.
 docker exec "$NGINX_CONTAINER_NAME" sh -c "echo '' > /etc/nginx/vhost.d/default"
 
-if [[ -z $TRAVIS_CI ]]; then
+if [[ -z $TRAVIS ]]; then
   le_container_name="$(basename ${0%/*})_$(date "+%Y-%m-%d_%H.%M.%S")"
 else
   le_container_name="$(basename ${0%/*})"
