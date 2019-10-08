@@ -285,6 +285,8 @@ function set_ownership_and_permissions {
     return 1
   fi
 
+  [[ "$(lc $DEBUG)" == true ]] && echo "Debug: checking $path ownership and permissions."
+
   # Find the user numeric ID if the FILES_UID environment variable isn't numeric.
   if [[ "$user" =~ ^[0-9]+$ ]]; then
     user_num="$user"
@@ -329,7 +331,7 @@ function set_ownership_and_permissions {
       fi
     # If the path is a file, check and modify permissions if required.
     elif [[ -f "$path" ]]; then
-      # Use different permissions for private files (private keys and ACME account keys) ...
+      # Use different permissions for private files (private keys and ACME account files) ...
       if [[ "$path" =~ ^.*(default\.key|key\.pem|\.json)$ ]]; then
         if [[ "$(stat -c %a "$path")" != "$f_perms" ]]; then
           [[ "$(lc $DEBUG)" == true ]] && echo "Debug: setting $path permissions to $f_perms."
