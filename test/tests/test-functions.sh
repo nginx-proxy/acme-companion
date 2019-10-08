@@ -24,7 +24,7 @@ function run_le_container {
     $cli_args \
     --env "DHPARAM_BITS=256" \
     --env "DEBUG=true" \
-    --env "ACME_CA_URI=http://boulder:4000/directory" \
+    --env "ACME_CA_URI=http://boulder:4001/directory" \
     --label com.github.jrcs.letsencrypt_nginx_proxy_companion.test_suite \
     --network boulder_bluenet \
     "$image" > /dev/null && echo "Started letsencrypt container for test ${name%%_2*}"
