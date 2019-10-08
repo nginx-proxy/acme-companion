@@ -135,10 +135,11 @@ function check_default_cert_key {
 source /app/functions.sh
 
 if [[ "$*" == "/bin/bash /app/start.sh" ]]; then
-    acmev2_re='https://acme-.*v02\.api\.letsencrypt\.org/directory'
-    if [[ "${ACME_CA_URI:-}" =~ $acmev2_re ]]; then
-        echo "Error: ACME v2 API is not yet supported by simp_le."
-        echo "See https://github.com/zenhack/simp_le/issues/101"
+    acmev1_r='acme-(v01\|staging)\.api\.letsencrypt\.org'
+    if [[ "${ACME_CA_URI:-}" =~ $acmev1_r ]]; then
+        echo "Error: the ACME v1 API is no longer supported by simp_le."
+        echo "See https://github.com/zenhack/simp_le/pull/119"
+        echo "Please use one of Let's Encrypt ACME v2 endpoints instead."
         exit 1
     fi
     check_docker_socket

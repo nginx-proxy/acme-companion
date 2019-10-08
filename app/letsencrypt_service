@@ -4,7 +4,7 @@
 source /app/functions.sh
 
 seconds_to_wait=3600
-ACME_CA_URI="${ACME_CA_URI:-https://acme-v01.api.letsencrypt.org/directory}"
+ACME_CA_URI="${ACME_CA_URI:-https://acme-v02.api.letsencrypt.org/directory}"
 DEFAULT_KEY_SIZE=4096
 REUSE_ACCOUNT_KEYS="$(lc ${REUSE_ACCOUNT_KEYS:-true})"
 REUSE_PRIVATE_KEYS="$(lc ${REUSE_PRIVATE_KEYS:-false})"
@@ -158,7 +158,7 @@ function update_certs {
         fi
 
         test_certificate_varname="LETSENCRYPT_${cid}_TEST"
-        le_staging_uri="https://acme-staging.api.letsencrypt.org/directory"
+        le_staging_uri="https://acme-staging-v02.api.letsencrypt.org/directory"
         if [[ $(lc "${!test_certificate_varname:-}") == true ]] || \
           [[ "$ACME_CA_URI" == "$le_staging_uri" ]]; then
             # Use staging Let's Encrypt ACME end point
@@ -215,27 +215,39 @@ function update_certs {
             add_location_configuration "$domain" || reload_nginx
         done
 
-        # The ACME account key full path is derived from the endpoint URI
-        # + the account alias (set to 'default' if no alias is provided)
-        account_key_dir="../accounts/${acme_ca_uri#*://}"
-        account_key_full_path="${account_key_dir}/${account_alias}.json"
+        if [[ -e "./account_key.json" ]] && [[ ! -e "./account_reg.json" ]]; then
+          # If there is an account key present without account registration, this is
+          # a leftover from the ACME v1 version of simp_le. Remove this account key.
+          rm -f ./account_key.json
+          [[ "$(lc $DEBUG)" == true ]] \
+            && echo "Debug: removed ACME v1 account key $certificate_dir/account_key.json"
+        fi
+
+        # The ACME account key and registration full path are derived from the
+        # endpoint URI + the account alias (set to 'default' if no alias is provided)
+        account_dir="../accounts/${acme_ca_uri#*://}"
         if [[ $REUSE_ACCOUNT_KEYS == true ]]; then
-            if [[ -f "$account_key_full_path" ]]; then
-                # If there is no symlink to the account key, create it
-                if [[ ! -L ./account_key.json ]]; then
-                    ln -sf "$account_key_full_path" ./account_key.json \
-                      && set_ownership_and_permissions ./account_key.json
-                # If the symlink target the wrong account key, replace it
-                elif [[ "$(readlink -f ./account_key.json)" != "$account_key_full_path" ]]; then
-                    ln -sf "$account_key_full_path" ./account_key.json \
-                      && set_ownership_and_permissions ./account_key.json
+            for type in "key" "reg"; do
+                file_full_path="${account_dir}/${account_alias}_${type}.json"
+                simp_le_file="./account_${type}.json"
+                if [[ -f "$file_full_path" ]]; then
+                    # If there is no symlink to the account file, create it
+                    if [[ ! -L "$simp_le_file" ]]; then
+                        ln -sf "$file_full_path" "$simp_le_file" \
+                          && set_ownership_and_permissions "$simp_le_file"
+                    # If the symlink target the wrong account file, replace it
+                    elif [[ "$(readlink -f "$simp_le_file")" != "$file_full_path" ]]; then
+                        ln -sf "$file_full_path" "$simp_le_file" \
+                          && set_ownership_and_permissions "$simp_le_file"
+                    fi
                 fi
-            fi
+            done
         fi
 
         echo "Creating/renewal $base_domain certificates... (${hosts_array_expanded[*]})"
         /usr/bin/simp_le \
-            -f account_key.json -f key.pem -f chain.pem -f fullchain.pem -f cert.pem \
+            -f account_key.json -f account_reg.json \
+            -f key.pem -f chain.pem -f fullchain.pem -f cert.pem \
             $params_d_str \
             --cert_key_size=$cert_keysize \
             --server=$acme_ca_uri \
@@ -244,13 +256,17 @@ function update_certs {
         simp_le_return=$?
 
         if [[ $REUSE_ACCOUNT_KEYS == true ]]; then
-            # If the account key to be reused does not exist yet, copy it
-            # from the CWD and replace the file in CWD with a symlink
-            if [[ ! -f "$account_key_full_path" && -f ./account_key.json ]]; then
-                mkdir -p "$account_key_dir"
-                cp ./account_key.json "$account_key_full_path"
-                ln -sf "$account_key_full_path" ./account_key.json
-            fi
+            mkdir -p "$account_dir"
+            for type in "key" "reg"; do
+                file_full_path="${account_dir}/${account_alias}_${type}.json"
+                simp_le_file="./account_${type}.json"
+                # If the account file to be reused does not exist yet, copy it
+                # from the CWD and replace the file in CWD with a symlink
+                if [[ ! -f "$file_full_path" && -f "$simp_le_file" ]]; then
+                    cp "$simp_le_file" "$file_full_path"
+                    ln -sf "$file_full_path" "$simp_le_file"
+                fi
+            done
         fi
 
         popd || return
@@ -262,20 +278,21 @@ function update_certs {
             else
               create_links "$base_domain" "$domain" && should_reload_nginx='true' && should_restart_container='true'
             fi
-            touch "${certificate_dir}/.companion"
-            set_ownership_and_permissions "${certificate_dir}/.companion"
           done
-          # Make private key root readable only
-          for file in cert.pem key.pem chain.pem fullchain.pem account_key.json; do
+          touch "${certificate_dir}/.companion"
+          # Set ownership and permissions of the files inside $certificate_dir
+          for file in .companion cert.pem key.pem chain.pem fullchain.pem account_key.json account_reg.json; do
             set_ownership_and_permissions "${certificate_dir}/${file}"
           done
-          # Make the account key and its parent folders (up to
-          # /etc/nginx/certs/accounts included) root readable only
-          account_key_perm_path="/etc/nginx/certs/accounts/${acme_ca_uri#*://}/${account_alias}.json"
+          # Set ownership and permissions of the ACME account key and its parent
+          # folders (up to /etc/nginx/certs/accounts included)
+          account_key_perm_path="/etc/nginx/certs/accounts/${acme_ca_uri#*://}/${account_alias}_key.json"
           until [[ "$account_key_perm_path" == /etc/nginx/certs ]]; do
             set_ownership_and_permissions "$account_key_perm_path"
             account_key_perm_path="$(dirname "$account_key_perm_path")"
           done
+          # Set ownership and permissions of the ACME account registration
+          set_ownership_and_permissions "/etc/nginx/certs/accounts/${acme_ca_uri#*://}/${account_alias}_reg.json"
           # Queue nginx reload if a certificate was issued or renewed
           [[ $simp_le_return -eq 0 ]] && should_reload_nginx='true' && should_restart_container='true'
         fi
