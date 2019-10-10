@@ -10,8 +10,10 @@ vhost_path='/etc/nginx/vhost.d'
 location_file="${TRAVIS_BUILD_DIR}/test/tests/location_config/le2.wtf"
 echo "$test_comment" > "$location_file"
 
-# Create le1.wtf configuration file from inside the nginx container
+# Create le1.wtf configuration file, *.le3.wtf and test.* from inside the nginx container
 docker exec "$NGINX_CONTAINER_NAME" sh -c "echo '### This is a test comment' > /etc/nginx/vhost.d/le1.wtf"
+docker exec "$NGINX_CONTAINER_NAME" sh -c "echo '### This is a test comment' > /etc/nginx/vhost.d/\*.example.com"
+docker exec "$NGINX_CONTAINER_NAME" sh -c "echo '### This is a test comment' > /etc/nginx/vhost.d/test.\*"
 
 # Zero the default configuration file.
 docker exec "$NGINX_CONTAINER_NAME" sh -c "echo '' > /etc/nginx/vhost.d/default"
@@ -30,6 +32,8 @@ IFS=',' read -r -a domains <<< "$TEST_DOMAINS"
 function cleanup {
   # Cleanup the files created by this run of the test to avoid foiling following test(s).
   docker exec "$le_container_name" bash -c 'rm -rf /etc/nginx/vhost.d/le1.wtf'
+  docker exec "$le_container_name" bash -c 'rm -rf /etc/nginx/vhost.d/\*.example.com'
+  docker exec "$le_container_name" bash -c 'rm -rf /etc/nginx/vhost.d/test.\*'
   # Stop the LE container
   docker stop "$le_container_name" > /dev/null
 }
@@ -51,6 +55,9 @@ function check_location {
   fi
 }
 
+# check the wildcard location enumeration function
+docker exec "$le_container_name" bash -c 'source /app/functions.sh; enumerate_wildcard_locations foo.bar.baz.example.com'
+
 # default configuration file should be empty
 config_path="$vhost_path/default"
 if docker exec "$le_container_name" [ ! -s "$config_path" ]; then
@@ -58,8 +65,8 @@ if docker exec "$le_container_name" [ ! -s "$config_path" ]; then
   docker exec "$le_container_name" cat "$config_path"
 fi
 
-# le1.wtf and le2.wtf configuration files should only contains the test comment
-for domain in "${domains[@]:0:2}"; do
+# custom configuration files should only contains the test comment
+for domain in "${domains[@]:0:2}" '*.example.com' 'test.*'; do
   config_path="$vhost_path/$domain"
   if check_location "$le_container_name" "$config_path"; then
     echo "Unexpected location configuration on $config_path at container startup:"
@@ -99,6 +106,30 @@ for domain in "${domains[@]:0:2}"; do
   fi
 done
 
+# Adding subdomain.example.com location configurations should use the *.example.com file
+domain="subdomain.example.com"
+config_path="$vhost_path/*.example.com"
+docker exec "$le_container_name" bash -c "source /app/functions.sh; add_location_configuration $domain"
+if ! check_location "$le_container_name" "$config_path" ; then
+  echo "Unexpected location configuration on $config_path after call to add_location_configuration $domain:"
+  docker exec "$le_container_name" cat "$config_path"
+elif ! docker exec "$le_container_name" grep -q "$test_comment" "$config_path"; then
+  echo "$config_path should still have test comment after call to add_location_configuration $domain:"
+  docker exec "$le_container_name" cat "$config_path"
+fi
+
+# Adding test.domain.tld location configurations should use the test.* file
+domain="test.domain.tld"
+config_path="$vhost_path/test.*"
+docker exec "$le_container_name" bash -c "source /app/functions.sh; add_location_configuration $domain"
+if ! check_location "$le_container_name" "$config_path" ; then
+  echo "Unexpected location configuration on $config_path after call to add_location_configuration $domain:"
+  docker exec "$le_container_name" cat "$config_path"
+elif ! docker exec "$le_container_name" grep -q "$test_comment" "$config_path"; then
+  echo "$config_path should still have test comment after call to add_location_configuration $domain:"
+  docker exec "$le_container_name" cat "$config_path"
+fi
+
 # Remove all location configurations
 docker exec "$le_container_name" bash -c "source /app/functions.sh; remove_all_location_configurations"
 
@@ -109,8 +140,8 @@ if docker exec "$le_container_name" [ ! -s "$config_path" ]; then
   docker exec "$le_container_name" cat "$config_path"
 fi
 
-# le1.wtf and le2.wtf configuration files should have reverted to only containing the test comment
-for domain in "${domains[@]:0:2}"; do
+# Custom configuration files should have reverted to only containing the test comment
+for domain in "${domains[@]:0:2}" '*.example.com' 'test.*'; do
   config_path="$vhost_path/$domain"
   if check_location "$le_container_name" "$config_path"; then
     echo "Unexpected location configuration on $config_path after call to remove_all_location_configurations:"

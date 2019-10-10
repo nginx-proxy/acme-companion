@@ -1,1 +1,8 @@
 Started letsencrypt container for test location_config
+*.bar.baz.example.com
+*.baz.example.com
+*.example.com
+foo.bar.baz.example.*
+foo.bar.baz.*
+foo.bar.*
+foo.*
