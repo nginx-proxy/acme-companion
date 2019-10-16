@@ -2,7 +2,7 @@
 
 set -e
 
-acme_endpoint='http://boulder:4000/directory'
+acme_endpoint='http://boulder:4001/directory'
 
 setup_boulder() {
   export GOPATH=${TRAVIS_BUILD_DIR}/go
@@ -10,7 +10,7 @@ setup_boulder() {
     && git clone https://github.com/letsencrypt/boulder \
       $GOPATH/src/github.com/letsencrypt/boulder
   pushd $GOPATH/src/github.com/letsencrypt/boulder
-  git checkout release-2019-06-17
+  git checkout release-2019-10-07
   if [[ "$(uname)" == 'Darwin' ]]; then
     # Set Standard Ports
     sed -i '' 's/ 5002/ 80/g' test/config/va.json
