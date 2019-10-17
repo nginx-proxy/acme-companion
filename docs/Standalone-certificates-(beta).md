@@ -63,7 +63,7 @@ Those are all single bash variables.
 
 `LETSENCRYPT_uniqueidentifier_TEST` : if set to true, the corresponding certificate will be a test certificates: it won't have the 5 certs/week/domain limits and will be signed by an untrusted intermediate (ie it won't be trusted by browsers).
 
-`LETSENCRYPT_uniqueidentifier_ACCOUNT_ALIAS` : see the [ACME account keys documentation](./Let's-Encrypt-and-ACME.md#disable-account-keys-re-utilization).
+`LETSENCRYPT_uniqueidentifier_ACCOUNT_ALIAS` : see the [ACME account documentation](./Let's-Encrypt-and-ACME.md#multiple-accounts-per-endpoint).
 
 ### Picking up changes to letsencrypt_user_data
 
