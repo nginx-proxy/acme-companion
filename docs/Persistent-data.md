@@ -70,14 +70,14 @@ By default, the **letsencrypt-nginx-proxy-companion** container will enforce the
 ```
 [drwxr-xr-x]  /etc/nginx/certs
 ├── [drwxr-xr-x root root]  accounts
-│   └── [drwxr-xr-x root root]  acme-v01.api.letsencrypt.org
+│   └── [drwxr-xr-x root root]  acme-v02.api.letsencrypt.org
 │       └── [drwxr-xr-x root root]  directory
 │           └── [-rw-r--r-- root root]  default.json
 ├── [-rw-r--r-- root root]  dhparam.pem
 ├── [-rw-r--r-- root root]  default.crt
 ├── [-rw-r--r-- root root]  default.key
 ├── [drwxr-xr-x root root]  domain.tld
-│   ├── [lrwxrwxrwx root root]  account_key.json -> ../accounts/acme-v01.api.letsencrypt.org/directory/default.json
+│   ├── [lrwxrwxrwx root root]  account_key.json -> ../accounts/acme-v02.api.letsencrypt.org/directory/default.json
 │   ├── [-rw-r--r-- root root]  cert.pem
 │   ├── [-rw-r--r-- root root]  chain.pem
 │   ├── [-rw-r--r-- root root]  fullchain.pem
@@ -100,14 +100,14 @@ For example, `FILES_UID=1000`, `FILES_PERMS=600` and `FOLDERS_PERMS=700` will re
 ```
 [drwxr-xr-x]  /etc/nginx/certs
 ├── [drwx------ 1000 1000]  accounts
-│   └── [drwx------ 1000 1000]  acme-v01.api.letsencrypt.org
+│   └── [drwx------ 1000 1000]  acme-v02.api.letsencrypt.org
 │       └── [drwx------ 1000 1000]  directory
 │           └── [-rw------- 1000 1000]  default.json
 ├── [-rw-r--r-- 1000 1000]  dhparam.pem
 ├── [-rw-r--r-- 1000 1000]  default.crt
 ├── [-rw------- 1000 1000]  default.key
 ├── [drwx------ 1000 1000]  domain.tld
-│   ├── [lrwxrwxrwx 1000 1000]  account_key.json -> ../accounts/acme-v01.api.letsencrypt.org/directory/default.json
+│   ├── [lrwxrwxrwx 1000 1000]  account_key.json -> ../accounts/acme-v02.api.letsencrypt.org/directory/default.json
 │   ├── [-rw-r--r-- 1000 1000]  cert.pem
 │   ├── [-rw-r--r-- 1000 1000]  chain.pem
 │   ├── [-rw-r--r-- 1000 1000]  fullchain.pem
@@ -119,4 +119,3 @@ For example, `FILES_UID=1000`, `FILES_PERMS=600` and `FOLDERS_PERMS=700` will re
 ```
 
 If you just want to make the most sensitive files (private keys and ACME account keys) root readable only, set the environment variable `FILES_PERMS` to `600` on your **letsencrypt-nginx-proxy-companion** container.
-
