@@ -1,0 +1,11 @@
+image: jrcs/letsencrypt-nginx-proxy-companion:latest
+manifests:
+  - image: jrcs/letsencrypt-nginx-proxy-companion:amd64
+    platform:
+      architecture: amd64
+      os: linux
+  - image: jrcs/letsencrypt-nginx-proxy-companion:arm32v7
+    platform:
+      architecture: arm
+      os: linux
+      variant: v7
