@@ -5,13 +5,17 @@ function print_cert_info {
   local san_str
 
   # Get the wanted informations with OpenSSL.
-  issuer="$(openssl x509 -noout -issuer -in "$1" | sed -n 's/.*CN=\(.*\)/\1/p')"
+  issuer="$(openssl x509 -noout -issuer -in "$1" | sed -n 's/.*CN = \(.*\)/\1/p')"
   enddate="$(openssl x509 -noout -enddate -in "$1" | sed -n 's/notAfter=\(.*$\)/\1/p')"
-  subject="$(openssl x509 -noout -subject -in "$1" | sed -n 's/.*CN=\([a-z0-9.-]*\)/- \1/p')"
+  subject="$(openssl x509 -noout -subject -in "$1" | sed -n 's/.*CN = \([a-z0-9.-]*\)/- \1/p')"
   san_str="$(openssl x509 -text -in "$1" | grep 'DNS:')"
 
   echo "Certificate was issued by $issuer"
-  echo "Certificate is valid until $enddate"
+  if [[ "$2" == "expired" ]]; then
+      echo "Certificate was valid until $enddate"
+  else
+      echo "Certificate is valid until $enddate"
+  fi
   echo "Subject Name:"
   echo "$subject"
 
@@ -29,11 +33,23 @@ function print_cert_info {
 echo '##### Certificate status #####'
 for cert in /etc/nginx/certs/*/fullchain.pem; do
     [[ -e "$cert" ]] || continue
-    # Verify the certificate with OpenSSL.
-    openssl verify -CAfile "${cert%fullchain.pem}chain.pem" "$cert"
-
-    # Print certificate info.
-    print_cert_info "$cert"
+    if [[ -e "${cert%fullchain.pem}chain.pem" ]]; then
+        # Verify the certificate with OpenSSL.
+        verify=$(openssl verify -CAfile "${cert%fullchain.pem}chain.pem" "$cert" 2>&1)
+        if [[ $? -eq 0 ]]; then
+            echo $verify
+            # Print certificate info.
+            print_cert_info "$cert"
+        else
+            echo "${cert}: EXPIRED"
+            # Print certificate info.
+            print_cert_info "$cert" "expired"
+        fi
+    else
+        echo "${cert}: no corresponding chain.pem file, unable to verify certificate"
+        # Print certificate info.
+        print_cert_info "$cert"
+    fi
 
     # Find the .crt files in /etc/nginx/certs which are
     # symlinks pointing to the current certificate.
