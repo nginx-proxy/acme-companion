@@ -1,0 +1,67 @@
+Started letsencrypt container for test certs_standalone_from_env
+Started test web server for le1.wtf,le2.wtf,le3.wtf
+Symlink to le1.wtf certificate has been generated.
+The link is pointing to the file ./le1.wtf/fullchain.pem
+le1.wtf is on certificate.
+le2.wtf did not appear on certificate for le1.wtf.
+le3.wtf did not appear on certificate for le1.wtf.
+Connection to le1.wtf using https was successful.
+The correct certificate for le1.wtf was served by Nginx.
+Symlink to le2.wtf certificate has been generated.
+The link is pointing to the file ./le2.wtf/fullchain.pem
+le2.wtf is on certificate.
+le1.wtf did not appear on certificate for le2.wtf.
+le3.wtf did not appear on certificate for le2.wtf.
+Connection to le2.wtf using https was successful.
+The correct certificate for le2.wtf was served by Nginx.
+Symlink to le3.wtf certificate has been generated.
+The link is pointing to the file ./le3.wtf/fullchain.pem
+le3.wtf is on certificate.
+le1.wtf did not appear on certificate for le3.wtf.
+le2.wtf did not appear on certificate for le3.wtf.
+Connection to le3.wtf using https was successful.
+The correct certificate for le3.wtf was served by Nginx.
+Started test web server for le2.wtf, le3.wtf, le1.wtf
+Symlink to le1.wtf certificate has been generated.
+The link is pointing to the file ./le1.wtf/fullchain.pem
+le1.wtf is on certificate.
+le2.wtf did not appear on certificate for le1.wtf.
+le3.wtf did not appear on certificate for le1.wtf.
+Connection to le1.wtf using https was successful.
+The correct certificate for le1.wtf was served by Nginx.
+Symlink to le2.wtf certificate has been generated.
+The link is pointing to the file ./le2.wtf/fullchain.pem
+le2.wtf is on certificate.
+le1.wtf did not appear on certificate for le2.wtf.
+le3.wtf did not appear on certificate for le2.wtf.
+Connection to le2.wtf using https was successful.
+The correct certificate for le2.wtf was served by Nginx.
+Symlink to le3.wtf certificate has been generated.
+The link is pointing to the file ./le3.wtf/fullchain.pem
+le3.wtf is on certificate.
+le1.wtf did not appear on certificate for le3.wtf.
+le2.wtf did not appear on certificate for le3.wtf.
+Connection to le3.wtf using https was successful.
+The correct certificate for le3.wtf was served by Nginx.
+Started test web server for le3.wtf, le1.wtf, le2.wtf,
+Symlink to le1.wtf certificate has been generated.
+The link is pointing to the file ./le1.wtf/fullchain.pem
+le1.wtf is on certificate.
+le2.wtf did not appear on certificate for le1.wtf.
+le3.wtf did not appear on certificate for le1.wtf.
+Connection to le1.wtf using https was successful.
+The correct certificate for le1.wtf was served by Nginx.
+Symlink to le2.wtf certificate has been generated.
+The link is pointing to the file ./le2.wtf/fullchain.pem
+le2.wtf is on certificate.
+le1.wtf did not appear on certificate for le2.wtf.
+le3.wtf did not appear on certificate for le2.wtf.
+Connection to le2.wtf using https was successful.
+The correct certificate for le2.wtf was served by Nginx.
+Symlink to le3.wtf certificate has been generated.
+The link is pointing to the file ./le3.wtf/fullchain.pem
+le3.wtf is on certificate.
+le1.wtf did not appear on certificate for le3.wtf.
+le2.wtf did not appear on certificate for le3.wtf.
+Connection to le3.wtf using https was successful.
+The correct certificate for le3.wtf was served by Nginx.
