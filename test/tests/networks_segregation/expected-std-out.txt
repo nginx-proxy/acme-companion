@@ -1,0 +1,11 @@
+Started letsencrypt container for test networks_segregation
+Started test web server for le1.wtf in net boulder_bluenet
+Started test web server for le2.wtf in net le_test_other_net1
+Started test web server for le3.wtf in net le_test_other_net2
+le1.wtf is in boulder_bluenet, cert should be generated
+Symlink to le1.wtf certificate has been generated.
+The link is pointing to the file ./le1.wtf/fullchain.pem
+le2.wtf is not in boulder_bluenet, cert should not be generated
+Domain le2.wtf was not included in the service_data.
+le3.wtf is not in boulder_bluenet, cert should not be generated
+Domain le3.wtf was not included in the service_data.

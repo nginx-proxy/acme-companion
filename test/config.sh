@@ -20,5 +20,6 @@ imageTests+=(
 	permissions_default
 	permissions_custom
 	symlinks
+	networks_segregation
 	'
 )
