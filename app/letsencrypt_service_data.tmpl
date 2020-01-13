@@ -1,14 +1,38 @@
+{{ $CurrentContainer := where $ "ID" .Docker.CurrentContainerID | first }}
+{{ $scopedContainersString := "" }}
+
+{{ range $hosts, $containers := groupBy $ "Env.LETSENCRYPT_HOST" }}
+    {{ if trim $hosts }}
+        {{ range $container := $containers }}
+            {{ $cid := printf "%.12s" $container.ID }}
+            {{ if $CurrentContainer.Env.MUST_BE_CONNECTED_WITH_NETWORK }}
+                {{ range $containerNetwork := $container.Networks }}
+                    {{ if eq $CurrentContainer.Env.MUST_BE_CONNECTED_WITH_NETWORK $containerNetwork.Name }}
+                        {{ $scopedContainersString = (printf "%s %s" $scopedContainersString $cid) }}
+                    {{ end }}
+                {{ end }}
+            {{ else }}
+                {{ $scopedContainersString = (printf "%s %s" $scopedContainersString $cid) }}
+            {{ end }}
+        {{ end }}
+    {{ end }}
+{{ end }}
+
+{{ $scopedContainersSlice := split (trim $scopedContainersString) " " }}
+
 LETSENCRYPT_CONTAINERS=(
     {{ range $hosts, $containers := groupBy $ "Env.LETSENCRYPT_HOST" }}
         {{ if trim $hosts }}
             {{ range $container := $containers }}
-                {{ if parseBool (coalesce $container.Env.LETSENCRYPT_SINGLE_DOMAIN_CERTS "false") }}
-                    {{ range $host := split $hosts "," }}
-                        {{ $host := trim $host }}
-                        {{- "\t"}}'{{ printf "%.12s" $container.ID }}_{{ sha1 $host }}'
+                {{ $cid := printf "%.12s" $container.ID }}
+                {{ if intersect $scopedContainersSlice (split $cid " ") }}
+                    {{ if parseBool (coalesce $container.Env.LETSENCRYPT_SINGLE_DOMAIN_CERTS "false") }}
+                        {{ range $host := split $hosts "," }}
+                            {{- "\t"}}'{{ printf "%s_%s" $cid (sha1 (trim $host)) }}'
+                        {{ end }}
+                    {{ else }}
+                        '{{ $cid }}'
                     {{ end }}
-                {{ else }}
-                    {{- "\t"}}'{{ printf "%.12s" $container.ID }}'
                 {{ end }}
             {{ end }}
         {{ end }}
@@ -19,39 +43,41 @@ LETSENCRYPT_CONTAINERS=(
     {{ $hosts := trimSuffix "," $hosts }}
     {{ range $container := $containers }}
         {{ $cid := printf "%.12s" $container.ID }}
-        {{ if parseBool (coalesce $container.Env.LETSENCRYPT_SINGLE_DOMAIN_CERTS "false") }}
-            {{ range $host := split $hosts "," }}
-                {{ $host := trim $host }}
-                {{ $host := trimSuffix "." $host }}
-                {{ $hostHash := sha1 $host }}
-                {{- "\n" }}LETSENCRYPT_{{ $cid }}_{{ $hostHash }}_HOST=('{{ $host }}')
-                {{- "\n" }}LETSENCRYPT_{{ $cid }}_{{ $hostHash }}_KEYSIZE="{{ $container.Env.LETSENCRYPT_KEYSIZE }}"
-                {{- "\n" }}LETSENCRYPT_{{ $cid }}_{{ $hostHash }}_TEST="{{ $container.Env.LETSENCRYPT_TEST }}"
-                {{- "\n" }}LETSENCRYPT_{{ $cid }}_{{ $hostHash }}_EMAIL="{{ $container.Env.LETSENCRYPT_EMAIL }}"
-                {{- "\n" }}ACME_{{ $cid }}_{{ $hostHash }}_CA_URI="{{ $container.Env.ACME_CA_URI }}"
-                {{- "\n" }}ACME_{{ $cid }}_{{ $hostHash }}_PREFERRED_CHAIN="{{ $container.Env.ACME_PREFERRED_CHAIN }}"
-                {{- "\n" }}ACME_{{ $cid }}_{{ $hostHash }}_EAB_KID="{{ $container.Env.ACME_EAB_KID }}"
-                {{- "\n" }}ACME_{{ $cid }}_{{ $hostHash }}_EAB_HMAC_KEY="{{ $container.Env.ACME_EAB_HMAC_KEY }}"
-                {{- "\n" }}ZEROSSL_{{ $cid }}_{{ $hostHash }}_API_KEY="{{ $container.Env.ZEROSSL_API_KEY }}"
-                {{- "\n" }}LETSENCRYPT_{{ $cid }}_{{ $hostHash }}_RESTART_CONTAINER="{{ $container.Env.LETSENCRYPT_RESTART_CONTAINER }}"
+        {{ if intersect $scopedContainersSlice (split $cid " ") }}
+            {{ if parseBool (coalesce $container.Env.LETSENCRYPT_SINGLE_DOMAIN_CERTS "false") }}
+                {{ range $host := split $hosts "," }}
+                    {{ $host := trim $host }}
+                    {{ $host := trimSuffix "." $host }}
+                    {{ $hostHash := sha1 $host }}
+                    {{- "\n" }}LETSENCRYPT_{{ $cid }}_{{ $hostHash }}_HOST=('{{ $host }}')
+                    {{- "\n" }}LETSENCRYPT_{{ $cid }}_{{ $hostHash }}_KEYSIZE="{{ $container.Env.LETSENCRYPT_KEYSIZE }}"
+                    {{- "\n" }}LETSENCRYPT_{{ $cid }}_{{ $hostHash }}_TEST="{{ $container.Env.LETSENCRYPT_TEST }}"
+                    {{- "\n" }}LETSENCRYPT_{{ $cid }}_{{ $hostHash }}_EMAIL="{{ $container.Env.LETSENCRYPT_EMAIL }}"
+                    {{- "\n" }}ACME_{{ $cid }}_{{ $hostHash }}_CA_URI="{{ $container.Env.ACME_CA_URI }}"
+                    {{- "\n" }}ACME_{{ $cid }}_{{ $hostHash }}_PREFERRED_CHAIN="{{ $container.Env.ACME_PREFERRED_CHAIN }}"
+                    {{- "\n" }}ACME_{{ $cid }}_{{ $hostHash }}_EAB_KID="{{ $container.Env.ACME_EAB_KID }}"
+                    {{- "\n" }}ACME_{{ $cid }}_{{ $hostHash }}_EAB_HMAC_KEY="{{ $container.Env.ACME_EAB_HMAC_KEY }}"
+                    {{- "\n" }}ZEROSSL_{{ $cid }}_{{ $hostHash }}_API_KEY="{{ $container.Env.ZEROSSL_API_KEY }}"
+                    {{- "\n" }}LETSENCRYPT_{{ $cid }}_{{ $hostHash }}_RESTART_CONTAINER="{{ $container.Env.LETSENCRYPT_RESTART_CONTAINER }}"
+                {{ end }}
+            {{ else }}
+                {{- "\n" }}LETSENCRYPT_{{ $cid }}_HOST=( 
+                        {{- range $host := split $hosts "," }}
+                            {{- $host := trim $host }}
+                            {{- $host := trimSuffix "." $host -}}
+                            '{{ $host }}'{{ " " }} 
+                        {{- end -}}
+                )
+                {{- "\n" }}LETSENCRYPT_{{ $cid }}_KEYSIZE="{{ $container.Env.LETSENCRYPT_KEYSIZE }}"
+                {{- "\n" }}LETSENCRYPT_{{ $cid }}_TEST="{{ $container.Env.LETSENCRYPT_TEST }}"
+                {{- "\n" }}LETSENCRYPT_{{ $cid }}_EMAIL="{{ $container.Env.LETSENCRYPT_EMAIL }}"
+                {{- "\n" }}ACME_{{ $cid }}_CA_URI="{{ $container.Env.ACME_CA_URI }}"
+                {{- "\n" }}ACME_{{ $cid }}_PREFERRED_CHAIN="{{ $container.Env.ACME_PREFERRED_CHAIN }}"
+                {{- "\n" }}ACME_{{ $cid }}_EAB_KID="{{ $container.Env.ACME_EAB_KID }}"
+                {{- "\n" }}ACME_{{ $cid }}_EAB_HMAC_KEY="{{ $container.Env.ACME_EAB_HMAC_KEY }}"
+                {{- "\n" }}ZEROSSL_{{ $cid }}_API_KEY="{{ $container.Env.ZEROSSL_API_KEY }}"
+                {{- "\n" }}LETSENCRYPT_{{ $cid }}_RESTART_CONTAINER="{{ $container.Env.LETSENCRYPT_RESTART_CONTAINER }}"
             {{ end }}
-        {{ else }}
-            {{- "\n" }}LETSENCRYPT_{{ $cid }}_HOST=( 
-                    {{- range $host := split $hosts "," }}
-                        {{- $host := trim $host }}
-                        {{- $host := trimSuffix "." $host -}}
-                        '{{ $host }}'{{ " " }} 
-                    {{- end -}}
-            )
-            {{- "\n" }}LETSENCRYPT_{{ $cid }}_KEYSIZE="{{ $container.Env.LETSENCRYPT_KEYSIZE }}"
-            {{- "\n" }}LETSENCRYPT_{{ $cid }}_TEST="{{ $container.Env.LETSENCRYPT_TEST }}"
-            {{- "\n" }}LETSENCRYPT_{{ $cid }}_EMAIL="{{ $container.Env.LETSENCRYPT_EMAIL }}"
-            {{- "\n" }}ACME_{{ $cid }}_CA_URI="{{ $container.Env.ACME_CA_URI }}"
-            {{- "\n" }}ACME_{{ $cid }}_PREFERRED_CHAIN="{{ $container.Env.ACME_PREFERRED_CHAIN }}"
-            {{- "\n" }}ACME_{{ $cid }}_EAB_KID="{{ $container.Env.ACME_EAB_KID }}"
-            {{- "\n" }}ACME_{{ $cid }}_EAB_HMAC_KEY="{{ $container.Env.ACME_EAB_HMAC_KEY }}"
-            {{- "\n" }}ZEROSSL_{{ $cid }}_API_KEY="{{ $container.Env.ZEROSSL_API_KEY }}"
-            {{- "\n" }}LETSENCRYPT_{{ $cid }}_RESTART_CONTAINER="{{ $container.Env.LETSENCRYPT_RESTART_CONTAINER }}"
         {{ end }}
     {{ end }}
 {{ end }}
