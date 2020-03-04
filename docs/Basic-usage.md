@@ -24,7 +24,7 @@ $ docker run --detach \
     jwilder/nginx-proxy
 ```
 
-Binding the host docker socket (`/var/run/docker.sock`) inside the container to `/tmp/docker.sock` is a requirement of **ninx-proxy**.
+Binding the host docker socket (`/var/run/docker.sock`) inside the container to `/tmp/docker.sock` is a requirement of **nginx-proxy**.
 
 ### Step 2 - letsencrypt-nginx-proxy-companion
 
