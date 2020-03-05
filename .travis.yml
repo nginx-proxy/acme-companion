@@ -1,8 +1,7 @@
 os: linux
 dist: trusty
-sudo: required
 
-language: bash
+language: shell
 
 addons:
   hosts:
@@ -18,25 +17,21 @@ env:
     - TEST_DOMAINS=le1.wtf,le2.wtf,le3.wtf
     - DOCKER_COMPOSE_VERSION=1.24.0
 
-matrix:
+jobs:
   include:
     - env: SETUP=2containers
     - env: SETUP=3containers
     - os: linux
       dist: xenial
-      sudo: required
       env: SETUP=2containers
     - os: linux
       dist: xenial
-      sudo: required
       env: SETUP=3containers
     - os: linux
       dist: bionic
-      sudo: required
       env: SETUP=2containers
     - os: linux
       dist: bionic
-      sudo: required
       env: SETUP=3containers
   allow_failures:
     - dist: bionic
