@@ -1,4 +1,4 @@
-FROM golang:1.13-alpine AS go-builder
+FROM golang:1.14-alpine AS go-builder
 
 ENV DOCKER_GEN_VERSION=0.7.4
 
@@ -17,7 +17,7 @@ RUN go get github.com/jwilder/docker-gen \
     && make get-deps \
     && make all
 
-FROM alpine:3.10
+FROM alpine:3.11
 
 LABEL maintainer="Yves Blusseau <90z7oey02@sneakemail.com> (@blusseau)"
 
