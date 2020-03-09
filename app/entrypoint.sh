@@ -1,7 +1,10 @@
 #!/bin/bash
-# shellcheck disable=SC2155
 
 set -u
+
+# shellcheck source=functions.sh
+source /app/functions.sh
+DEBUG="$(lc "$DEBUG")"
 
 function check_deprecated_env_var {
     if [[ -n "${ACME_TOS_HASH:-}" ]]; then
@@ -24,8 +27,9 @@ function check_docker_socket {
 function check_writable_directory {
     local dir="$1"
     if [[ $(get_self_cid) ]]; then
-        docker_api "/containers/$(get_self_cid)/json" | jq ".Mounts[].Destination" | grep -q "^\"$dir\"$"
-        [[ $? -ne 0 ]] && echo "Warning: '$dir' does not appear to be a mounted volume."
+        if ! docker_api "/containers/$(get_self_cid)/json" | jq ".Mounts[].Destination" | grep -q "^\"$dir\"$"; then
+            echo "Warning: '$dir' does not appear to be a mounted volume."
+        fi
     else
         echo "Warning: can't check if '$dir' is a mounted volume without self container ID."
     fi
@@ -34,13 +38,12 @@ function check_writable_directory {
         echo "Check that '$dir' directory is declared as a writable volume." >&2
         exit 1
     fi
-    touch $dir/.check_writable 2>/dev/null
-    if [[ $? -ne 0 ]]; then
+    if ! touch "$dir/.check_writable" 2>/dev/null ; then
         echo "Error: can't write to the '$dir' directory !" >&2
         echo "Check that '$dir' directory is export as a writable volume." >&2
         exit 1
     fi
-    rm -f $dir/.check_writable
+    rm -f "$dir/.check_writable"
 }
 
 function check_dh_group {
@@ -59,9 +62,9 @@ function check_dh_group {
     local GEN_LOCKFILE="/tmp/le_companion_dhparam_generating.lock"
 
     # The hash of the pregenerated dhparam file is used to check if the pregen dhparam is already in use
-    local PREGEN_HASH=$(sha256sum "$PREGEN_DHPARAM_FILE" | cut -d ' ' -f1)
+    local PREGEN_HASH; PREGEN_HASH=$(sha256sum "$PREGEN_DHPARAM_FILE" | cut -d ' ' -f1)
     if [[ -f "$DHPARAM_FILE" ]]; then
-        local CURRENT_HASH=$(sha256sum "$DHPARAM_FILE" | cut -d ' ' -f1)
+        local CURRENT_HASH; CURRENT_HASH=$(sha256sum "$DHPARAM_FILE" | cut -d ' ' -f1)
         if [[ "$PREGEN_HASH" != "$CURRENT_HASH" ]]; then
             # There is already a dhparam, and it's not the default
             set_ownership_and_permissions "$DHPARAM_FILE"
@@ -106,7 +109,7 @@ function check_default_cert_key {
         # than 3 months / 7776000 seconds (60 x 60 x 24 x 30 x 3).
         check_cert_min_validity /etc/nginx/certs/default.crt 7776000
         cert_validity=$?
-        [[ "$(lc $DEBUG)" == true ]] && echo "Debug: a default certificate with $default_cert_cn is present."
+        [[ "$DEBUG" == true ]] && echo "Debug: a default certificate with $default_cert_cn is present."
     fi
 
     # Create a default cert and private key if:
@@ -123,16 +126,14 @@ function check_default_cert_key {
         && mv /etc/nginx/certs/default.key.new /etc/nginx/certs/default.key \
         && mv /etc/nginx/certs/default.crt.new /etc/nginx/certs/default.crt
         echo "Info: a default key and certificate have been created at /etc/nginx/certs/default.key and /etc/nginx/certs/default.crt."
-    elif [[ "$(lc $DEBUG)" == true && "${default_cert_cn:-}" =~ $cn ]]; then
+    elif [[ "$DEBUG" == true && "${default_cert_cn:-}" =~ $cn ]]; then
         echo "Debug: the self generated default certificate is still valid for more than three months. Skipping default certificate creation."
-    elif [[ "$(lc $DEBUG)" == true ]]; then
+    elif [[ "$DEBUG" == true ]]; then
         echo "Debug: the default certificate is user provided. Skipping default certificate creation."
     fi
     set_ownership_and_permissions "/etc/nginx/certs/default.key"
     set_ownership_and_permissions "/etc/nginx/certs/default.crt"
 }
-
-source /app/functions.sh
 
 if [[ "$*" == "/bin/bash /app/start.sh" ]]; then
     acmev1_r='acme-(v01\|staging)\.api\.letsencrypt\.org'

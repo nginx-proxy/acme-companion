@@ -1,13 +1,14 @@
 #!/bin/bash
-# shellcheck disable=SC2120
 
+# shellcheck source=functions.sh
 source /app/functions.sh
+DEBUG="$(lc "$DEBUG")"
 
 seconds_to_wait=3600
 ACME_CA_URI="${ACME_CA_URI:-https://acme-v02.api.letsencrypt.org/directory}"
 DEFAULT_KEY_SIZE=4096
-REUSE_ACCOUNT_KEYS="$(lc ${REUSE_ACCOUNT_KEYS:-true})"
-REUSE_PRIVATE_KEYS="$(lc ${REUSE_PRIVATE_KEYS:-false})"
+REUSE_ACCOUNT_KEYS="$(lc "${REUSE_ACCOUNT_KEYS:-true}")"
+REUSE_PRIVATE_KEYS="$(lc "${REUSE_PRIVATE_KEYS:-false}")"
 MIN_VALIDITY_CAP=7603200
 DEFAULT_MIN_VALIDITY=2592000
 
@@ -16,7 +17,7 @@ function create_link {
     local -r target=${2?missing target argument}
     if [[ -f "$target" ]] && [[ "$(readlink "$target")" == "$source" ]]; then
       set_ownership_and_permissions "$target"
-      [[ "$(lc $DEBUG)" == true ]] && echo "$target already linked to $source"
+      [[ "$DEBUG" == true ]] && echo "$target already linked to $source"
       return 1
     else
       ln -sf "$source" "$target" \
@@ -34,16 +35,16 @@ function create_links {
     fi
     local return_code=1
     create_link "./$base_domain/fullchain.pem" "/etc/nginx/certs/$domain.crt"
-    return_code=$(( $return_code & $? ))
+    return_code=$(( return_code & $? ))
     create_link "./$base_domain/key.pem" "/etc/nginx/certs/$domain.key"
-    return_code=$(( $return_code & $? ))
+    return_code=$(( return_code & $? ))
     if [[ -f "/etc/nginx/certs/dhparam.pem" ]]; then
         create_link ./dhparam.pem "/etc/nginx/certs/$domain.dhparam.pem"
-        return_code=$(( $return_code & $? ))
+        return_code=$(( return_code & $? ))
     fi
     if [[ -f "/etc/nginx/certs/$base_domain/chain.pem" ]]; then
         create_link "./$base_domain/chain.pem" "/etc/nginx/certs/$domain.chain.pem"
-        return_code=$(( $return_code & $? ))
+        return_code=$(( return_code & $? ))
     fi
     return $return_code
 }
@@ -61,7 +62,7 @@ function cleanup_links {
         symlinked_domain="${symlinked_domain%*.crt}"
         SYMLINKED_DOMAINS+=("$symlinked_domain")
     done
-    [[ "$(lc $DEBUG)" == true ]] && echo "Symlinked domains: ${SYMLINKED_DOMAINS[*]}"
+    [[ "$DEBUG" == true ]] && echo "Symlinked domains: ${SYMLINKED_DOMAINS[*]}"
 
     # Create an array containing domains that are considered
     # enabled (ie present on /app/letsencrypt_service_data).
@@ -75,7 +76,7 @@ function cleanup_links {
         ENABLED_DOMAINS+=("$domain")
       done
     done
-    [[ "$(lc $DEBUG)" == true ]] && echo "Enabled domains: ${ENABLED_DOMAINS[*]}"
+    [[ "$DEBUG" == true ]] && echo "Enabled domains: ${ENABLED_DOMAINS[*]}"
 
     # Create an array containing only domains for which a symlinked private key exists
     # in /etc/nginx/certs but that no longer have a corresponding LETSENCRYPT_HOST set
@@ -86,28 +87,28 @@ function cleanup_links {
                                              "${ENABLED_DOMAINS[@]}" \
                                              | tr ' ' '\n' | sort | uniq -u)
     fi
-    [[ "$(lc $DEBUG)" == true ]] && echo "Disabled domains: ${DISABLED_DOMAINS[*]}"
+    [[ "$DEBUG" == true ]] && echo "Disabled domains: ${DISABLED_DOMAINS[*]}"
 
 
     # Remove disabled domains symlinks if present.
     # Return 1 if nothing was removed and 0 otherwise.
     if [[ ${#DISABLED_DOMAINS[@]} -gt 0 ]]; then
-      [[ "$(lc $DEBUG)" == true ]] && echo "Some domains are disabled :"
+      [[ "$DEBUG" == true ]] && echo "Some domains are disabled :"
       for disabled_domain in "${DISABLED_DOMAINS[@]}"; do
-          [[ "$(lc $DEBUG)" == true ]] && echo "Checking domain ${disabled_domain}"
-          cert_folder="$(readlink -f /etc/nginx/certs/${disabled_domain}.crt)"
+          [[ "$DEBUG" == true ]] && echo "Checking domain ${disabled_domain}"
+          cert_folder="$(readlink -f /etc/nginx/certs/"${disabled_domain}".crt)"
           # If the dotfile is absent, skip domain.
           if [[ ! -e "${cert_folder%/*}/.companion" ]]; then
-              [[ "$(lc $DEBUG)" == true ]] && echo "No .companion file found in ${cert_folder}. ${disabled_domain} is not managed by letsencrypt-nginx-proxy-companion. Skipping domain."
+              [[ "$DEBUG" == true ]] && echo "No .companion file found in ${cert_folder}. ${disabled_domain} is not managed by letsencrypt-nginx-proxy-companion. Skipping domain."
               continue
           else
-              [[ "$(lc $DEBUG)" == true ]] && echo "${disabled_domain} is managed by letsencrypt-nginx-proxy-companion. Removing unused symlinks."
+              [[ "$DEBUG" == true ]] && echo "${disabled_domain} is managed by letsencrypt-nginx-proxy-companion. Removing unused symlinks."
           fi
 
           for extension in .crt .key .dhparam.pem .chain.pem; do
               file="${disabled_domain}${extension}"
               if [[ -n "${file// }" ]] && [[ -L "/etc/nginx/certs/${file}" ]]; then
-                  [[ "$(lc $DEBUG)" == true ]] && echo "Removing /etc/nginx/certs/${file}"
+                  [[ "$DEBUG" == true ]] && echo "Removing /etc/nginx/certs/${file}"
                   rm -f "/etc/nginx/certs/${file}"
               fi
           done
@@ -140,15 +141,15 @@ function update_certs {
         # First domain will be our base domain
         base_domain="${hosts_array_expanded[0]}"
 
-        params_d_str=""
+        params_d_arr=()
 
         # Use container's LETSENCRYPT_EMAIL if set, fallback to DEFAULT_EMAIL
         email_varname="LETSENCRYPT_${cid}_EMAIL"
         email_address="${!email_varname}"
         if [[ "$email_address" != "<no value>" ]]; then
-            params_d_str+=" --email $email_address"
+            params_d_arr+=(--email "$email_address")
         elif [[ -n "${DEFAULT_EMAIL:-}" ]]; then
-            params_d_str+=" --email $DEFAULT_EMAIL"
+            params_d_arr+=(--email "$DEFAULT_EMAIL")
         fi
 
         keysize_varname="LETSENCRYPT_${cid}_KEYSIZE"
@@ -177,9 +178,9 @@ function update_certs {
             account_alias=default
         fi
 
-        [[ "$(lc $DEBUG)" == true ]] && params_d_str+=" -v"
-        [[ $REUSE_PRIVATE_KEYS == true ]] && params_d_str+=" --reuse_key"
-
+        [[ "$DEBUG" == true ]] && params_d_arr+=(-v)
+        [[ $REUSE_PRIVATE_KEYS == true ]] && params_d_arr+=(--reuse_key)
+        
         min_validity="LETSENCRYPT_${cid}_MIN_VALIDITY"
         min_validity="${!min_validity}"
         if [[ "$min_validity" == "<no value>" ]]; then
@@ -191,15 +192,15 @@ function update_certs {
             min_validity=$MIN_VALIDITY_CAP
         fi
         # Lower Bound
-        if [[ $min_validity -lt $(($seconds_to_wait * 2)) ]]; then
-            min_validity=$(($seconds_to_wait * 2))
+        if [[ $min_validity -lt $((seconds_to_wait * 2)) ]]; then
+            min_validity=$((seconds_to_wait * 2))
         fi
 
         if [[ "${1}" == "--force-renew" ]]; then
             # Manually set to highest certificate lifetime given by LE CA
-            params_d_str+=" --valid_min 7776000"
+            params_d_arr+=(--valid_min 7776000)
         else
-            params_d_str+=" --valid_min $min_validity"
+            params_d_arr+=(--valid_min "$min_validity")
         fi
 
         # Create directory for the first domain,
@@ -210,7 +211,7 @@ function update_certs {
 
         for domain in "${!hosts_array}"; do
             # Add all the domains to certificate
-            params_d_str+=" -d $domain"
+            params_d_arr+=(-d "$domain")
             # Add location configuration for the domain
             add_location_configuration "$domain" || reload_nginx
         done
@@ -219,7 +220,7 @@ function update_certs {
           # If there is an account key present without account registration, this is
           # a leftover from the ACME v1 version of simp_le. Remove this account key.
           rm -f ./account_key.json
-          [[ "$(lc $DEBUG)" == true ]] \
+          [[ "$DEBUG" == true ]] \
             && echo "Debug: removed ACME v1 account key $certificate_dir/account_key.json"
         fi
 
@@ -248,9 +249,9 @@ function update_certs {
         /usr/bin/simp_le \
             -f account_key.json -f account_reg.json \
             -f key.pem -f chain.pem -f fullchain.pem -f cert.pem \
-            $params_d_str \
-            --cert_key_size=$cert_keysize \
-            --server=$acme_ca_uri \
+            "${params_d_arr[@]}" \
+            --cert_key_size="$cert_keysize" \
+            --server="$acme_ca_uri" \
             --default_root /usr/share/nginx/html/
 
         simp_le_return=$?
@@ -326,7 +327,7 @@ pid=
 trap '[[ $pid ]] && kill $pid; exec $0' EXIT
 trap 'trap - EXIT' INT TERM
 
-update_certs
+update_certs "$@"
 
 # Wait some amount of time
 echo "Sleep for ${seconds_to_wait}s"
