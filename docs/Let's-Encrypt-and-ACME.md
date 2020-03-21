@@ -6,11 +6,25 @@
 
 As described on [basic usage](./Basic-usage.md), the `LETSENCRYPT_HOST` environment variables needs to be declared in each to-be-proxied application containers for which you want to enable SSL and create certificate. It most likely needs to be the same as the `VIRTUAL_HOST` variable and must resolve to your host (which has to be publicly reachable).
 
-Specify multiple hosts with a comma delimiter to create multi-domain ([SAN](https://www.digicert.com/subject-alternative-name.htm)) certificates (the first domain in the list will be the base domain).
-
 The following environment variables are optional and parametrize the way the Let's Encrypt client works.
 
 ### per proxyed container
+
+#### Multi-domains certificates
+
+Specify multiple hosts with a comma delimiter to create multi-domains ([SAN](https://www.digicert.com/subject-alternative-name.htm)) certificates (the first domain in the list will be the base domain).
+
+Example:
+
+```shell
+$ docker run --detach \
+    --name your-proxyed-app \
+    --env "VIRTUAL_HOST=yourdomain.tld,www.yourdomain.tld,anotherdomain.tld" \
+    --env "LETSENCRYPT_HOST=yourdomain.tld,www.yourdomain.tld,anotherdomain.tld" \
+    nginx
+```
+
+Let's Encrypt has a limit of [100 domains per certificate](https://letsencrypt.org/fr/docs/rate-limits/), while Buypass limit is [15 domains per certificate](https://www.buypass.com/ssl/products/go-ssl-campaign).
 
 #### Automatic certificate renewal
 Every hour (3600 seconds) the certificates are checked and per default every certificate that will expire in the next [30 days](https://github.com/zenhack/simp_le/blob/a8a8013c097910f8f3cce046f1077b41b745673b/simp_le.py#L73) (90 days / 3) is renewed.

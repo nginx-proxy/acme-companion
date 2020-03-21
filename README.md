@@ -14,7 +14,7 @@ Please note that **letsencrypt-nginx-proxy-companion** no longer supports ACME v
 * Automated creation/renewal of Let's Encrypt (or other ACME CAs) certificates using [**simp_le**](https://github.com/zenhack/simp_le).
 * Let's Encrypt / ACME domain validation through `http-01` challenge only.
 * Automated update and reload of nginx config on certificate creation/renewal.
-* Support creation of Multi-Domain (SAN) Certificates.
+* Support creation of [Multi-Domain (SAN) Certificates](https://github.com/nginx-proxy/docker-letsencrypt-nginx-proxy-companion/blob/master/docs/Let's-Encrypt-and-ACME.md#multi-domains-certificates).
 * Creation of a Strong Diffie-Hellman Group at startup.
 * Work with all versions of docker.
 
