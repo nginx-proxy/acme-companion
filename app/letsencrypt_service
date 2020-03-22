@@ -134,6 +134,16 @@ function update_cert {
     params_base_arr+=(--log /dev/null)
     [[ "$DEBUG" == 1 ]] && params_base_arr+=(--debug 2)
 
+    # Alternative trusted root CA path, used for test with Pebble
+    if [[ -n "${CA_BUNDLE// }" ]]; then
+        if [[ -f "$CA_BUNDLE" ]]; then
+            params_base_arr+=(--ca-bundle "$CA_BUNDLE")
+            [[ "$DEBUG" == 1 ]] && echo "Debug: acme.sh will use $CA_BUNDLE as trusted root CA."
+        else
+            echo "Warning: the path to the alternate CA bundle ($CA_BUNDLE) is not valid, using default Alpine trust store."
+        fi
+    fi
+
     # CLI parameters array used for --register-account
     local -a params_register_arr
 
