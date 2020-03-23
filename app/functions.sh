@@ -1,5 +1,11 @@
 #!/bin/bash
-# shellcheck disable=SC2155
+
+# Convert argument to lowercase (bash 4 only)
+function lc {
+	echo "${@,,}"
+}
+
+DEBUG="$(lc "$DEBUG")"
 
 [[ -z "${VHOST_DIR:-}" ]] && \
  declare -r VHOST_DIR=/etc/nginx/vhost.d
@@ -9,7 +15,7 @@
  declare -r END_HEADER='## End of configuration add by letsencrypt container'
 
 function check_nginx_proxy_container_run {
-    local _nginx_proxy_container=$(get_nginx_proxy_container)
+    local _nginx_proxy_container; _nginx_proxy_container=$(get_nginx_proxy_container)
     if [[ -n "$_nginx_proxy_container" ]]; then
         if [[ $(docker_api "/containers/${_nginx_proxy_container}/json" | jq -r '.State.Status') = "running" ]];then
             return 0
@@ -156,22 +162,22 @@ function docker_api {
         return 1
     fi
     if [[ $DOCKER_HOST == unix://* ]]; then
-        curl_opts+=(--unix-socket ${DOCKER_HOST#unix://})
+        curl_opts+=(--unix-socket "${DOCKER_HOST#unix://}")
         scheme='http://localhost'
     else
         scheme="http://${DOCKER_HOST#*://}"
     fi
     [[ $method = "POST" ]] && curl_opts+=(-H 'Content-Type: application/json')
-    curl "${curl_opts[@]}" -X${method} ${scheme}$1
+    curl "${curl_opts[@]}" -X "${method}" "${scheme}$1"
 }
 
 function docker_exec {
     local id="${1?missing id}"
     local cmd="${2?missing command}"
-    local data=$(printf '{ "AttachStdin": false, "AttachStdout": true, "AttachStderr": true, "Tty":false,"Cmd": %s }' "$cmd")
+    local data; data=$(printf '{ "AttachStdin": false, "AttachStdout": true, "AttachStderr": true, "Tty":false,"Cmd": %s }' "$cmd")
     exec_id=$(docker_api "/containers/$id/exec" "POST" "$data" | jq -r .Id)
     if [[ -n "$exec_id" && "$exec_id" != "null" ]]; then
-        docker_api /exec/$exec_id/start "POST" '{"Detach": false, "Tty":false}'
+        docker_api "/exec/${exec_id}/start" "POST" '{"Detach": false, "Tty":false}'
     else
         echo "$(date "+%Y/%m/%d %T"), Error: can't exec command ${cmd} in container ${id}. Check if the container is running." >&2
         return 1
@@ -190,12 +196,12 @@ function docker_kill {
 }
 
 function labeled_cid {
-    docker_api "/containers/json" | jq -r '.[] | select(.Labels["'$1'"])|.Id'
+    docker_api "/containers/json" | jq -r '.[] | select(.Labels["'"$1"'"])|.Id'
 }
 
 function is_docker_gen_container {
     local id="${1?missing id}"
-    if [[ $(docker_api "/containers/$id/json" | jq -r '.Config.Env[]' | egrep -c '^DOCKER_GEN_VERSION=') = "1" ]]; then
+    if [[ $(docker_api "/containers/$id/json" | jq -r '.Config.Env[]' | grep -c -E '^DOCKER_GEN_VERSION=') = "1" ]]; then
         return 0
     else
         return 1
@@ -204,7 +210,7 @@ function is_docker_gen_container {
 
 function get_docker_gen_container {
     # First try to get the docker-gen container ID from the container label.
-    local docker_gen_cid="$(labeled_cid com.github.jrcs.letsencrypt_nginx_proxy_companion.docker_gen)"
+    local docker_gen_cid; docker_gen_cid="$(labeled_cid com.github.jrcs.letsencrypt_nginx_proxy_companion.docker_gen)"
 
     # If the labeled_cid function dit not return anything and the env var is set, use it.
     if [[ -z "$docker_gen_cid" ]] && [[ -n "${NGINX_DOCKER_GEN_CONTAINER:-}" ]]; then
@@ -218,7 +224,7 @@ function get_docker_gen_container {
 function get_nginx_proxy_container {
     local volumes_from
     # First try to get the nginx container ID from the container label.
-    local nginx_cid="$(labeled_cid com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy)"
+    local nginx_cid; nginx_cid="$(labeled_cid com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy)"
 
     # If the labeled_cid function dit not return anything ...
     if [[ -z "${nginx_cid}" ]]; then
@@ -230,7 +236,7 @@ function get_nginx_proxy_container {
             volumes_from=$(docker_api "/containers/$(get_self_cid)/json" | jq -r '.HostConfig.VolumesFrom[]' 2>/dev/null)
             for cid in $volumes_from; do
                 cid="${cid%:*}" # Remove leading :ro or :rw set by remote docker-compose (thx anoopr)
-                if [[ $(docker_api "/containers/$cid/json" | jq -r '.Config.Env[]' | egrep -c '^NGINX_VERSION=') = "1" ]];then
+                if [[ $(docker_api "/containers/$cid/json" | jq -r '.Config.Env[]' | grep -c -E '^NGINX_VERSION=') = "1" ]];then
                     nginx_cid="$cid"
                     break
                 fi
@@ -244,8 +250,8 @@ function get_nginx_proxy_container {
 
 ## Nginx
 function reload_nginx {
-    local _docker_gen_container=$(get_docker_gen_container)
-    local _nginx_proxy_container=$(get_nginx_proxy_container)
+    local _docker_gen_container; _docker_gen_container=$(get_docker_gen_container)
+    local _nginx_proxy_container; _nginx_proxy_container=$(get_nginx_proxy_container)
 
     if [[ -n "${_docker_gen_container:-}" ]]; then
         # Using docker-gen and nginx in separate container
@@ -285,7 +291,7 @@ function set_ownership_and_permissions {
     return 1
   fi
 
-  [[ "$(lc $DEBUG)" == true ]] && echo "Debug: checking $path ownership and permissions."
+  [[ "$DEBUG" == true ]] && echo "Debug: checking $path ownership and permissions."
 
   # Find the user numeric ID if the FILES_UID environment variable isn't numeric.
   if [[ "$user" =~ ^[0-9]+$ ]]; then
@@ -293,8 +299,8 @@ function set_ownership_and_permissions {
   # Check if this user exist inside the container
   elif id -u "$user" > /dev/null 2>&1; then
     # Convert the user name to numeric ID
-    local user_num="$(id -u "$user")"
-    [[ "$(lc $DEBUG)" == true ]] && echo "Debug: numeric ID of user $user is $user_num."
+    local user_num; user_num="$(id -u "$user")"
+    [[ "$DEBUG" == true ]] && echo "Debug: numeric ID of user $user is $user_num."
   else
     echo "Warning: user $user not found in the container, please use a numeric user ID instead of a user name. Skipping ownership and permissions check."
     return 1
@@ -306,8 +312,8 @@ function set_ownership_and_permissions {
   # Check if this group exist inside the container
   elif getent group "$group" > /dev/null 2>&1; then
     # Convert the group name to numeric ID
-    local group_num="$(getent group "$group" | awk -F ':' '{print $3}')"
-    [[ "$(lc $DEBUG)" == true ]] && echo "Debug: numeric ID of group $group is $group_num."
+    local group_num; group_num="$(getent group "$group" | awk -F ':' '{print $3}')"
+    [[ "$DEBUG" == true ]] && echo "Debug: numeric ID of group $group is $group_num."
   else
     echo "Warning: group $group not found in the container, please use a numeric group ID instead of a group name. Skipping ownership and permissions check."
     return 1
@@ -316,7 +322,7 @@ function set_ownership_and_permissions {
   # Check and modify ownership if required.
   if [[ -e "$path" ]]; then
     if [[ "$(stat -c %u:%g "$path" )" != "$user_num:$group_num" ]]; then
-      [[ "$(lc $DEBUG)" == true ]] && echo "Debug: setting $path ownership to $user:$group."
+      [[ "$DEBUG" == true ]] && echo "Debug: setting $path ownership to $user:$group."
       if [[ -L "$path" ]]; then
         chown -h "$user_num:$group_num" "$path"
       else
@@ -326,7 +332,7 @@ function set_ownership_and_permissions {
     # If the path is a folder, check and modify permissions if required.
     if [[ -d "$path" ]]; then
       if [[ "$(stat -c %a "$path")" != "$d_perms" ]]; then
-        [[ "$(lc $DEBUG)" == true ]] && echo "Debug: setting $path permissions to $d_perms."
+        [[ "$DEBUG" == true ]] && echo "Debug: setting $path permissions to $d_perms."
         chmod "$d_perms" "$path"
       fi
     # If the path is a file, check and modify permissions if required.
@@ -334,13 +340,13 @@ function set_ownership_and_permissions {
       # Use different permissions for private files (private keys and ACME account files) ...
       if [[ "$path" =~ ^.*(default\.key|key\.pem|\.json)$ ]]; then
         if [[ "$(stat -c %a "$path")" != "$f_perms" ]]; then
-          [[ "$(lc $DEBUG)" == true ]] && echo "Debug: setting $path permissions to $f_perms."
+          [[ "$DEBUG" == true ]] && echo "Debug: setting $path permissions to $f_perms."
           chmod "$f_perms" "$path"
         fi
       # ... and for public files (certificates, chains, fullchains, DH parameters).
       else
         if [[ "$(stat -c %a "$path")" != "644" ]]; then
-          [[ "$(lc $DEBUG)" == true ]] && echo "Debug: setting $path permissions to 644."
+          [[ "$DEBUG" == true ]] && echo "Debug: setting $path permissions to 644."
           chmod "644" "$path"
         fi
       fi
@@ -349,9 +355,4 @@ function set_ownership_and_permissions {
     echo "Warning: $path does not exist. Skipping ownership and permissions check."
     return 1
   fi
-}
-
-# Convert argument to lowercase (bash 4 only)
-function lc {
-	echo "${@,,}"
 }

@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# shellcheck source=letsencrypt_service
 source /app/letsencrypt_service --source-only
 
 update_certs --force-renew

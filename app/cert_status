@@ -35,9 +35,8 @@ for cert in /etc/nginx/certs/*/fullchain.pem; do
     [[ -e "$cert" ]] || continue
     if [[ -e "${cert%fullchain.pem}chain.pem" ]]; then
         # Verify the certificate with OpenSSL.
-        verify=$(openssl verify -CAfile "${cert%fullchain.pem}chain.pem" "$cert" 2>&1)
-        if [[ $? -eq 0 ]]; then
-            echo $verify
+        if verify=$(openssl verify -CAfile "${cert%fullchain.pem}chain.pem" "$cert" 2>&1); then
+            echo "$verify"
             # Print certificate info.
             print_cert_info "$cert"
         else
@@ -57,7 +56,8 @@ for cert in /etc/nginx/certs/*/fullchain.pem; do
     for symlink in /etc/nginx/certs/*.crt; do
         [[ -e "$symlink" ]] || continue
         if [[ "$(readlink -f "$symlink")" == "$cert" ]]; then
-            domain="$(echo "${symlink%.crt}" | sed 's#/etc/nginx/certs/##g')"
+            domain="${symlink%.crt}"
+            domain="${domain//\/etc\/nginx\/certs\//}"
             symlinked_domains+=("$domain")
         fi
     done
