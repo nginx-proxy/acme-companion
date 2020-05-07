@@ -28,7 +28,7 @@ Let's Encrypt has a limit of [100 domains per certificate](https://letsencrypt.o
 
 #### Separate certificate for each domain
 
-The example above will issue a single [SAN](https://www.digicert.com/subject-alternative-name.htm) certificate for all the listed in `LETSENCRYPT_HOST` domains. If you need to have a separate certificate for each of the domains, you can add the `LETSENCRYPT_SINGLE_DOMAIN_CERTS` environment variable.
+The example above will issue a single [SAN](https://www.digicert.com/subject-alternative-name.htm) certificate for all the listed in `LETSENCRYPT_HOST` domains. If you need to have a separate certificate for each of the domains, you can add the `LETSENCRYPT_SINGLE_DOMAIN_CERTS=true` environment variable.
 
 Example:
 
