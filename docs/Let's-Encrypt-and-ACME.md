@@ -26,6 +26,21 @@ $ docker run --detach \
 
 Let's Encrypt has a limit of [100 domains per certificate](https://letsencrypt.org/fr/docs/rate-limits/), while Buypass limit is [15 domains per certificate](https://www.buypass.com/ssl/products/go-ssl-campaign).
 
+#### Separate certificate for each domain
+
+The example above will issue a single [SAN](https://www.digicert.com/subject-alternative-name.htm) certificate for all the listed in `LETSENCRYPT_HOST` domains. If you need to have a separate certificate for each of the domains, you can add the `LETSENCRYPT_SINGLE_DOMAIN_CERTS=true` environment variable.
+
+Example:
+
+```shell
+$ docker run --detach \
+    --name your-proxyed-app \
+    --env "VIRTUAL_HOST=yourdomain.tld,www.yourdomain.tld,anotherdomain.tld" \
+    --env "LETSENCRYPT_HOST=yourdomain.tld,www.yourdomain.tld,anotherdomain.tld" \
+    --env "LETSENCRYPT_SINGLE_DOMAIN_CERTS=true" \
+    nginx
+```
+
 #### Automatic certificate renewal
 Every hour (3600 seconds) the certificates are checked and per default every certificate that will expire in the next [30 days](https://github.com/zenhack/simp_le/blob/a8a8013c097910f8f3cce046f1077b41b745673b/simp_le.py#L73) (90 days / 3) is renewed.
 
