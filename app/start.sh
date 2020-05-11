@@ -8,6 +8,7 @@ term_handler() {
     # shellcheck source=functions.sh
     source /app/functions.sh
     remove_all_location_configurations
+    remove_all_standalone_configurations
 
     exit 0
 }

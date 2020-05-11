@@ -9,6 +9,7 @@ case $SETUP in
       --name $NGINX_CONTAINER_NAME \
       --env "DHPARAM_BITS=256" \
       -v /etc/nginx/vhost.d \
+      -v /etc/nginx/conf.d \
       -v /usr/share/nginx/html \
       -v /var/run/docker.sock:/tmp/docker.sock:ro \
       --label com.github.jrcs.letsencrypt_nginx_proxy_companion.test_suite \
