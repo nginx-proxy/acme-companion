@@ -1,9 +1,5 @@
 ## Standalone certificates
 
-**This feature is only present on the `dev` branch / image.**
-
-**It's still considered experimental and subject to change.**
-
 You can generate certificate that are not tied to containers environment variable by mounting a user configuration file inside the container at `/app/letsencrypt_user_data`. This feature also require sharing the `/etc/nginx/conf.d` folder between the **nginx-proxy** and **letsencrypt-nginx-proxy-companion** container (and the **docker-gen** container if you are running a [three container setup](./Advanced-usage.md)):
 
 ```bash
