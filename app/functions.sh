@@ -116,6 +116,7 @@ server {
     access_log /var/log/nginx/access.log vhost;
     location ^~ /.well-known/acme-challenge/ {
         auth_basic off;
+        auth_request off;
         allow all;
         root /usr/share/nginx/html;
         try_files \$uri =404;
