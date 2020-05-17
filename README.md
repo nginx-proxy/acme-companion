@@ -6,7 +6,7 @@
 
 **letsencrypt-nginx-proxy-companion** is a lightweight companion container for [**nginx-proxy**](https://github.com/jwilder/nginx-proxy).
 
-It handles the automated creation, renewal and use of Let's Encrypt certificates for proxyed Docker containers.
+It handles the automated creation, renewal and use of Let's Encrypt certificates for proxied Docker containers.
 
 Please note that **letsencrypt-nginx-proxy-companion** no longer supports ACME v1 endpoints. The last tagged version that supports ACME v1 is [v1.11](https://github.com/JrCs/docker-letsencrypt-nginx-proxy-companion/releases/tag/v1.11.2)
 
@@ -73,9 +73,9 @@ The host docker socket has to be bound inside this container too, this time to `
 
 Albeit **optional**, it is **recommended** to provide a valid default email address through the `DEFAULT_EMAIL` environment variable, so that Let's Encrypt can warn you about expiring certificates and allow you to recover your account.
 
-### Step 3 - proxyed container(s)
+### Step 3 - proxied container(s)
 
-Once both **nginx-proxy** and **letsencrypt-nginx-proxy-companion** containers are up and running, start any container you want proxyed with environment variables `VIRTUAL_HOST` and `LETSENCRYPT_HOST` both set to the domain(s) your proxyed container is going to use.
+Once both **nginx-proxy** and **letsencrypt-nginx-proxy-companion** containers are up and running, start any container you want proxied with environment variables `VIRTUAL_HOST` and `LETSENCRYPT_HOST` both set to the domain(s) your proxied container is going to use.
 
 [`VIRTUAL_HOST`](https://github.com/jwilder/nginx-proxy#usage) control proxying by **nginx-proxy** and `LETSENCRYPT_HOST` control certificate creation and SSL enabling by **letsencrypt-nginx-proxy-companion**.
 
@@ -83,7 +83,7 @@ Certificates will only be issued for containers that have both `VIRTUAL_HOST` an
 
 ```shell
 $ docker run --detach \
-    --name your-proxyed-app \
+    --name your-proxied-app \
     --env "VIRTUAL_HOST=subdomain.yourdomain.tld" \
     --env "LETSENCRYPT_HOST=subdomain.yourdomain.tld" \
     nginx
@@ -91,7 +91,7 @@ $ docker run --detach \
 
 The containers being proxied must expose the port to be proxied, either by using the `EXPOSE` directive in their Dockerfile or by using the `--expose` flag to `docker run` or `docker create`.
 
-If the proxyed container listen on and expose another port than the default `80`, you can force **nginx-proxy** to use this port with the [`VIRTUAL_PORT`](https://github.com/jwilder/nginx-proxy#multiple-ports) environment variable.
+If the proxied container listen on and expose another port than the default `80`, you can force **nginx-proxy** to use this port with the [`VIRTUAL_PORT`](https://github.com/jwilder/nginx-proxy#multiple-ports) environment variable.
 
 Example using [Grafana](https://hub.docker.com/r/grafana/grafana/) (expose and listen on port 3000):
 
@@ -105,7 +105,7 @@ $ docker run --detach \
     grafana/grafana
 ```
 
-Repeat [Step 3](#step-3---proxyed-containers) for any other container you want to proxy.
+Repeat [Step 3](#step-3---proxied-containers) for any other container you want to proxy.
 
 ## Additional documentation
 
