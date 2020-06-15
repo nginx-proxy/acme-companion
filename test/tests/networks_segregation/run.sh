@@ -8,7 +8,7 @@ else
   le_container_name="$(basename ${0%/*})"
 fi
 desired_network="boulder_bluenet"
-run_le_container ${1:?} "$le_container_name" "--env MUST_BE_CONNECTED_WITH_NETWORK=$desired_network"
+run_le_container ${1:?} "$le_container_name" "--env NETWORK_SCOPE=$desired_network"
 
 # Create the $domains array from comma separated domains in TEST_DOMAINS.
 IFS=',' read -r -a domains <<< "$TEST_DOMAINS"

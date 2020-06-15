@@ -5,9 +5,9 @@
     {{ if trim $hosts }}
         {{ range $container := $containers }}
             {{ $cid := printf "%.12s" $container.ID }}
-            {{ if $CurrentContainer.Env.MUST_BE_CONNECTED_WITH_NETWORK }}
+            {{ if $CurrentContainer.Env.NETWORK_SCOPE }}
                 {{ range $containerNetwork := $container.Networks }}
-                    {{ if eq $CurrentContainer.Env.MUST_BE_CONNECTED_WITH_NETWORK $containerNetwork.Name }}
+                    {{ if eq $CurrentContainer.Env.NETWORK_SCOPE $containerNetwork.Name }}
                         {{ $scopedContainersString = (printf "%s %s" $scopedContainersString $cid) }}
                     {{ end }}
                 {{ end }}
