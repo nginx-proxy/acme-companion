@@ -4,7 +4,7 @@ set -e
 
 # Get the first domain of a comma separated list.
 function get_base_domain {
-  awk -F ',' '{print $1}' <(echo ${1:?}) | tr -d ' '
+  awk -F ',' '{print $1}' <<< "${1:?}" | tr -d ' ' | sed 's/\.$//'
 }
 export -f get_base_domain
 
