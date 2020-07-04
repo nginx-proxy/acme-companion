@@ -28,12 +28,14 @@ function cleanup {
 trap cleanup EXIT
 
 # Create three different comma separated list from the first three domains in $domains.
-# testing for regression on spaced lists https://github.com/JrCs/docker-letsencrypt-nginx-proxy-companion/issues/288
-# and with trailing comma https://github.com/JrCs/docker-letsencrypt-nginx-proxy-companion/issues/254
+# testing for regression on spaced lists https://github.com/nginx-proxy/docker-letsencrypt-nginx-proxy-companion/issues/288
+# with trailing comma https://github.com/nginx-proxy/docker-letsencrypt-nginx-proxy-companion/issues/254
+# and with trailing dot https://github.com/nginx-proxy/docker-letsencrypt-nginx-proxy-companion/issues/676
 letsencrypt_hosts=( \
   [0]="${domains[0]},${domains[1]},${domains[2]}" \     #straight comma separated list
   [1]="${domains[1]}, ${domains[2]}, ${domains[0]}" \   #comma separated list with spaces
-  [2]="${domains[2]}, ${domains[0]}, ${domains[1]}," )  #comma separated list with spaces and a trailing comma
+  [2]="${domains[2]}, ${domains[0]}, ${domains[1]}," \  #comma separated list with spaces and a trailing comma
+  [3]="${domains[0]}.,${domains[1]}.,${domains[2]}" )   #trailing dots
 
 i=1
 
