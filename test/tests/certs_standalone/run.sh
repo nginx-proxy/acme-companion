@@ -10,9 +10,12 @@ fi
 
 # Create the $domains array from comma separated domains in TEST_DOMAINS.
 IFS=',' read -r -a domains <<< "$TEST_DOMAINS"
+subdomain="sub.${domains[0]}"
 
 # Cleanup function with EXIT trap
 function cleanup {
+  # Remove the Nginx container silently.
+  docker rm --force "$subdomain" > /dev/null 2>&1
   # Cleanup the files created by this run of the test to avoid foiling following test(s).
   docker exec "$le_container_name" bash -c 'rm -rf /etc/nginx/certs/le?.wtf*'
   # Stop the LE container
@@ -26,8 +29,19 @@ LETSENCRYPT_STANDALONE_CERTS=('single')
 LETSENCRYPT_single_HOST=('${domains[0]}')
 EOF
 
+# Run an nginx container with a VIRTUAL_HOST set to a subdomain of ${domains[0]} in order to check for
+# this regression : https://github.com/nginx-proxy/docker-letsencrypt-nginx-proxy-companion/issues/674
+docker run --rm -d \
+    --name "$subdomain" \
+    -e "VIRTUAL_HOST=$subdomain" \
+    --network boulder_bluenet \
+    nginx:alpine > /dev/null && echo "Started test web server for $subdomain"
+
 run_le_container ${1:?} "$le_container_name" \
   "--volume ${TRAVIS_BUILD_DIR}/test/tests/certs_standalone/letsencrypt_user_data:/app/letsencrypt_user_data"
+
+# Wait for a file at /etc/nginx/conf.d/standalone-cert-${domains[0]}.conf
+wait_for_standalone_conf "${domains[0]}" "$le_container_name"
 
 # Wait for a symlink at /etc/nginx/certs/${domains[0]}.crt
 # then grab the certificate in text form ...
@@ -54,6 +68,11 @@ EOF
 
 # Manually trigger the service loop
 docker exec "$le_container_name" /app/signal_le_service > /dev/null
+
+for domain in "${domains[1]}" "${domains[2]}"; do
+  # Wait for a file at /etc/nginx/conf.d/standalone-cert-$domain.conf
+  wait_for_standalone_conf "$domain" "$le_container_name"
+done
 
 # Wait for a symlink at /etc/nginx/certs/${domains[1]}.crt
 # then grab the certificate in text form ...

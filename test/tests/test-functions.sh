@@ -32,6 +32,24 @@ function run_le_container {
 export -f run_le_container
 
 
+# Wait for the /etc/nginx/conf.d/standalone-cert-$1.conf file to exist inside container $2
+function wait_for_standalone_conf {
+  local domain="${1:?}"
+  local name="${2:?}"
+  local i=0
+  local target
+  until docker exec "$name" [ -f "/etc/nginx/conf.d/standalone-cert-$domain.conf" ]; do
+    if [ $i -gt 600 ]; then
+      echo "Standalone configuration file for $domain was not generated under one minute, timing out."
+      return 1
+    fi
+    i=$((i + 10))
+    sleep 0.1
+  done
+}
+export -f wait_for_standalone_conf
+
+
 # Wait for the /etc/nginx/certs/$1.crt symlink to exist inside container $2
 function wait_for_symlink {
   local domain="${1:?}"

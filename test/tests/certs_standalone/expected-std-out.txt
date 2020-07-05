@@ -1,3 +1,4 @@
+Started test web server for sub.le1.wtf
 Started letsencrypt container for test certs_standalone
 Symlink to le1.wtf certificate has been generated.
 The link is pointing to the file ./le1.wtf/fullchain.pem
