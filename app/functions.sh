@@ -104,7 +104,7 @@ function add_location_configuration {
 
 function add_standalone_configuration {
     local domain="${1:?}"
-    if grep -q "$domain" "/etc/nginx/conf.d/default.conf"; then
+    if grep -q "server_name ${domain};" "/etc/nginx/conf.d/default.conf"; then
         # If the domain is already present in nginx's conf, use the location configuration.
         add_location_configuration "$domain"
     else
