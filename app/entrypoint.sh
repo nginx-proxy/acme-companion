@@ -155,7 +155,7 @@ if [[ "$*" == "/bin/bash /app/start.sh" ]]; then
         echo "Error: can't get docker-gen container id !" >&2
         echo "If you are running a three containers setup, check that you are doing one of the following :" >&2
         echo -e "\t- Set the NGINX_DOCKER_GEN_CONTAINER env var on the letsencrypt-companion container to the name of the docker-gen container." >&2
-        echo -e "\t- Label the docker-gen container to use with 'com.github.jrcs.letsencrypt_nginx_proxy_companion.docker_gen.'" >&2
+        echo -e "\t- Label the docker-gen container to use with 'com.github.jrcs.letsencrypt_nginx_proxy_companion.docker_gen'." >&2
         exit 1
     fi
     check_writable_directory '/etc/nginx/certs'
