@@ -30,7 +30,6 @@ LETSENCRYPT_CONTAINERS=(
                 LETSENCRYPT_{{ $cid }}_{{ $hostHash }}_TEST="{{ $container.Env.LETSENCRYPT_TEST }}"
                 LETSENCRYPT_{{ $cid }}_{{ $hostHash }}_ACCOUNT_ALIAS="{{ $container.Env.LETSENCRYPT_ACCOUNT_ALIAS }}"
                 LETSENCRYPT_{{ $cid }}_{{ $hostHash }}_RESTART_CONTAINER="{{ $container.Env.LETSENCRYPT_RESTART_CONTAINER }}"
-                LETSENCRYPT_{{ $cid }}_{{ $hostHash }}_MIN_VALIDITY="{{ $container.Env.LETSENCRYPT_MIN_VALIDITY }}"
             {{ end }}
         {{ else }}
             LETSENCRYPT_{{ $cid }}_HOST=( {{ range $host := split $hosts "," }}{{ $host := trim $host }}{{ $host := trimSuffix "." $host }}'{{ $host }}' {{ end }})
@@ -39,7 +38,6 @@ LETSENCRYPT_CONTAINERS=(
             LETSENCRYPT_{{ $cid }}_TEST="{{ $container.Env.LETSENCRYPT_TEST }}"
             LETSENCRYPT_{{ $cid }}_ACCOUNT_ALIAS="{{ $container.Env.LETSENCRYPT_ACCOUNT_ALIAS }}"
             LETSENCRYPT_{{ $cid }}_RESTART_CONTAINER="{{ $container.Env.LETSENCRYPT_RESTART_CONTAINER }}"
-            LETSENCRYPT_{{ $cid }}_MIN_VALIDITY="{{ $container.Env.LETSENCRYPT_MIN_VALIDITY }}"
         {{ end }}
     {{ end }}
 {{ end }}

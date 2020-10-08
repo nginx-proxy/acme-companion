@@ -9,8 +9,6 @@ ACME_CA_URI="${ACME_CA_URI:-https://acme-v02.api.letsencrypt.org/directory}"
 DEFAULT_KEY_SIZE=4096
 REUSE_ACCOUNT_KEYS="$(lc "${REUSE_ACCOUNT_KEYS:-true}")"
 REUSE_PRIVATE_KEYS="$(lc "${REUSE_PRIVATE_KEYS:-false}")"
-MIN_VALIDITY_CAP=7603200
-DEFAULT_MIN_VALIDITY=2592000
 
 function create_link {
     local -r source=${1?missing source argument}
@@ -202,28 +200,7 @@ function update_certs {
 
         [[ "$DEBUG" == true ]] && params_d_arr+=(-v)
         [[ $REUSE_PRIVATE_KEYS == true ]] && params_d_arr+=(--reuse_key)
-        
-        min_validity="LETSENCRYPT_${cid}_MIN_VALIDITY"
-        min_validity="${!min_validity:-"<no value>"}"
-        if [[ "$min_validity" == "<no value>" ]]; then
-            min_validity=$DEFAULT_MIN_VALIDITY
-        fi
-        # Sanity Check
-        # Upper Bound
-        if [[ $min_validity -gt $MIN_VALIDITY_CAP ]]; then
-            min_validity=$MIN_VALIDITY_CAP
-        fi
-        # Lower Bound
-        if [[ $min_validity -lt $((seconds_to_wait * 2)) ]]; then
-            min_validity=$((seconds_to_wait * 2))
-        fi
-
-        if [[ "${1}" == "--force-renew" ]]; then
-            # Manually set to highest certificate lifetime given by LE CA
-            params_d_arr+=(--valid_min 7776000)
-        else
-            params_d_arr+=(--valid_min "$min_validity")
-        fi
+        [[ "${1}" == "--force-renew" ]] && params_d_arr+=(--valid_min 7776000)
 
         # Create directory for the first domain,
         # make it root readable only and make it the cwd
