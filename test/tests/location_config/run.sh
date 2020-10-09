@@ -19,9 +19,9 @@ docker exec "$NGINX_CONTAINER_NAME" sh -c "echo '### This is a test comment' > /
 docker exec "$NGINX_CONTAINER_NAME" sh -c "echo '' > /etc/nginx/vhost.d/default"
 
 if [[ -z $TRAVIS ]]; then
-  le_container_name="$(basename ${0%/*})_$(date "+%Y-%m-%d_%H.%M.%S")"
+  le_container_name="$(basename "${0%/*}")_$(date "+%Y-%m-%d_%H.%M.%S")"
 else
-  le_container_name="$(basename ${0%/*})"
+  le_container_name="$(basename "${0%/*}")"
 fi
 run_le_container "${1:?}" "$le_container_name" "--volume $location_file:$vhost_path/le2.wtf"
 

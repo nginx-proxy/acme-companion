@@ -3,11 +3,11 @@
 ## Test for standalone certificates by NGINX container env variables
 
 if [[ -z $TRAVIS_CI ]]; then
-  le_container_name="$(basename ${0%/*})_$(date "+%Y-%m-%d_%H.%M.%S")"
+  le_container_name="$(basename "${0%/*}")_$(date "+%Y-%m-%d_%H.%M.%S")"
 else
-  le_container_name="$(basename ${0%/*})"
+  le_container_name="$(basename "${0%/*}")"
 fi
-run_le_container ${1:?} "$le_container_name"
+run_le_container "${1:?}" "$le_container_name"
 
 # Create the $domains array from comma separated domains in TEST_DOMAINS.
 IFS=',' read -r -a domains <<< "$TEST_DOMAINS"
@@ -18,7 +18,7 @@ function cleanup {
   i=1
   for hosts in "${letsencrypt_hosts[@]}"; do
     docker rm --force "test$i" > /dev/null 2>&1
-    i=$(( $i + 1 ))
+    i=$(( i + 1 ))
   done
   # Cleanup the files created by this run of the test to avoid foiling following test(s).
   docker exec "$le_container_name" bash -c 'rm -rf /etc/nginx/certs/le?.wtf* && rm -rf /etc/acme.sh/default/le?.wtf*'
@@ -39,8 +39,6 @@ i=1
 
 for hosts in "${letsencrypt_hosts[@]}"; do
 
-  # Get the base domain (first domain of the list).
-  base_domain="$(get_base_domain "$hosts")"
   container="test$i"
 
   # Run an Nginx container passing one of the comma separated list as LETSENCRYPT_HOST env var.
@@ -56,10 +54,10 @@ for hosts in "${letsencrypt_hosts[@]}"; do
       ## For all the domains in the $domains array ...
       wait_for_symlink "${domain}" "$le_container_name"
       created_cert="$(docker exec "$le_container_name" \
-        openssl x509 -in /etc/nginx/certs/${domain}/cert.pem -text -noout)"
+        openssl x509 -in "/etc/nginx/certs/${domain}/cert.pem" -text -noout)"
       # ... as well as the certificate fingerprint.
       created_cert_fingerprint="$(docker exec "$le_container_name" \
-        sh -c "openssl x509 -in "/etc/nginx/certs/${domain}/cert.pem" -fingerprint -noout")"
+        openssl x509 -in "/etc/nginx/certs/${domain}/cert.pem" -fingerprint -noout)"
 
     # Check if the domain is on the certificate.
     if grep -q "$domain" <<< "$created_cert"; then
@@ -80,7 +78,7 @@ for hosts in "${letsencrypt_hosts[@]}"; do
     # Wait for a connection to https://domain then grab the served certificate in text form.
     wait_for_conn --domain "$domain"
     served_cert_fingerprint="$(echo \
-      | openssl s_client -showcerts -servername $domain -connect $domain:443 2>/dev/null \
+      | openssl s_client -showcerts -servername "$domain" -connect "$domain:443" 2>/dev/null \
       | openssl x509 -fingerprint -noout)"
 
 
@@ -92,7 +90,7 @@ for hosts in "${letsencrypt_hosts[@]}"; do
         | openssl s_client -showcerts -servername "$domain" -connect "$domain:443" 2>/dev/null \
         | openssl x509 -text -noout \
         | sed 's/ = /=/g' )"
-      diff -u <(echo "$created_cert" | sed 's/ = /=/g') <(echo "$served_cert")
+      diff -u <(echo "${created_cert// = /=}") <(echo "$served_cert")
     else
       echo "The correct certificate for $domain was served by Nginx."
     fi
@@ -100,6 +98,6 @@ for hosts in "${letsencrypt_hosts[@]}"; do
 
   docker stop "$container" > /dev/null 2>&1
   docker exec "$le_container_name" bash -c 'rm -rf /etc/nginx/certs/le?.wtf* && rm -rf /etc/acme.sh/default/le?.wtf*'
-  i=$(( $i + 1 ))
+  i=$(( i + 1 ))
 
 done

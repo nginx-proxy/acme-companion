@@ -8,11 +8,11 @@ files_perms=640
 folders_perms=750
 
 if [[ -z $TRAVIS ]]; then
-  le_container_name="$(basename ${0%/*})_$(date "+%Y-%m-%d_%H.%M.%S")"
+  le_container_name="$(basename "${0%/*}")_$(date "+%Y-%m-%d_%H.%M.%S")"
 else
-  le_container_name="$(basename ${0%/*})"
+  le_container_name="$(basename "${0%/*}")"
 fi
-run_le_container ${1:?} "$le_container_name" \
+run_le_container "${1:?}" "$le_container_name" \
   "--env FILES_UID=$files_uid --env FILES_GID=$files_gid --env FILES_PERMS=$files_perms --env FOLDERS_PERMS=$folders_perms"
 
 # Create the $domains array from comma separated domains in TEST_DOMAINS.

@@ -19,7 +19,7 @@ function run_le_container {
   fi
   docker run -d \
     --name "$name" \
-    --volumes-from $NGINX_CONTAINER_NAME \
+    --volumes-from "$NGINX_CONTAINER_NAME" \
     --volume /var/run/docker.sock:/var/run/docker.sock:ro \
     $cli_args \
     --env "DHPARAM_BITS=256" \

@@ -8,8 +8,8 @@ setup_boulder() {
   export GOPATH=${TRAVIS_BUILD_DIR}/go
   [[ ! -d $GOPATH/src/github.com/letsencrypt/boulder ]] \
     && git clone https://github.com/letsencrypt/boulder \
-      $GOPATH/src/github.com/letsencrypt/boulder
-  pushd $GOPATH/src/github.com/letsencrypt/boulder
+      "$GOPATH/src/github.com/letsencrypt/boulder"
+  pushd "$GOPATH/src/github.com/letsencrypt/boulder"
   git checkout release-2019-10-07
   if [[ "$(uname)" == 'Darwin' ]]; then
     # Set Standard Ports

@@ -3,11 +3,11 @@
 ## Test for single domain certificates.
 
 if [[ -z $TRAVIS ]]; then
-  le_container_name="$(basename ${0%/*})_$(date "+%Y-%m-%d_%H.%M.%S")"
+  le_container_name="$(basename "${0%/*}")_$(date "+%Y-%m-%d_%H.%M.%S")"
 else
-  le_container_name="$(basename ${0%/*})"
+  le_container_name="$(basename "${0%/*}")"
 fi
-run_le_container ${1:?} "$le_container_name"
+run_le_container "${1:?}" "$le_container_name"
 
 # Create the $domains array from comma separated domains in TEST_DOMAINS.
 IFS=',' read -r -a domains <<< "$TEST_DOMAINS"
@@ -42,10 +42,10 @@ for domain in "${domains[@]}"; do
   # then grab the certificate in text form from the file ...
   wait_for_symlink "$domain" "$le_container_name"
   created_cert="$(docker exec "$le_container_name" \
-    sh -c "openssl x509 -in "/etc/nginx/certs/${domain}/cert.pem" -text -noout")"
+    openssl x509 -in "/etc/nginx/certs/${domain}/cert.pem" -text -noout)"
   # ... as well as the certificate fingerprint.
   created_cert_fingerprint="$(docker exec "$le_container_name" \
-    sh -c "openssl x509 -in "/etc/nginx/certs/${domain}/cert.pem" -fingerprint -noout")"
+    openssl x509 -in "/etc/nginx/certs/${domain}/cert.pem" -fingerprint -noout)"
 
   # Check if the domain is on the certificate.
   if grep -q "$domain" <<< "$created_cert"; then
@@ -68,7 +68,7 @@ for domain in "${domains[@]}"; do
       | openssl s_client -showcerts -servername "$domain" -connect "$domain:443" 2>/dev/null \
       | openssl x509 -text -noout \
       | sed 's/ = /=/g' )"
-    diff -u <(echo "$created_cert" | sed 's/ = /=/g') <(echo "$served_cert")
+    diff -u <(echo "${created_cert// = /=}") <(echo "$served_cert")
   else
     echo "The correct certificate for $domain was served by Nginx."
   fi

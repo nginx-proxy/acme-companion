@@ -404,7 +404,7 @@ for dockerImage in "$@"; do
 			## Next nine lines were modified or added by jrcs/docker-letsencrypt-nginx-proxy-companion
 			if [ -x "$script" ] && [ ! -d "$script" ]; then
 				if [ $dryRun ]; then
-					if "$script" $dockerImage; then
+					if "$script" "$dockerImage"; then
 						echo 'passed'
 					else
 						echo 'failed'
@@ -412,12 +412,12 @@ for dockerImage in "$@"; do
 					fi
 				else
 				## End of modified / additional code
-					if output="$("$script" $dockerImage)"; then
+					if output="$("$script" "$dockerImage")"; then
 						if [ -f "$scriptDir/expected-std-out.txt" ] && ! d="$(echo "$output" | diff -u "$scriptDir/expected-std-out.txt" - 2>/dev/null)"; then
 							echo 'failed; unexpected output:'
 							echo "$d"
 							## Next line was added by jrcs/docker-letsencrypt-nginx-proxy-companion
-							failed_tests+=("$(basename $scriptDir)")
+							failed_tests+=("$(basename "$scriptDir")")
 							## End of additional code
 							didFail=1
 						else
@@ -426,7 +426,7 @@ for dockerImage in "$@"; do
 					else
 						echo 'failed'
 						## Next line was added by jrcs/docker-letsencrypt-nginx-proxy-companion
-						failed_tests+=("$(basename $scriptDir)")
+						failed_tests+=("$(basename "$scriptDir")")
 						## End of additional code
 						didFail=1
 					fi

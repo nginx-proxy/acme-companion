@@ -14,7 +14,7 @@ case $SETUP in
   # Cleanup function with EXIT trap
   function cleanup {
     # Kill the Docker events listener
-    kill $docker_events_pid && wait $docker_events_pid 2>/dev/null
+    kill "$docker_events_pid" && wait "$docker_events_pid" 2>/dev/null
     # Remove the remaining containers silently
     docker rm --force \
       "$nginx_vol" \
@@ -23,6 +23,9 @@ case $SETUP in
       > /dev/null 2>&1
   }
   trap cleanup EXIT
+
+  # Set the commands to be passed to docker exec
+  commands='source /app/functions.sh; reload_nginx > /dev/null; check_nginx_proxy_container_run; get_nginx_proxy_container'
 
   # Listen to Docker exec_start events
   docker events \
@@ -48,10 +51,7 @@ case $SETUP in
     -v /var/run/docker.sock:/var/run/docker.sock:ro \
     --volumes-from "$nginx_vol" \
     "$1" \
-    bash -c 'source /app/functions.sh; \
-            reload_nginx > /dev/null; \
-            check_nginx_proxy_container_run; \
-            get_nginx_proxy_container' 2>&1
+    bash -c "$commands" 2>&1
 
   # This should target the nginx-proxy container obtained with
   # the NGINX_PROXY_CONTAINER environment variable (nginx-env-var)
@@ -60,10 +60,7 @@ case $SETUP in
     --volumes-from "$nginx_vol" \
     -e "NGINX_PROXY_CONTAINER=$nginx_env" \
     "$1" \
-    bash -c 'source /app/functions.sh; \
-            reload_nginx > /dev/null; \
-            check_nginx_proxy_container_run; \
-            get_nginx_proxy_container' 2>&1
+    bash -c "$commands" 2>&1
 
   # Run a nginx-proxy container named nginx-label, with the nginx_proxy label.
   # Store the container id in the labeled_nginx_cid variable.
@@ -79,12 +76,9 @@ case $SETUP in
     --volumes-from "$nginx_vol" \
     -e "NGINX_PROXY_CONTAINER=$nginx_env" \
     "$1" \
-    bash -c 'source /app/functions.sh; \
-            reload_nginx > /dev/null; \
-            check_nginx_proxy_container_run; \
-            get_nginx_proxy_container' 2>&1
+    bash -c "$commands" 2>&1
 
-  cat > ${TRAVIS_BUILD_DIR}/test/tests/docker_api/expected-std-out.txt <<EOF
+  cat > "${TRAVIS_BUILD_DIR}/test/tests/docker_api/expected-std-out.txt" <<EOF
 Container $nginx_vol received exec_start: sh -c /app/docker-entrypoint.sh /usr/local/bin/docker-gen /app/nginx.tmpl /etc/nginx/conf.d/default.conf; /usr/sbin/nginx -s reload
 $nginx_vol
 Container $nginx_env received exec_start: sh -c /app/docker-entrypoint.sh /usr/local/bin/docker-gen /app/nginx.tmpl /etc/nginx/conf.d/default.conf; /usr/sbin/nginx -s reload
@@ -109,6 +103,9 @@ EOF
       > /dev/null 2>&1
   }
   trap cleanup EXIT
+
+  # Set the commands to be passed to docker exec
+  commands='source /app/functions.sh; reload_nginx > /dev/null; check_nginx_proxy_container_run; get_docker_gen_container; get_nginx_proxy_container'
 
   # Listen to Docker kill events
   docker events \
@@ -142,11 +139,7 @@ EOF
     --volumes-from "$nginx_vol" \
     -e "NGINX_DOCKER_GEN_CONTAINER=$docker_gen" \
     "$1" \
-    bash -c 'source /app/functions.sh; \
-            reload_nginx > /dev/null; \
-            check_nginx_proxy_container_run; \
-            get_docker_gen_container; \
-            get_nginx_proxy_container;' 2>&1
+    bash -c "$commands" 2>&1
 
   # This should target the nginx container whose id or name was obtained with
   # the NGINX_PROXY_CONTAINER environment variable (nginx-env-var)
@@ -158,11 +151,7 @@ EOF
     -e "NGINX_PROXY_CONTAINER=$nginx_env" \
     -e "NGINX_DOCKER_GEN_CONTAINER=$docker_gen" \
     "$1" \
-    bash -c 'source /app/functions.sh; \
-            reload_nginx > /dev/null; \
-            check_nginx_proxy_container_run; \
-            get_docker_gen_container; \
-            get_nginx_proxy_container;' 2>&1
+    bash -c "$commands" 2>&1
 
   # Spawn a nginx container named nginx-label, with the nginx_proxy label.
   labeled_nginx1_cid="$(docker run --rm -d \
@@ -180,11 +169,7 @@ EOF
     -e "NGINX_PROXY_CONTAINER=$nginx_env" \
     -e "NGINX_DOCKER_GEN_CONTAINER=$docker_gen" \
     "$1" \
-    bash -c 'source /app/functions.sh; \
-            reload_nginx > /dev/null; \
-            check_nginx_proxy_container_run; \
-            get_docker_gen_container; \
-            get_nginx_proxy_container;' 2>&1
+    bash -c "$commands" 2>&1
 
   docker stop "$nginx_lbl" > /dev/null
 
@@ -203,11 +188,7 @@ EOF
     --volumes-from "$nginx_vol" \
     -e "NGINX_DOCKER_GEN_CONTAINER=$docker_gen" \
     "$1" \
-    bash -c 'source /app/functions.sh; \
-            reload_nginx > /dev/null; \
-            check_nginx_proxy_container_run; \
-            get_docker_gen_container; \
-            get_nginx_proxy_container;' 2>&1
+    bash -c "$commands" 2>&1
 
   # This should target the nginx container whose id or name was obtained with
   # the NGINX_PROXY_CONTAINER environment variable (nginx-env-var)
@@ -219,11 +200,7 @@ EOF
     -e "NGINX_PROXY_CONTAINER=$nginx_env" \
     -e "NGINX_DOCKER_GEN_CONTAINER=$docker_gen" \
     "$1" \
-    bash -c 'source /app/functions.sh; \
-            reload_nginx > /dev/null; \
-            check_nginx_proxy_container_run; \
-            get_docker_gen_container; \
-            get_nginx_proxy_container;' 2>&1
+    bash -c "$commands" 2>&1
 
   # Spawn a nginx container named nginx-label, with the nginx_proxy label.
   labeled_nginx2_cid="$(docker run --rm -d \
@@ -241,13 +218,9 @@ EOF
     -e "NGINX_PROXY_CONTAINER=$nginx_env" \
     -e "NGINX_DOCKER_GEN_CONTAINER=$docker_gen" \
     "$1" \
-    bash -c 'source /app/functions.sh; \
-            reload_nginx > /dev/null; \
-            check_nginx_proxy_container_run; \
-            get_docker_gen_container; \
-            get_nginx_proxy_container;' 2>&1
+    bash -c "$commands" 2>&1
 
-    cat > ${TRAVIS_BUILD_DIR}/test/tests/docker_api/expected-std-out.txt <<EOF
+    cat > "${TRAVIS_BUILD_DIR}/test/tests/docker_api/expected-std-out.txt" <<EOF
 Container $docker_gen received signal 1
 Container $nginx_vol received signal 1
 $docker_gen

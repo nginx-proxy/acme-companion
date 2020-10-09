@@ -3,11 +3,11 @@
 ## Test for LETSENCRYPT_RESTART_CONTAINER variable.
 
 if [[ -z $TRAVIS ]]; then
-  le_container_name="$(basename ${0%/*})_$(date "+%Y-%m-%d_%H.%M.%S")"
+  le_container_name="$(basename "${0%/*}")_$(date "+%Y-%m-%d_%H.%M.%S")"
 else
-  le_container_name="$(basename ${0%/*})"
+  le_container_name="$(basename "${0%/*}")"
 fi
-run_le_container ${1:?} "$le_container_name"
+run_le_container "${1:?}" "$le_container_name"
 
 # Create the $domains array from comma separated domains in TEST_DOMAINS.
 IFS=',' read -r -a domains <<< "$TEST_DOMAINS"
@@ -15,7 +15,7 @@ IFS=',' read -r -a domains <<< "$TEST_DOMAINS"
 # Listen for Docker restart events
 docker events \
   --filter event=restart \
-  --format 'Container {{.Actor.Attributes.name}} restarted' > ${TRAVIS_BUILD_DIR}/test/tests/container_restart/docker_event_out.txt &
+  --format 'Container {{.Actor.Attributes.name}} restarted' > "${TRAVIS_BUILD_DIR}/test/tests/container_restart/docker_event_out.txt" &
 docker_events_pid=$!
 
 # Cleanup function with EXIT trap
@@ -23,7 +23,7 @@ function cleanup {
   # Kill the Docker events listener
   kill $docker_events_pid && wait $docker_events_pid 2>/dev/null
   # Remove temporary files
-  rm -f ${TRAVIS_BUILD_DIR}/test/tests/container_restart/docker_event_out.txt
+  rm -f "${TRAVIS_BUILD_DIR}/test/tests/container_restart/docker_event_out.txt"
   # Remove any remaining Nginx container(s) silently.
   for domain in "${domains[@]}"; do
     docker rm --force "$domain" > /dev/null 2>&1
