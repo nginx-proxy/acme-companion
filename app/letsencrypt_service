@@ -221,7 +221,8 @@ function update_certs {
 
         acmesh_return=$?
 
-        if [[ $acmesh_return -ne 2 ]]; then
+        # 0 = success, 2 = RENEW_SKIP
+        if [[ $acmesh_return == 0 || $acmesh_return == 2 ]]; then
           for domain in "${!hosts_array}"; do
             if [[ $acme_ca_uri =~ ^https://acme-staging.* ]]; then
               create_links "_test_$base_domain" "$domain" && should_reload_nginx='true' && should_restart_container='true'
