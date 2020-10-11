@@ -74,6 +74,20 @@ docker exec "$le_container_name" [ -L "/etc/nginx/certs/${domains[2]}.crt" ] \
 docker stop "symlink-le3" > /dev/null
 wait_for_symlink_rm "${domains[2]}" "$le_container_name"
 
+# Start the nginx containers for ${domains[2]} again,
+# and check if the corresponding symlink is re-created.
+docker run --rm -d \
+  --name "symlink-le3" \
+  -e "VIRTUAL_HOST=${domains[2]}" \
+  -e "LETSENCRYPT_HOST=${domains[2]}" \
+  --network boulder_bluenet \
+  nginx:alpine > /dev/null && echo "Restarted test web server for ${domains[2]}"
+wait_for_symlink "${domains[2]}" "$le_container_name"
+
+# Stop the nginx containers for ${domains[2]} silently and wait for symlink removal.
+docker stop "symlink-le3" > /dev/null
+wait_for_symlink_rm "${domains[2]}" "$le_container_name"
+
 # Move ${domains[2]} to a san certificate with ${domains[0]} and ${domains[1]}
 docker run --rm -d \
   --name "symlink-le1-le2-le3" \

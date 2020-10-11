@@ -10,6 +10,10 @@ The link is pointing to the file ./le3.wtf/fullchain.pem
 Symlink to le1.wtf certificate has been removed.
 Symlink to le2.wtf certificate has been removed.
 Symlink to le3.wtf certificate has been removed.
+Restarted test web server for le3.wtf
+Symlink to le3.wtf certificate has been generated.
+The link is pointing to the file ./le3.wtf/fullchain.pem
+Symlink to le3.wtf certificate has been removed.
 Started test web server for le1.wtf,le2.wtf,le3.wtf
 Symlink to le3.wtf certificate has been generated.
 The link is pointing to the file ./le1.wtf/fullchain.pem
