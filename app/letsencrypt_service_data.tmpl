@@ -27,14 +27,12 @@ LETSENCRYPT_CONTAINERS=(
                 LETSENCRYPT_{{ $cid }}_{{ $hostHash }}_HOST=('{{ $host }}')
                 LETSENCRYPT_{{ $cid }}_{{ $hostHash }}_KEYSIZE="{{ $container.Env.LETSENCRYPT_KEYSIZE }}"
                 LETSENCRYPT_{{ $cid }}_{{ $hostHash }}_TEST="{{ $container.Env.LETSENCRYPT_TEST }}"
-                LETSENCRYPT_{{ $cid }}_{{ $hostHash }}_ACMESH_CONFIG="{{ $container.Env.LETSENCRYPT_ACMESH_CONFIG }}"
                 LETSENCRYPT_{{ $cid }}_{{ $hostHash }}_RESTART_CONTAINER="{{ $container.Env.LETSENCRYPT_RESTART_CONTAINER }}"
             {{ end }}
         {{ else }}
             LETSENCRYPT_{{ $cid }}_HOST=( {{ range $host := split $hosts "," }}{{ $host := trim $host }}{{ $host := trimSuffix "." $host }}'{{ $host }}' {{ end }})
             LETSENCRYPT_{{ $cid }}_KEYSIZE="{{ $container.Env.LETSENCRYPT_KEYSIZE }}"
             LETSENCRYPT_{{ $cid }}_TEST="{{ $container.Env.LETSENCRYPT_TEST }}"
-            LETSENCRYPT_{{ $cid }}_ACMESH_CONFIG="{{ $container.Env.LETSENCRYPT_ACMESH_CONFIG }}"
             LETSENCRYPT_{{ $cid }}_RESTART_CONTAINER="{{ $container.Env.LETSENCRYPT_RESTART_CONTAINER }}"
         {{ end }}
     {{ end }}

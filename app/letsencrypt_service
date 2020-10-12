@@ -140,6 +140,16 @@ function update_cert {
         cert_keysize=$DEFAULT_KEY_SIZE
     fi
 
+    local accountemail config_name
+    if [[ -n "${DEFAULT_EMAIL// }" ]]; then
+        accountemail="$DEFAULT_EMAIL"
+        params_d_arr+=("--accountemail" "$accountemail")
+        config_name="$accountemail"
+        [[ ! -d "/etc/acme.sh/$config_name" ]] && mkdir -p "/etc/acme.sh/$config_name"
+    else
+        config_name="default"
+    fi
+
     local test_certificate_varname="LETSENCRYPT_${cid}_TEST"
     local acme_ca_uri certificate_dir
     if [[ $(lc "${!test_certificate_varname:-}") == true ]] || \
@@ -152,14 +162,6 @@ function update_cert {
         # Use default or user provided ACME end point
         acme_ca_uri="$ACME_CA_URI"
         certificate_dir="/etc/nginx/certs/$base_domain"
-    fi
-
-    local config_varname="LETSENCRYPT_${cid}_ACMESH_CONFIG"
-    local config_name="${!config_varname:-"<no value>"}"
-    if [[ "$config_name" == "<no value>" ]]; then
-        config_name=default
-    else
-        [[ ! -d "/etc/acme.sh/$config_name" ]] && mkdir -p "/etc/acme.sh/$config_name"
     fi
 
     [[ "$DEBUG" == 1 ]] && params_d_arr+=("--debug")
