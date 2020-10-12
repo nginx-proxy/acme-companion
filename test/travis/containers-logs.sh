@@ -20,4 +20,9 @@ for container in "${containers[@]}"; do
   fold_start "$container" "Docker container output for $container"
   docker logs "$container"
   fold_end "$container"
+  if [[ "$container" == "acme_accounts" ]]; then
+    fold_start "${container}_default" "Docker container output for ${container}_default"
+    docker logs "${container}_default"
+    fold_end "${container}_default"
+  fi
 done

@@ -1,0 +1,8 @@
+Started letsencrypt container for test acme_accounts
+Started test web server for le1.wtf
+Symlink to le1.wtf certificate has been generated.
+The link is pointing to the file ./le1.wtf/fullchain.pem
+Started letsencrypt container for test acme_accounts_default
+Started test web server for le2.wtf
+Symlink to le2.wtf certificate has been generated.
+The link is pointing to the file ./le2.wtf/fullchain.pem
