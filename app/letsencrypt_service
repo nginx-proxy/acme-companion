@@ -5,6 +5,7 @@ source /app/functions.sh
 
 seconds_to_wait=3600
 ACME_CA_URI="${ACME_CA_URI:-https://acme-v02.api.letsencrypt.org/directory}"
+ACME_CA_TEST_URI="https://acme-staging-v02.api.letsencrypt.org/directory"
 DEFAULT_KEY_SIZE="${DEFAULT_KEY_SIZE:-4096}"
 RENEW_PRIVATE_KEYS="$(lc "${RENEW_PRIVATE_KEYS:-true}")"
 
@@ -118,6 +119,115 @@ function cleanup_links {
     fi
 }
 
+function update_cert {
+    local cid="${1:?}"
+    # Derive host and email variable names
+    local host_varname="LETSENCRYPT_${cid}_HOST"
+    # Array variable indirection hack: http://stackoverflow.com/a/25880676/350221
+    local -a hosts_array="${host_varname}[@]"
+    local hosts_array_expanded=("${!hosts_array}")
+    # First domain will be our base domain
+    local base_domain="${hosts_array_expanded[0]}"
+
+    local should_restart_container='false'
+
+    local -a params_d_arr
+
+    local keysize_varname="LETSENCRYPT_${cid}_KEYSIZE"
+    local cert_keysize="${!keysize_varname:-"<no value>"}"
+    if [[ "$cert_keysize" == "<no value>" ]] || \
+        [[ ! "$cert_keysize" =~ ^(2048|3072|4096|8192|ec-256|ec-384)$ ]]; then
+        cert_keysize=$DEFAULT_KEY_SIZE
+    fi
+
+    local test_certificate_varname="LETSENCRYPT_${cid}_TEST"
+    local acme_ca_uri certificate_dir
+    if [[ $(lc "${!test_certificate_varname:-}") == true ]] || \
+        [[ "$ACME_CA_URI" == "$ACME_CA_TEST_URI" ]]; then
+        # Use staging Let's Encrypt ACME end point
+        acme_ca_uri="$ACME_CA_TEST_URI"
+        # Prefix test certificate directory with _test_
+        certificate_dir="/etc/nginx/certs/_test_$base_domain"
+    else
+        # Use default or user provided ACME end point
+        acme_ca_uri="$ACME_CA_URI"
+        certificate_dir="/etc/nginx/certs/$base_domain"
+    fi
+
+    local config_varname="LETSENCRYPT_${cid}_ACMESH_CONFIG"
+    local config_name="${!config_varname:-"<no value>"}"
+    if [[ "$config_name" == "<no value>" ]]; then
+        config_name=default
+    else
+        [[ ! -d "/etc/acme.sh/$config_name" ]] && mkdir -p "/etc/acme.sh/$config_name"
+    fi
+
+    [[ "$DEBUG" == 1 ]] && params_d_arr+=("--debug")
+    [[ "$RENEW_PRIVATE_KEYS" == true ]] && params_d_arr+=("--always-force-new-domain-key")
+    [[ "${2:-}" == "--force-renew" ]] && params_d_arr+=("--force")
+
+    # Create directory for the first domain
+    mkdir -p "$certificate_dir"
+    set_ownership_and_permissions "$certificate_dir"
+
+    for domain in "${!hosts_array}"; do
+        # Add all the domains to certificate
+        params_d_arr+=("--domain" "$domain")
+        # Add location configuration for the domain
+        add_location_configuration "$domain" || reload_nginx
+    done
+
+    echo "Creating/renewal $base_domain certificates... (${hosts_array_expanded[*]})"
+    acme.sh --issue \
+            --log /dev/null \
+            --config-home "/etc/acme.sh/$config_name" \
+            "${params_d_arr[@]}" \
+            --keylength "$cert_keysize" \
+            --server "$acme_ca_uri" \
+            --webroot /usr/share/nginx/html \
+            --cert-file "${certificate_dir}/cert.pem" \
+            --key-file "${certificate_dir}/key.pem" \
+            --ca-file "${certificate_dir}/chain.pem" \
+            --fullchain-file "${certificate_dir}/fullchain.pem"
+
+    local acmesh_return=$?
+
+    # 0 = success, 2 = RENEW_SKIP
+    if [[ $acmesh_return == 0 || $acmesh_return == 2 ]]; then
+        for domain in "${!hosts_array}"; do
+        if [[ $acme_ca_uri =~ ^https://acme-staging.* ]]; then
+            create_links "_test_$base_domain" "$domain" && should_reload_nginx='true' && should_restart_container='true'
+        else
+            create_links "$base_domain" "$domain" && should_reload_nginx='true' && should_restart_container='true'
+        fi
+        done
+        touch "${certificate_dir}/.companion"
+        set_ownership_and_permissions "${certificate_dir}/.companion"
+        # Make private key root readable only
+        for file in cert.pem key.pem chain.pem fullchain.pem; do
+        local file_path="${certificate_dir}/${file}"
+        [[ -e "$file_path" ]] && set_ownership_and_permissions "$file_path"
+        done
+        # Queue nginx reload if a certificate was issued or renewed
+        [[ $acmesh_return -eq 0 ]] && should_reload_nginx='true' && should_restart_container='true'
+    fi
+
+    # Restart container if certs are updated and the respective environmental variable is set
+    local restart_container_var="LETSENCRYPT_${cid}_RESTART_CONTAINER"
+    if [[ $(lc "${!restart_container_var:-}") == true ]] && [[ "$should_restart_container" == 'true' ]]; then
+        echo "Restarting container (${cid})..."
+        docker_restart "${cid}"
+    fi
+
+    for domain in "${!hosts_array}"; do
+        if [[ -f "/etc/nginx/conf.d/standalone-cert-$domain.conf" ]]; then
+            [[ "$DEBUG" == 1 ]] && echo "Debug: removing standalone configuration file /etc/nginx/conf.d/standalone-cert-$domain.conf"
+            rm -f "/etc/nginx/conf.d/standalone-cert-$domain.conf" && should_reload_nginx='true'
+        fi
+    done
+
+}
+
 function update_certs {
     local -a LETSENCRYPT_CONTAINERS
     local -a LETSENCRYPT_STANDALONE_CERTS
@@ -151,110 +261,8 @@ function update_certs {
 
     should_reload_nginx='false'
     for cid in "${LETSENCRYPT_CONTAINERS[@]}"; do
-        should_restart_container='false'
-        # Derive host and email variable names
-        host_varname="LETSENCRYPT_${cid}_HOST"
-        # Array variable indirection hack: http://stackoverflow.com/a/25880676/350221
-        hosts_array="${host_varname}[@]"
-        hosts_array_expanded=("${!hosts_array}")
-        # First domain will be our base domain
-        base_domain="${hosts_array_expanded[0]}"
-
-        params_d_arr=()
-
-        keysize_varname="LETSENCRYPT_${cid}_KEYSIZE"
-        cert_keysize="${!keysize_varname:-"<no value>"}"
-        if [[ "$cert_keysize" == "<no value>" ]] || \
-          [[ ! "$cert_keysize" =~ ^(2048|3072|4096|8192|ec-256|ec-384)$ ]]; then
-            cert_keysize=$DEFAULT_KEY_SIZE
-        fi
-
-        test_certificate_varname="LETSENCRYPT_${cid}_TEST"
-        le_staging_uri="https://acme-staging-v02.api.letsencrypt.org/directory"
-        if [[ $(lc "${!test_certificate_varname:-}") == true ]] || \
-          [[ "$ACME_CA_URI" == "$le_staging_uri" ]]; then
-            # Use staging Let's Encrypt ACME end point
-            acme_ca_uri="$le_staging_uri"
-            # Prefix test certificate directory with _test_
-            certificate_dir="/etc/nginx/certs/_test_$base_domain"
-        else
-            # Use default or user provided ACME end point
-            acme_ca_uri="$ACME_CA_URI"
-            certificate_dir="/etc/nginx/certs/$base_domain"
-        fi
-
-        config_varname="LETSENCRYPT_${cid}_ACMESH_CONFIG"
-        config_name="${!config_varname:-"<no value>"}"
-        if [[ "$config_name" == "<no value>" ]]; then
-            config_name=default
-        else
-            [[ ! -d "/etc/acme.sh/$config_name" ]] && mkdir -p "/etc/acme.sh/$config_name"
-        fi
-
-        [[ "$DEBUG" == 1 ]] && params_d_arr+=("--debug")
-        [[ "$RENEW_PRIVATE_KEYS" == true ]] && params_d_arr+=("--always-force-new-domain-key")
-        [[ "$1" == "--force-renew" ]] && params_d_arr+=("--force")
-
-        # Create directory for the first domain
-        mkdir -p "$certificate_dir"
-        set_ownership_and_permissions "$certificate_dir"
-
-        for domain in "${!hosts_array}"; do
-            # Add all the domains to certificate
-            params_d_arr+=("--domain" "$domain")
-            # Add location configuration for the domain
-            add_location_configuration "$domain" || reload_nginx
-        done
-
-        echo "Creating/renewal $base_domain certificates... (${hosts_array_expanded[*]})"
-        acme.sh --issue \
-                --log /dev/null \
-                --config-home "/etc/acme.sh/$config_name" \
-                "${params_d_arr[@]}" \
-                --keylength "$cert_keysize" \
-                --server "$acme_ca_uri" \
-                --webroot /usr/share/nginx/html \
-                --cert-file "${certificate_dir}/cert.pem" \
-                --key-file "${certificate_dir}/key.pem" \
-                --ca-file "${certificate_dir}/chain.pem" \
-                --fullchain-file "${certificate_dir}/fullchain.pem"
-
-        acmesh_return=$?
-
-        # 0 = success, 2 = RENEW_SKIP
-        if [[ $acmesh_return == 0 || $acmesh_return == 2 ]]; then
-          for domain in "${!hosts_array}"; do
-            if [[ $acme_ca_uri =~ ^https://acme-staging.* ]]; then
-              create_links "_test_$base_domain" "$domain" && should_reload_nginx='true' && should_restart_container='true'
-            else
-              create_links "$base_domain" "$domain" && should_reload_nginx='true' && should_restart_container='true'
-            fi
-          done
-          touch "${certificate_dir}/.companion"
-          set_ownership_and_permissions "${certificate_dir}/.companion"
-          # Make private key root readable only
-          for file in cert.pem key.pem chain.pem fullchain.pem; do
-            file_path="${certificate_dir}/${file}"
-            [[ -e "$file_path" ]] && set_ownership_and_permissions "$file_path"
-          done
-          # Queue nginx reload if a certificate was issued or renewed
-          [[ $acmesh_return -eq 0 ]] && should_reload_nginx='true' && should_restart_container='true'
-        fi
-
-        # Restart container if certs are updated and the respective environmental variable is set
-        restart_container_var="LETSENCRYPT_${cid}_RESTART_CONTAINER"
-        if [[ $(lc "${!restart_container_var:-}") == true ]] && [[ "$should_restart_container" == 'true' ]]; then
-            echo "Restarting container (${cid})..."
-            docker_restart "${cid}"
-        fi
-
-        for domain in "${!hosts_array}"; do
-            if [[ -f "/etc/nginx/conf.d/standalone-cert-$domain.conf" ]]; then
-                [[ "$DEBUG" == 1 ]] && echo "Debug: removing standalone configuration file /etc/nginx/conf.d/standalone-cert-$domain.conf"
-                rm -f "/etc/nginx/conf.d/standalone-cert-$domain.conf" && should_reload_nginx='true'
-            fi
-        done
-
+        # Pass the eventual --force-renew arg to update_cert() as second arg
+        update_cert "$cid" "${1:-}"
     done
 
     cleanup_links && should_reload_nginx='true'
