@@ -73,3 +73,9 @@ The `DEFAULT_EMAIL` variable must be a valid email and, when set on the **letsen
 The `RENEW_PRIVATE_KEYS` environment variable, when set to `false` on the **letsencrypt-nginx-proxy-companion** container, will set `acme.sh` to reuse previously generated private key instead of generating a new one at renewal for all domains.
 
 Reusing private keys can help if you intend to use [HPKP](https://developer.mozilla.org/en-US/docs/Web/HTTP/Public_Key_Pinning), but please note that HPKP has been deprecated by Google's Chrome and that it is therefore strongly discouraged to use it at all.
+
+#### ACME accounts handling
+
+- Use one `acme.sh` configuration directory (`--config-home`) per account email address.
+- Each `acme.sh` configuration directory can hold several accounts on different ACME service providers. But only one per service provider.
+- The `defaut` configuration directory holds the configuration for empty account email address.
