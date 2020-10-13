@@ -40,6 +40,7 @@ services:
       - nginx-proxy
     volumes:
       - certs:/etc/nginx/certs:rw
+      - acme:/etc/acme.sh
       - /var/run/docker.sock:/var/run/docker.sock:ro
     network_mode: bridge
 
@@ -49,9 +50,10 @@ volumes:
   html:
   dhparam:
   certs:
+  acme:
 ```
 
-**Note:** **nginx-proxy** Dockerfile [create a volume for `/etc/nginx/dhparam`](https://github.com/jwilder/nginx-proxy/blob/e80fc0b304bcbcf703d86392394c1a5adb823e3c/Dockerfile#L34), so this compose file include it as a named volume instead of letting it be created anyway as an anonymous volume.
+**Note:** **nginx-proxy** Dockerfile [create a volume for `/etc/nginx/dhparam`](https://github.com/nginx-proxy/nginx-proxy/blob/e80fc0b304bcbcf703d86392394c1a5adb823e3c/Dockerfile#L34), so this compose file include it as a named volume instead of letting it be created anyway as an anonymous volume.
 
 ### Three containers example
 
@@ -92,6 +94,7 @@ services:
       - nginx-proxy
     volumes:
       - certs:/etc/nginx/certs:rw
+      - acme:/etc/acme.sh
       - /var/run/docker.sock:/var/run/docker.sock:ro
     network_mode: bridge
 
@@ -100,9 +103,10 @@ volumes:
   vhost:
   html:
   certs:
+  acme:
 ```
 
-**Note:** don't forget to replace `/path/to/nginx.tmpl` with the actual path to the [`nginx.tmpl`](https://raw.githubusercontent.com/jwilder/nginx-proxy/master/nginx.tmpl) file you downloaded.
+**Note:** don't forget to replace `/path/to/nginx.tmpl` with the actual path to the [`nginx.tmpl`](https://raw.githubusercontent.com/nginx-proxy/nginx-proxy/master/nginx.tmpl) file you downloaded.
 
 ### Other (external) examples
 

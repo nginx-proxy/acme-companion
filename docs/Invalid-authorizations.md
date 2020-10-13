@@ -44,7 +44,7 @@ Read https://letsencrypt.org/docs/caa/ and test with https://unboundtest.com/
 
 #### the **nginx-proxy**/**nginx**/**docker-gen**/**letsencrypt-nginx-proxy-companion** containers were misconfigured.
 
-Review [basic usage](./Basic-usage.md) or [advanced usage](./Advanced-usage.md), plus the [nginx-proxy documentation](https://github.com/jwilder/nginx-proxy).
+Review [basic usage](./Basic-usage.md) or [advanced usage](./Advanced-usage.md), plus the [nginx-proxy documentation](https://github.com/nginx-proxy/nginx-proxy).
 
 Pay special attention to the fact that the volumes **MUST** be shared between the different containers.
 
@@ -54,7 +54,7 @@ Both are required. Every domain on `LETSENCRYPT_HOST`**must** be on `VIRTUAL_HOS
 
 #### you are using an outdated version of either **letsencrypt-nginx-proxy-companion** or the nginx.tmpl file (if running a 3 containers setup)
 
-Pull `jrcs/letsencrypt-nginx-proxy-companion:latest` again and get the latest [latest nginx.tmpl](https://raw.githubusercontent.com/jwilder/nginx-proxy/master/nginx.tmpl).
+Pull `jrcs/letsencrypt-nginx-proxy-companion:latest` again and get the latest [latest nginx.tmpl](https://raw.githubusercontent.com/nginx-proxy/nginx-proxy/master/nginx.tmpl).
 
 
 ***

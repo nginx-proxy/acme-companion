@@ -2,9 +2,13 @@
 
 Three writable volumes must be declared on the **nginx-proxy** container so that they can be shared with the **letsencrypt-nginx-proxy-companion** container:
 
-* `/etc/nginx/certs` to store certificates, private keys and ACME account keys (readonly for the **nginx-proxy** container).
+* `/etc/nginx/certs` to store certificates and private keys (readonly for the **nginx-proxy** container).
 * `/etc/nginx/vhost.d` to change the configuration of vhosts (required so the CA may access `http-01` challenge files).
 * `/usr/share/nginx/html` to write `http-01` challenge files.
+
+Additionally, a fourth volume must be declared on the **letsencrypt-nginx-proxy-companion** container to store `acme.sh` configuration and state: `/etc/acme.sh`.
+
+Please also read the doc about [data persistence](./docs/persistent-data.md).
 
 Example of use:
 
@@ -35,6 +39,7 @@ $ docker run --detach \
     --name nginx-proxy-letsencrypt \
     --volumes-from nginx-proxy \
     --volume /var/run/docker.sock:/var/run/docker.sock:ro \
+    --volume /etc/acme.sh \
     --env "DEFAULT_EMAIL=mail@yourdomain.tld" \
     jrcs/letsencrypt-nginx-proxy-companion
 ```
@@ -47,7 +52,7 @@ Albeit **optional**, it is **recommended** to provide a valid default email addr
 
 Once both **nginx-proxy** and **letsencrypt-nginx-proxy-companion** containers are up and running, start any container you want proxyed with environment variables `VIRTUAL_HOST` and `LETSENCRYPT_HOST` both set to the domain(s) your proxyed container is going to use. Multiple hosts can be separated using commas.
 
-[`VIRTUAL_HOST`](https://github.com/jwilder/nginx-proxy#usage) control proxying by **nginx-proxy** and `LETSENCRYPT_HOST` control certificate creation and SSL enabling by **letsencrypt-nginx-proxy-companion**.
+[`VIRTUAL_HOST`](https://github.com/nginx-proxy/nginx-proxy#usage) control proxying by **nginx-proxy** and `LETSENCRYPT_HOST` control certificate creation and SSL enabling by **letsencrypt-nginx-proxy-companion**.
 
 Certificates will only be issued for containers that have both `VIRTUAL_HOST` and `LETSENCRYPT_HOST` variables set to domain(s) that correctly resolve to the host, provided the host is publicly reachable.
 
@@ -61,7 +66,7 @@ $ docker run --detach \
 
 The containers being proxied must expose the port to be proxied, either by using the `EXPOSE` directive in their Dockerfile or by using the `--expose` flag to `docker run` or `docker create`.
 
-If the proxyed container listen on and expose another port than the default `80`, you can force **nginx-proxy** to use this port with the [`VIRTUAL_PORT`](https://github.com/jwilder/nginx-proxy#multiple-ports) environment variable.
+If the proxyed container listen on and expose another port than the default `80`, you can force **nginx-proxy** to use this port with the [`VIRTUAL_PORT`](https://github.com/nginx-proxy/nginx-proxy#multiple-ports) environment variable.
 
 Example using [Grafana](https://hub.docker.com/r/grafana/grafana/) (expose and listen on port 3000):
 

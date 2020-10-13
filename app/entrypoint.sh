@@ -40,7 +40,7 @@ function check_writable_directory {
 
 function check_dh_group {
     # Credits to Steve Kamerman for the background Diffie-Hellman creation logic.
-    # https://github.com/jwilder/nginx-proxy/pull/589
+    # https://github.com/nginx-proxy/nginx-proxy/pull/589
     local DHPARAM_BITS="${DHPARAM_BITS:-2048}"
     re='^[0-9]*$'
     if ! [[ "$DHPARAM_BITS" =~ $re ]] ; then
