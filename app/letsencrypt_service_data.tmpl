@@ -28,6 +28,7 @@ LETSENCRYPT_CONTAINERS=(
                 LETSENCRYPT_{{ $cid }}_{{ $hostHash }}_KEYSIZE="{{ $container.Env.LETSENCRYPT_KEYSIZE }}"
                 LETSENCRYPT_{{ $cid }}_{{ $hostHash }}_TEST="{{ $container.Env.LETSENCRYPT_TEST }}"
                 LETSENCRYPT_{{ $cid }}_{{ $hostHash }}_EMAIL="{{ $container.Env.LETSENCRYPT_EMAIL }}"
+                LETSENCRYPT_{{ $cid }}_{{ $hostHash }}_ACME_CA_URI="{{ $container.Env.LETSENCRYPT_ACME_CA_URI }}"
                 LETSENCRYPT_{{ $cid }}_{{ $hostHash }}_RESTART_CONTAINER="{{ $container.Env.LETSENCRYPT_RESTART_CONTAINER }}"
             {{ end }}
         {{ else }}
@@ -35,6 +36,7 @@ LETSENCRYPT_CONTAINERS=(
             LETSENCRYPT_{{ $cid }}_KEYSIZE="{{ $container.Env.LETSENCRYPT_KEYSIZE }}"
             LETSENCRYPT_{{ $cid }}_TEST="{{ $container.Env.LETSENCRYPT_TEST }}"
             LETSENCRYPT_{{ $cid }}_EMAIL="{{ $container.Env.LETSENCRYPT_EMAIL }}"
+            LETSENCRYPT_{{ $cid }}_ACME_CA_URI="{{ $container.Env.LETSENCRYPT_ACME_CA_URI }}"
             LETSENCRYPT_{{ $cid }}_RESTART_CONTAINER="{{ $container.Env.LETSENCRYPT_RESTART_CONTAINER }}"
         {{ end }}
     {{ end }}

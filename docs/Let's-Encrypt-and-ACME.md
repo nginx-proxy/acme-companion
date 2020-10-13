@@ -79,3 +79,7 @@ Reusing private keys can help if you intend to use [HPKP](https://developer.mozi
 - Use one `acme.sh` configuration directory (`--config-home`) per account email address.
 - Each `acme.sh` configuration directory can hold several accounts on different ACME service providers. But only one per service provider.
 - The `defaut` configuration directory holds the configuration for empty account email address.
+- When in testing mode (`LETSENCRYPT_TEST=true`):
+    1. The container will use the special purpose `staging` configuration directory.
+    1. The directory URI is forced to The Let's Encrypt v2 staging one (`ACME_CA_URI` is ignored)
+    2. The account email address is forced empty (`DEFAULT_EMAIL` and `LETSENCRYPT_EMAIL` are ignored)

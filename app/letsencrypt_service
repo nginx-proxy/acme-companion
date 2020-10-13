@@ -4,7 +4,7 @@
 source /app/functions.sh
 
 seconds_to_wait=3600
-ACME_CA_URI="${ACME_CA_URI:-https://acme-v02.api.letsencrypt.org/directory}"
+ACME_CA_URI="${ACME_CA_URI:-"https://acme-v02.api.letsencrypt.org/directory"}"
 ACME_CA_TEST_URI="https://acme-staging-v02.api.letsencrypt.org/directory"
 DEFAULT_KEY_SIZE="${DEFAULT_KEY_SIZE:-4096}"
 RENEW_PRIVATE_KEYS="$(lc "${RENEW_PRIVATE_KEYS:-true}")"
@@ -160,21 +160,35 @@ function update_cert {
         # If we did not get any email at all, use the default (empty mail) config
         config_home="/etc/acme.sh/default"
     fi 
-    [[ ! -d "$config_home" ]] && mkdir -p "$config_home"
 
+    local acme_ca_uri_varname="LETSENCRYPT_${cid}_ACME_CA_URI"
+    local acme_ca_uri="${!acme_ca_uri_varname:-"<no value>"}"
+    if [[ "$acme_ca_uri" == "<no value>" ]]; then
+        # Use default or user provided ACME end point
+        acme_ca_uri="$ACME_CA_URI"
+    fi
+
+    # LETSENCRYPT_TEST overrides LETSENCRYPT_ACME_CA_URI
     local test_certificate_varname="LETSENCRYPT_${cid}_TEST"
-    local acme_ca_uri certificate_dir
-    if [[ $(lc "${!test_certificate_varname:-}") == true ]] || \
-        [[ "$ACME_CA_URI" == "$ACME_CA_TEST_URI" ]]; then
-        # Use staging Let's Encrypt ACME end point
+    if [[ $(lc "${!test_certificate_varname:-}") == true ]]; then
+        # Use Let's Encrypt ACME V2 staging end point
         acme_ca_uri="$ACME_CA_TEST_URI"
+    fi
+
+    local certificate_dir
+    # If we're going to use one of LE stating endpoints ...
+    if [[ "$acme_ca_uri" =~ ^https://acme-staging.* ]]; then
+        # Unset accountemail
+        # force config dir to 'staging'
+        unset accountemail
+        config_home="/etc/acme.sh/staging"
         # Prefix test certificate directory with _test_
         certificate_dir="/etc/nginx/certs/_test_$base_domain"
     else
-        # Use default or user provided ACME end point
-        acme_ca_uri="$ACME_CA_URI"
         certificate_dir="/etc/nginx/certs/$base_domain"
     fi
+
+    [[ ! -d "$config_home" ]] && mkdir -p "$config_home"
 
     [[ "$DEBUG" == 1 ]] && params_d_arr+=("--debug")
     [[ "$RENEW_PRIVATE_KEYS" == true ]] && params_d_arr+=("--always-force-new-domain-key")
