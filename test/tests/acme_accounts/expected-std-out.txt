@@ -6,3 +6,6 @@ Started letsencrypt container for test acme_accounts_default
 Started test web server for le2.wtf
 Symlink to le2.wtf certificate has been generated.
 The link is pointing to the file ./le2.wtf/fullchain.pem
+Started test web server for le3.wtf
+Symlink to le3.wtf certificate has been generated.
+The link is pointing to the file ./le3.wtf/fullchain.pem

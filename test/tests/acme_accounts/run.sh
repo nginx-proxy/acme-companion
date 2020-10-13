@@ -56,7 +56,7 @@ default_email="contact@${domains[1]}"
 le_container_name="${le_container_name}_default"
 run_le_container "${1:?}" "$le_container_name" "--env DEFAULT_EMAIL=${default_email}"
 
-# Run an nginx container for ${domains[1]}.
+# Run an nginx container for ${domains[1]} without LETSENCRYPT_EMAIL set.
 docker run --rm -d \
   --name "${domains[1]}" \
   -e "VIRTUAL_HOST=${domains[1]}" \
@@ -68,7 +68,6 @@ docker run --rm -d \
 wait_for_symlink "${domains[1]}" "$le_container_name"
 
 # Test if the expected folder / file / content are there.
-# We exit in case of error to avoid deleting the companion container.
 json_file="/etc/acme.sh/${default_email}/ca/boulder/account.json"
 if docker exec "$le_container_name" [[ ! -d "/etc/acme.sh/$default_email" ]]; then
   echo "The /etc/acme.sh/$default_email folder does not exist."
@@ -79,5 +78,30 @@ elif [[ "$(docker exec "$le_container_name" jq -r '.contact|.[0]' "$json_file")"
   docker exec "$le_container_name" jq . "$json_file"
 fi
 
-# Stop the nginx container silently.
+# Run an nginx container for ${domains[2]} with LETSENCRYPT_EMAIL set.
+container_email="contact@${domains[2]}"
+docker run --rm -d \
+  --name "${domains[2]}" \
+  -e "VIRTUAL_HOST=${domains[2]}" \
+  -e "LETSENCRYPT_HOST=${domains[2]}" \
+  -e "LETSENCRYPT_EMAIL=${container_email}" \
+  --network boulder_bluenet \
+  nginx:alpine > /dev/null && echo "Started test web server for ${domains[2]}"
+
+# Wait for a symlink at /etc/nginx/certs/${domains[2]}.crt
+wait_for_symlink "${domains[2]}" "$le_container_name"
+
+# Test if the expected folder / file / content are there.
+json_file="/etc/acme.sh/${container_email}/ca/boulder/account.json"
+if docker exec "$le_container_name" [[ ! -d "/etc/acme.sh/$container_email" ]]; then
+  echo "The /etc/acme.sh/$container_email folder does not exist."
+elif docker exec "$le_container_name" [[ ! -f "$json_file" ]]; then
+  echo "The $json_file file does not exist."
+elif [[ "$(docker exec "$le_container_name" jq -r '.contact|.[0]' "$json_file")" != "mailto:${container_email}" ]]; then
+  echo "$default_email is not set on ${json_file}."
+  docker exec "$le_container_name" jq . "$json_file"
+fi
+
+# Stop the nginx containers silently.
 docker stop "${domains[1]}" > /dev/null 2>&1
+docker stop "${domains[2]}" > /dev/null 2>&1
