@@ -71,8 +71,7 @@ function check_dh_group {
     fi
 
     echo "Info: Creating Diffie-Hellman group in the background."
-    echo "A pre-generated Diffie-Hellman group will be used for now while the new one
-is being created."
+    echo "A pre-generated Diffie-Hellman group will be used for now while the new one is being created."
 
     # Put the default dhparam file in place so we can start immediately
     cp "$PREGEN_DHPARAM_FILE" "$DHPARAM_FILE"
