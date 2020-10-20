@@ -132,6 +132,8 @@ function update_cert {
     local should_restart_container='false'
 
     local -a params_d_arr
+    params_d_arr+=(--log /dev/null)
+    [[ "$DEBUG" == 1 ]] && params_d_arr+=(--debug)
 
     local keysize_varname="LETSENCRYPT_${cid}_KEYSIZE"
     local cert_keysize="${!keysize_varname:-"<no value>"}"
@@ -154,7 +156,7 @@ function update_cert {
     fi
     if [[ -n "${accountemail// }" ]]; then
         # If we got an email, use it with the corresponding config home
-        params_d_arr+=("--accountemail" "$accountemail")
+        params_d_arr+=(--accountemail "$accountemail")
         config_home="/etc/acme.sh/$accountemail"
     else
         # If we did not get any email at all, use the default (empty mail) config
@@ -174,6 +176,7 @@ function update_cert {
         # Use Let's Encrypt ACME V2 staging end point
         acme_ca_uri="$ACME_CA_TEST_URI"
     fi
+    params_d_arr+=(--server "$acme_ca_uri")
 
     local certificate_dir
     # If we're going to use one of LE stating endpoints ...
@@ -189,10 +192,13 @@ function update_cert {
     fi
 
     [[ ! -d "$config_home" ]] && mkdir -p "$config_home"
+    params_d_arr+=(--config-home "$config_home")
 
-    [[ "$DEBUG" == 1 ]] && params_d_arr+=("--debug")
-    [[ "$RENEW_PRIVATE_KEYS" == true ]] && params_d_arr+=("--always-force-new-domain-key")
-    [[ "${2:-}" == "--force-renew" ]] && params_d_arr+=("--force")
+    [[ "$DEBUG" == 1 ]] && echo "Calling acme.sh --register-account with the following parameters : ${params_d_arr[*]}"
+    acme.sh --register-account "${params_d_arr[@]}"
+
+    [[ "$RENEW_PRIVATE_KEYS" == true ]] && params_d_arr+=(--always-force-new-domain-key)
+    [[ "${2:-}" == "--force-renew" ]] && params_d_arr+=(--force)
 
     # Create directory for the first domain
     mkdir -p "$certificate_dir"
@@ -200,18 +206,15 @@ function update_cert {
 
     for domain in "${!hosts_array}"; do
         # Add all the domains to certificate
-        params_d_arr+=("--domain" "$domain")
+        params_d_arr+=(--domain "$domain")
         # Add location configuration for the domain
         add_location_configuration "$domain" || reload_nginx
     done
 
     echo "Creating/renewal $base_domain certificates... (${hosts_array_expanded[*]})"
     acme.sh --issue \
-            --log /dev/null \
-            --config-home "$config_home" \
             "${params_d_arr[@]}" \
             --keylength "$cert_keysize" \
-            --server "$acme_ca_uri" \
             --webroot /usr/share/nginx/html \
             --cert-file "${certificate_dir}/cert.pem" \
             --key-file "${certificate_dir}/key.pem" \
