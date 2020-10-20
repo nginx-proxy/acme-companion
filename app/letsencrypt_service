@@ -9,6 +9,9 @@ ACME_CA_TEST_URI="https://acme-staging-v02.api.letsencrypt.org/directory"
 DEFAULT_KEY_SIZE="${DEFAULT_KEY_SIZE:-4096}"
 RENEW_PRIVATE_KEYS="$(lc "${RENEW_PRIVATE_KEYS:-true}")"
 
+# Backward compatibility environment variable
+REUSE_PRIVATE_KEYS="$(lc "${REUSE_PRIVATE_KEYS:-false}")"
+
 function create_link {
     local -r source=${1?missing source argument}
     local -r target=${2?missing target argument}
@@ -209,7 +212,7 @@ function update_cert {
     [[ "$DEBUG" == 1 ]] && echo "Calling acme.sh --register-account with the following parameters : ${params_base_arr[*]}"
     acme.sh --register-account "${params_base_arr[@]}"
 
-    [[ "$RENEW_PRIVATE_KEYS" == false ]] && params_issue_arr+=(--always-force-new-domain-key)
+    [[ "$RENEW_PRIVATE_KEYS" == false || "$REUSE_PRIVATE_KEYS" == true ]] && params_issue_arr+=(--always-force-new-domain-key)
     [[ "${2:-}" == "--force-renew" ]] && params_issue_arr+=(--force)
 
     # Create directory for the first domain
