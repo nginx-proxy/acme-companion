@@ -21,7 +21,7 @@ RUN apk add --no-cache --virtual .build-deps \
 
 FROM alpine:3.12
 
-LABEL maintainer="Yves Blusseau <90z7oey02@sneakemail.com> (@blusseau)"
+LABEL maintainer="Nicolas Duchon <nicolas.duchon@gmail.com> (@buchdag)"
 
 ENV DOCKER_HOST=unix:///var/run/docker.sock \
     PATH=$PATH:/app
