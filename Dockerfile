@@ -30,7 +30,6 @@ RUN apk add --update \
         coreutils \
         curl \
         jq \
-        netcat-openbsd \
         openssl \
         socat \
     && rm /var/cache/apk/*
