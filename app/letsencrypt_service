@@ -168,7 +168,6 @@ function update_cert {
     fi
     if [[ -n "${accountemail// }" ]]; then
         # If we got an email, use it with the corresponding config home
-        params_issue_arr+=(--accountemail "$accountemail")
         config_home="/etc/acme.sh/$accountemail"
     else
         # If we did not get any email at all, use the default (empty mail) config
@@ -181,14 +180,18 @@ function update_cert {
         # Use default or user provided ACME end point
         acme_ca_uri="$ACME_CA_URI"
     fi
-
     # LETSENCRYPT_TEST overrides LETSENCRYPT_ACME_CA_URI
     local test_certificate_varname="LETSENCRYPT_${cid}_TEST"
     if [[ $(lc "${!test_certificate_varname:-}") == true ]]; then
         # Use Let's Encrypt ACME V2 staging end point
         acme_ca_uri="$ACME_CA_TEST_URI"
     fi
+
+    # Set relevant --server parameter and ca folder name
     params_base_arr+=(--server "$acme_ca_uri")
+    local ca_dir="${acme_ca_uri##*://}" \
+        && ca_dir="${ca_dir%%/*}" \
+        && ca_dir="${ca_dir%%:*}"
 
     local certificate_dir
     # If we're going to use one of LE stating endpoints ...
@@ -211,6 +214,7 @@ function update_cert {
 
     [[ ! -d "$config_home" ]] && mkdir -p "$config_home"
     params_base_arr+=(--config-home "$config_home")
+    local account_file="${config_home}/ca/${ca_dir}/account.json"
 
     # Zero SSL External Account Binding (EAB)
     if [[ "$acme_ca_uri" == "https://acme.zerossl.com/v2/DV90" ]]; then
@@ -238,9 +242,24 @@ function update_cert {
         # We're not using Zero SSL, register the ACME account using the provided email.
         params_register_arr+=(--accountemail "$accountemail")
     fi
-    params_register_arr=("${params_base_arr[@]}" "${params_register_arr[@]}")
-    [[ "$DEBUG" == 1 ]] && echo "Calling acme.sh --register-account with the following parameters : ${params_register_arr[*]}"
-    acme.sh --register-account "${params_register_arr[@]}"
+    
+    # Account registration and update if required
+    if [[ ! -f "$account_file" ]]; then
+        params_register_arr=("${params_base_arr[@]}" "${params_register_arr[@]}")
+        [[ "$DEBUG" == 1 ]] && echo "Calling acme.sh --register-account with the following parameters : ${params_register_arr[*]}"
+        acme.sh --register-account "${params_register_arr[@]}"
+    fi
+    if [[ -n "${accountemail// }" ]] && ! grep -q "mailto:$accountemail" "$account_file"; then
+        local -a params_update_arr=("${params_base_arr[@]}" --accountemail "$accountemail")
+        [[ "$DEBUG" == 1 ]] && echo "Calling acme.sh --update-account with the following parameters : ${params_update_arr[*]}"
+        acme.sh --update-account "${params_update_arr[@]}"
+    fi
+
+    # If we still don't have an account.json file by this point, we've got an issue
+    if [[ ! -f "$account_file" ]]; then
+        echo "Error: no ACME account was found or registered for $accountemail and $acme_ca_uri, certificate creation aborted."
+        return 1
+    fi
 
     [[ "$RENEW_PRIVATE_KEYS" == false || "$REUSE_PRIVATE_KEYS" == true ]] && params_issue_arr+=(--always-force-new-domain-key)
     [[ "${2:-}" == "--force-renew" ]] && params_issue_arr+=(--force)
