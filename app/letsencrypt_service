@@ -146,7 +146,7 @@ function update_cert {
     local keysize_varname="LETSENCRYPT_${cid}_KEYSIZE"
     local cert_keysize="${!keysize_varname:-"<no value>"}"
     if [[ "$cert_keysize" == "<no value>" ]] || \
-        [[ ! "$cert_keysize" =~ ^(2048|3072|4096|8192|ec-256|ec-384)$ ]]; then
+        [[ ! "$cert_keysize" =~ ^(2048|3072|4096|8192|ec-256|ec-384|ec-512)$ ]]; then
         cert_keysize=$DEFAULT_KEY_SIZE
     fi
     params_issue_arr+=(--keylength "$cert_keysize")
