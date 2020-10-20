@@ -56,7 +56,11 @@ The `LETSENCRYPT_KEYSIZE` environment variable determines the type and size of t
 
 The `LETSENCRYPT_TEST` environment variable, when set to `true` on a proxied application container, will create a test certificates that don't have the [5 certs/week/domain limits](https://letsencrypt.org/docs/rate-limits/) and are signed by an untrusted intermediate (they won't be trusted by browsers).
 
-If you want to do this globally for all containers, set `ACME_CA_URI` as described in [Container configuration](./Container-configuration.md).
+If you want to do this globally for all containers, set `ACME_CA_URI` on the **letsencrypt-nginx-proxy-companion** container as described in [Container configuration](./Container-configuration.md).
+
+#### ACME CA URI
+
+The `ACME_CA_URI` environment variable is used to set the ACME API endpoint from which the container's certificate(s) will be requested (defaults to ``https://acme-v02.api.letsencrypt.org/directory``).
 
 #### Container restart on cert renewal
 

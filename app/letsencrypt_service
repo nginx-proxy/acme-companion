@@ -175,7 +175,7 @@ function update_cert {
         config_home="/etc/acme.sh/default"
     fi 
 
-    local acme_ca_uri_varname="LETSENCRYPT_${cid}_ACME_CA_URI"
+    local acme_ca_uri_varname="ACME_${cid}_CA_URI"
     local acme_ca_uri="${!acme_ca_uri_varname:-"<no value>"}"
     if [[ "$acme_ca_uri" == "<no value>" ]]; then
         # Use default or user provided ACME end point
