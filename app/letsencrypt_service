@@ -131,9 +131,14 @@ function update_cert {
 
     local should_restart_container='false'
 
-    local -a params_d_arr
-    params_d_arr+=(--log /dev/null)
-    [[ "$DEBUG" == 1 ]] && params_d_arr+=(--debug)
+    # Base CLI parameters array, used for both --register-account and --issue
+    local -a params_base_arr
+    params_base_arr+=(--log /dev/null)
+    [[ "$DEBUG" == 1 ]] && params_base_arr+=(--debug)
+
+    # CLI parameters array used for --issue
+    local -a params_issue_arr
+    params_issue_arr+=(--webroot /usr/share/nginx/html)
 
     local keysize_varname="LETSENCRYPT_${cid}_KEYSIZE"
     local cert_keysize="${!keysize_varname:-"<no value>"}"
@@ -141,6 +146,7 @@ function update_cert {
         [[ ! "$cert_keysize" =~ ^(2048|3072|4096|8192|ec-256|ec-384)$ ]]; then
         cert_keysize=$DEFAULT_KEY_SIZE
     fi
+    params_issue_arr+=(--keylength "$cert_keysize")
 
     local accountemail_varname="LETSENCRYPT_${cid}_EMAIL"
     local accountemail="${!accountemail_varname:-"<no value>"}"
@@ -156,7 +162,7 @@ function update_cert {
     fi
     if [[ -n "${accountemail// }" ]]; then
         # If we got an email, use it with the corresponding config home
-        params_d_arr+=(--accountemail "$accountemail")
+        params_base_arr+=(--accountemail "$accountemail")
         config_home="/etc/acme.sh/$accountemail"
     else
         # If we did not get any email at all, use the default (empty mail) config
@@ -176,7 +182,7 @@ function update_cert {
         # Use Let's Encrypt ACME V2 staging end point
         acme_ca_uri="$ACME_CA_TEST_URI"
     fi
-    params_d_arr+=(--server "$acme_ca_uri")
+    params_base_arr+=(--server "$acme_ca_uri")
 
     local certificate_dir
     # If we're going to use one of LE stating endpoints ...
@@ -190,15 +196,21 @@ function update_cert {
     else
         certificate_dir="/etc/nginx/certs/$base_domain"
     fi
+    params_issue_arr+=( \
+        --cert-file "${certificate_dir}/cert.pem" \
+        --key-file "${certificate_dir}/key.pem" \
+        --ca-file "${certificate_dir}/chain.pem" \
+        --fullchain-file "${certificate_dir}/fullchain.pem" \
+    )
 
     [[ ! -d "$config_home" ]] && mkdir -p "$config_home"
-    params_d_arr+=(--config-home "$config_home")
+    params_base_arr+=(--config-home "$config_home")
 
-    [[ "$DEBUG" == 1 ]] && echo "Calling acme.sh --register-account with the following parameters : ${params_d_arr[*]}"
-    acme.sh --register-account "${params_d_arr[@]}"
+    [[ "$DEBUG" == 1 ]] && echo "Calling acme.sh --register-account with the following parameters : ${params_base_arr[*]}"
+    acme.sh --register-account "${params_base_arr[@]}"
 
-    [[ "$RENEW_PRIVATE_KEYS" == true ]] && params_d_arr+=(--always-force-new-domain-key)
-    [[ "${2:-}" == "--force-renew" ]] && params_d_arr+=(--force)
+    [[ "$RENEW_PRIVATE_KEYS" == true ]] && params_issue_arr+=(--always-force-new-domain-key)
+    [[ "${2:-}" == "--force-renew" ]] && params_issue_arr+=(--force)
 
     # Create directory for the first domain
     mkdir -p "$certificate_dir"
@@ -206,20 +218,15 @@ function update_cert {
 
     for domain in "${!hosts_array}"; do
         # Add all the domains to certificate
-        params_d_arr+=(--domain "$domain")
+        params_issue_arr+=(--domain "$domain")
         # Add location configuration for the domain
         add_location_configuration "$domain" || reload_nginx
     done
 
+    params_issue_arr=("${params_base_arr[@]}" "${params_issue_arr[@]}")
+    [[ "$DEBUG" == 1 ]] && echo "Calling acme.sh --issue with the following parameters : ${params_issue_arr[*]}"
     echo "Creating/renewal $base_domain certificates... (${hosts_array_expanded[*]})"
-    acme.sh --issue \
-            "${params_d_arr[@]}" \
-            --keylength "$cert_keysize" \
-            --webroot /usr/share/nginx/html \
-            --cert-file "${certificate_dir}/cert.pem" \
-            --key-file "${certificate_dir}/key.pem" \
-            --ca-file "${certificate_dir}/chain.pem" \
-            --fullchain-file "${certificate_dir}/fullchain.pem"
+    acme.sh --issue "${params_issue_arr[@]}"
 
     local acmesh_return=$?
 
