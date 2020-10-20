@@ -47,6 +47,7 @@ LETSENCRYPT_CONTAINERS=(
             {{ if parseBool (coalesce $container.Env.LETSENCRYPT_SINGLE_DOMAIN_CERTS "false") }}
                 {{ range $host := split $hosts "," }}
                     {{ $host := trim $host }}
+                    {{ $host := trimSuffix "." $host }}
                     {{ $hostHash := sha1 $host }}
                     LETSENCRYPT_{{ $cid }}_{{ $hostHash }}_HOST=('{{ $host }}')
                     LETSENCRYPT_{{ $cid }}_{{ $hostHash }}_EMAIL="{{ $container.Env.LETSENCRYPT_EMAIL }}"
@@ -57,8 +58,7 @@ LETSENCRYPT_CONTAINERS=(
                     LETSENCRYPT_{{ $cid }}_{{ $hostHash }}_MIN_VALIDITY="{{ $container.Env.LETSENCRYPT_MIN_VALIDITY }}"
                 {{ end }}
             {{ else }}
-                LETSENCRYPT_{{ $cid }}_HOST=( {{ range $host := split $hosts "," }}{{ $host := trim $host }}'{{ $host }}' {{ end }})
-                LETSENCRYPT_{{ $cid }}_EMAIL="{{ $container.Env.LETSENCRYPT_EMAIL }}"
+                LETSENCRYPT_{{ $cid }}_HOST=( {{ range $host := split $hosts "," }}{{ $host := trim $host }}{{ $host := trimSuffix "." $host }}'{{ $host }}' {{ end }})                LETSENCRYPT_{{ $cid }}_EMAIL="{{ $container.Env.LETSENCRYPT_EMAIL }}"
                 LETSENCRYPT_{{ $cid }}_KEYSIZE="{{ $container.Env.LETSENCRYPT_KEYSIZE }}"
                 LETSENCRYPT_{{ $cid }}_TEST="{{ $container.Env.LETSENCRYPT_TEST }}"
                 LETSENCRYPT_{{ $cid }}_ACCOUNT_ALIAS="{{ $container.Env.LETSENCRYPT_ACCOUNT_ALIAS }}"
