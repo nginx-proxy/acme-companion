@@ -23,7 +23,9 @@ FROM alpine:3.12
 
 LABEL maintainer="Nicolas Duchon <nicolas.duchon@gmail.com> (@buchdag)"
 
-ENV DOCKER_HOST=unix:///var/run/docker.sock \
+ARG GIT_DESCRIBE
+ENV COMPANION_VERSION=$GIT_DESCRIBE \
+    DOCKER_HOST=unix:///var/run/docker.sock \
     PATH=$PATH:/app
 
 # Install packages required by the image

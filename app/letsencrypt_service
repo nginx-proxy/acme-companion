@@ -246,7 +246,7 @@ function update_cert {
                     && should_restart_container='true'
             fi
         done
-        touch "${certificate_dir}/.companion"
+        echo "${COMPANION_VERSION:-}" > "${certificate_dir}/.companion"
         set_ownership_and_permissions "${certificate_dir}/.companion"
         # Make private key root readable only
         for file in cert.pem key.pem chain.pem fullchain.pem; do

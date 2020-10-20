@@ -5,6 +5,12 @@ set -u
 # shellcheck source=functions.sh
 source /app/functions.sh
 
+function print_version {
+    if [[ -n "${COMPANION_VERSION:-}" ]]; then
+        echo "Info: running letsencrypt-nginx-proxy-companion version ${COMPANION_VERSION}"
+    fi
+}
+
 function check_docker_socket {
     if [[ $DOCKER_HOST == unix://* ]]; then
         socket_file=${DOCKER_HOST#unix://}
@@ -137,6 +143,7 @@ function check_default_account {
 }
 
 if [[ "$*" == "/bin/bash /app/start.sh" ]]; then
+    print_version
     check_docker_socket
     if [[ -z "$(get_nginx_proxy_container)" ]]; then
         echo "Error: can't get nginx-proxy container ID !" >&2
