@@ -137,7 +137,7 @@ function update_cert {
     # Base CLI parameters array, used for both --register-account and --issue
     local -a params_base_arr
     params_base_arr+=(--log /dev/null)
-    [[ "$DEBUG" == 1 ]] && params_base_arr+=(--debug)
+    [[ "$DEBUG" == 1 ]] && params_base_arr+=(--debug 2)
 
     # CLI parameters array used for --register-account
     local -a params_register_arr
