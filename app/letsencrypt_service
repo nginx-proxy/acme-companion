@@ -139,6 +139,9 @@ function update_cert {
     params_base_arr+=(--log /dev/null)
     [[ "$DEBUG" == 1 ]] && params_base_arr+=(--debug)
 
+    # CLI parameters array used for --register-account
+    local -a params_register_arr
+
     # CLI parameters array used for --issue
     local -a params_issue_arr
     params_issue_arr+=(--webroot /usr/share/nginx/html)
@@ -165,7 +168,7 @@ function update_cert {
     fi
     if [[ -n "${accountemail// }" ]]; then
         # If we got an email, use it with the corresponding config home
-        params_base_arr+=(--accountemail "$accountemail")
+        params_issue_arr+=(--accountemail "$accountemail")
         config_home="/etc/acme.sh/$accountemail"
     else
         # If we did not get any email at all, use the default (empty mail) config
@@ -209,8 +212,35 @@ function update_cert {
     [[ ! -d "$config_home" ]] && mkdir -p "$config_home"
     params_base_arr+=(--config-home "$config_home")
 
-    [[ "$DEBUG" == 1 ]] && echo "Calling acme.sh --register-account with the following parameters : ${params_base_arr[*]}"
-    acme.sh --register-account "${params_base_arr[@]}"
+    # Zero SSL External Account Binding (EAB)
+    if [[ "$acme_ca_uri" == "https://acme.zerossl.com/v2/DV90" ]]; then
+        local eab_kid_varname="ACME_${cid}_EAB_KID"
+        local eab_kid="${!eab_kid_varname:-"<no value>"}"
+        local eab_hmac_key_varname="ACME_${cid}_EAB_HMAC_KEY"
+        local eab_hmac_key="${!eab_hmac_key_varname:-"<no value>"}"
+        if [[ "$eab_kid" != "<no value>" && "$eab_hmac_key" != "<no value>" ]]; then
+            # Register the ACME account with the per container EAB credentials.
+            params_register_arr+=(--eab-kid "$eab_kid" --eab-hmac-key "$eab_hmac_key")
+        elif [[ -n "${ACME_EAB_KID// }" && -n "${ACME_EAB_HMAC_KEY// }" ]]; then
+            # We don't have per-container EAB kid and hmac key.
+            # Register the ACME account with the default EAB credentials.
+            params_register_arr+=(--eab-kid "$ACME_EAB_KID" --eab-hmac-key "$ACME_EAB_HMAC_KEY")
+        elif [[ -n "${accountemail// }" ]]; then
+            # We don't have per container nor default EAB credentials, register a new account with ZeroSSL.
+            params_register_arr+=(--accountemail "$accountemail")
+        elif [[ ! -f "$account_file" ]]; then
+            # We don't have a Zero SSL ACME account, EAB credentials or account email :
+            # skip certificate account registration and certificate issuance. 
+            echo "Error: usage of ZeroSSL require an email bound account. No EAB credentials nor email were provided for this certificate, creation aborted."
+            return 1
+        fi
+    elif [[ -n "${accountemail// }" ]]; then
+        # We're not using Zero SSL, register the ACME account using the provided email.
+        params_register_arr+=(--accountemail "$accountemail")
+    fi
+    params_register_arr=("${params_base_arr[@]}" "${params_register_arr[@]}")
+    [[ "$DEBUG" == 1 ]] && echo "Calling acme.sh --register-account with the following parameters : ${params_register_arr[*]}"
+    acme.sh --register-account "${params_register_arr[@]}"
 
     [[ "$RENEW_PRIVATE_KEYS" == false || "$REUSE_PRIVATE_KEYS" == true ]] && params_issue_arr+=(--always-force-new-domain-key)
     [[ "${2:-}" == "--force-renew" ]] && params_issue_arr+=(--force)
