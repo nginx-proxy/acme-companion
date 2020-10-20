@@ -209,7 +209,7 @@ function update_cert {
     [[ "$DEBUG" == 1 ]] && echo "Calling acme.sh --register-account with the following parameters : ${params_base_arr[*]}"
     acme.sh --register-account "${params_base_arr[@]}"
 
-    [[ "$RENEW_PRIVATE_KEYS" == true ]] && params_issue_arr+=(--always-force-new-domain-key)
+    [[ "$RENEW_PRIVATE_KEYS" == false ]] && params_issue_arr+=(--always-force-new-domain-key)
     [[ "${2:-}" == "--force-renew" ]] && params_issue_arr+=(--force)
 
     # Create directory for the first domain
