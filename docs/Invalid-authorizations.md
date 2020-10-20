@@ -1,6 +1,6 @@
 ## Troubleshooting failing authorizations
 
-The first two things to do in case of failing authorization are to run the **letsencrypt-nginx-proxy-companion** container with the environment variable `DEBUG=true` to enable the more detailed error messages, and to [request test certificates](./Let's-Encrypt-and-ACME.md#test-certificates) while troubleshooting the issue.
+The first two things to do in case of failing authorization are to run the **letsencrypt-nginx-proxy-companion** container with the environment variable `DEBUG=1` to enable the more detailed error messages, and to [request test certificates](./Let's-Encrypt-and-ACME.md#test-certificates) while troubleshooting the issue.
 
 Common causes of of failing authorizations:
 
@@ -60,7 +60,7 @@ Pull `jrcs/letsencrypt-nginx-proxy-companion:latest` again and get the latest [l
 ***
 
 
-The challenge files are automatically cleaned up **after** the authorization process, wether it succeeded or failed, so trying to `curl` them from the outside won't yeld any result. You can however create a test file inside the same folder and use it to test the challenge files reachability from the outside (over both IPv4 and IPv6 if you want to use the latter):
+When not in debug mode, the challenge files are automatically cleaned up **after** the authorization process, wether it succeeded or failed, so trying to `curl` them from the outside if you didn't enable debug mode won't yeld any result. If don't want to enable debug mode, you can however create a test file inside the same folder and use it to test the challenge files reachability from the outside (over both IPv4 and IPv6 if you want to use the latter):
 
 ```
 you@remotedockerhost$ docker exec your-le-container bash -c 'echo "Hello world!" > /usr/share/nginx/html/.well-known/acme-challenge/hello-world'
@@ -71,4 +71,4 @@ you@localcomputer$ curl -6 http://yourdomain.tld/.well-known/acme-challenge/hell
 Hello world!
 ```
 
-If you have issues with the [advanced setup](./Advanced-usage.md), fallback to the [basic setup](./Basic-usage.md). The advanced setup is not meant to be obligatory.
+If you have issues with the [advanced setup](./Advanced-usage.md), fall back to the [basic setup](./Basic-usage.md). The advanced setup is not meant to be obligatory.
