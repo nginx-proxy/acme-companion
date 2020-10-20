@@ -17,7 +17,7 @@ RUN go get github.com/jwilder/docker-gen \
     && make get-deps \
     && make all
 
-FROM alpine:3.11
+FROM alpine:3.12
 
 LABEL maintainer="Yves Blusseau <90z7oey02@sneakemail.com> (@blusseau)"
 
