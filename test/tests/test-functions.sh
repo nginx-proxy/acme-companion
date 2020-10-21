@@ -17,7 +17,7 @@ function run_le_container {
   if [[ "$SETUP" == '3containers' ]]; then
     cli_args+=" --env NGINX_DOCKER_GEN_CONTAINER=$DOCKER_GEN_CONTAINER_NAME"
   fi
-  docker run -d \
+  if docker run -d \
     --name "$name" \
     --volumes-from "$NGINX_CONTAINER_NAME" \
     --volume /var/run/docker.sock:/var/run/docker.sock:ro \
@@ -27,9 +27,38 @@ function run_le_container {
     --env "ACME_CA_URI=http://boulder:4001/directory" \
     --label com.github.jrcs.letsencrypt_nginx_proxy_companion.test_suite \
     --network boulder_bluenet \
-    "$image" > /dev/null && echo "Started letsencrypt container for test ${name%%_2*}"
+    "$image" > /dev/null; \
+  then
+    [[ "${DRY_RUN:-}" == 1 ]] && echo "Started letsencrypt container for test ${name%%_2*}"
+  else
+    echo "Could not start letsencrypt container for test ${name%%_2*}"
+    return 1
+  fi
+  return 0
 }
 export -f run_le_container
+
+# Run an nginx container
+function run_nginx_container {
+  local le_host="${1:?}"
+  local virtual_host="${le_host// /}"; virtual_host="${virtual_host//.,/,}"; virtual_host="${virtual_host%,}"
+  local container_name="${2:-$virtual_host}"
+  [[ "${DRY_RUN:-}" == 1 ]] && echo "Starting $container_name nginx container, with environment variables VIRTUAL_HOST=$virtual_host and LETSENCRYPT_HOST=$le_host"
+  if docker run --rm -d \
+    --name "$container_name" \
+    -e "VIRTUAL_HOST=$virtual_host" \
+    -e "LETSENCRYPT_HOST=$le_host" \
+    --network boulder_bluenet \
+    nginx:alpine > /dev/null ; \
+  then
+    [[ "${DRY_RUN:-}" == 1 ]] && echo "Started $container_name nginx container."
+  else
+    echo "Failed to start test web server for $le_host"
+    return 1
+  fi
+  return 0
+}
+export -f run_nginx_container
 
 
 # Wait for the /etc/nginx/conf.d/standalone-cert-$1.conf file to exist inside container $2
@@ -55,6 +84,7 @@ export -f wait_for_standalone_conf
 function wait_for_symlink {
   local domain="${1:?}"
   local name="${2:?}"
+  local expected_target="${3:-}"
   local timeout
   timeout="$(date +%s)"
   timeout="$((timeout + 60))"
@@ -66,9 +96,17 @@ function wait_for_symlink {
     fi
     sleep 0.1
   done
-  target="$(docker exec "$name" readlink "/etc/nginx/certs/$domain.crt")"
-  echo "Symlink to $domain certificate has been generated."
-  echo "The link is pointing to the file $target"
+  [[ "${DRY_RUN:-}" == 1 ]] && echo "Symlink to $domain certificate has been generated."
+  if [[ -n "$expected_target" ]]; then
+    target="$(docker exec "$name" readlink "/etc/nginx/certs/$domain.crt")"
+    if [[ "$target" != "$expected_target" ]]; then
+      echo "The symlink to the $domain certificate is expected to point to $expected_target but point to $target instead."
+      return 1
+    elif [[ "${DRY_RUN:-}" == 1 ]]; then
+      echo "The symlink is pointing to the file $target"
+    fi
+  fi
+  return 0
 }
 export -f wait_for_symlink
 
@@ -87,7 +125,8 @@ function wait_for_symlink_rm {
     fi
     sleep 0.1
   done
-  echo "Symlink to $domain certificate has been removed."
+  [[ "${DRY_RUN:-}" == 1 ]] && echo "Symlink to $domain certificate has been removed."
+  return 0
 }
 export -f wait_for_symlink_rm
 
@@ -129,7 +168,7 @@ function check_cert_subj {
     esac
   done
 
-  if curl -k https://"$domain" > /dev/null 2>&1; then
+  if curl -k https://"$domain" &> /dev/null; then
     local cert_subject
     cert_subject="$(echo \
       | openssl s_client -showcerts -servername "$domain" -connect "$domain:443" 2>/dev/null \
@@ -197,7 +236,8 @@ function wait_for_conn {
     fi
     sleep 0.1
   done
-  echo "Connection to $domain using https was successful."
+  [[ "${DRY_RUN:-}" == 1 ]] && echo "Connection to $domain using https was successful."
+  return 0
 }
 export -f wait_for_conn
 

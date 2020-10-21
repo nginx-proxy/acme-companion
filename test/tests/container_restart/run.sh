@@ -26,7 +26,7 @@ function cleanup {
   rm -f "${TRAVIS_BUILD_DIR}/test/tests/container_restart/docker_event_out.txt"
   # Remove any remaining Nginx container(s) silently.
   for domain in "${domains[@]}"; do
-    docker rm --force "$domain" > /dev/null 2>&1
+    docker rm --force "$domain" &> /dev/null
   done
   # Cleanup the files created by this run of the test to avoid foiling following test(s).
   docker exec "$le_container_name" bash -c 'rm -rf /etc/nginx/certs/le?.wtf* && rm -rf /etc/acme.sh/default/le?.wtf*'
@@ -38,13 +38,18 @@ trap cleanup EXIT
 # Run a separate nginx container for each domain in the $domains array.
 # Start all the containers in a row so that docker-gen debounce timers fire only once.
 for domain in "${domains[@]}"; do
-  docker run --rm -d \
+  if docker run --rm -d \
     --name "$domain" \
     -e "VIRTUAL_HOST=${domain}" \
     -e "LETSENCRYPT_HOST=${domain}" \
     -e "LETSENCRYPT_RESTART_CONTAINER=true" \
     --network boulder_bluenet \
-    nginx:alpine > /dev/null && echo "Started test web server for $domain"
+    nginx:alpine > /dev/null; \
+  then
+    [[ "${DRY_RUN:-}" == 1 ]] && echo "Started test web server for $domain"
+  else
+    echo "Could not start test web server for $domain"
+  fi
 done
 
 for domain in "${domains[@]}"; do

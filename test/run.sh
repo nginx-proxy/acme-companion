@@ -248,7 +248,7 @@ while true; do
 	shift
 	case "$flag" in
 		## Next line was modified by jrcs/docker-letsencrypt-nginx-proxy-companion
-		--dry-run|-d) dryRun=1 ;;
+		--dry-run|-d) dryRun=1 && export DRY_RUN=1 ;;
 		--help|-h|'-?') usage && exit 0 ;;
 		--test|-t) argTests["$1"]=1 && shift ;;
 		--config|-c) configs+=("$(readlink -f "$1")") && shift ;;

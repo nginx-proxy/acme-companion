@@ -20,7 +20,7 @@ case $SETUP in
       "$nginx_vol" \
       "$nginx_env" \
       "$nginx_lbl" \
-      > /dev/null 2>&1
+      &> /dev/null
   }
   trap cleanup EXIT
 
@@ -100,7 +100,7 @@ EOF
       "$nginx_lbl" \
       "$docker_gen" \
       "$docker_gen_lbl" \
-      > /dev/null 2>&1
+      &> /dev/null
   }
   trap cleanup EXIT
 

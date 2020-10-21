@@ -15,7 +15,7 @@ IFS=',' read -r -a domains <<< "$TEST_DOMAINS"
 # Cleanup function with EXIT trap
 function cleanup {
   # Remove the ${domains[0]} Nginx container silently.
-  docker rm --force "${domains[0]}" > /dev/null 2>&1
+  docker rm --force "${domains[0]}" &> /dev/null
   # Cleanup the files created by this run of the test to avoid foiling following test(s).
   docker exec "$le_container_name" bash -c 'rm -rf /etc/nginx/certs/le?.wtf* && rm -rf /etc/acme.sh/default/le?.wtf*'
   # Stop the LE container
@@ -24,11 +24,7 @@ function cleanup {
 trap cleanup EXIT
 
 # Run an nginx container for ${domains[0]}.
-docker run --rm -d \
-  --name "${domains[0]}" \
-  -e "VIRTUAL_HOST=${domains[0]}" \
-  -e "LETSENCRYPT_HOST=${domains[0]}" \
-  nginx:alpine > /dev/null && echo "Started test web server for ${domains[0]}"
+run_nginx_container "${domains[0]}"
 
 # Wait for the cert symlink.
 wait_for_symlink "${domains[0]}" "$le_container_name"

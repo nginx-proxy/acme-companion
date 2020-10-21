@@ -17,7 +17,7 @@ function cleanup {
   # Remove any remaining Nginx container(s) silently.
   i=1
   for hosts in "${letsencrypt_hosts[@]}"; do
-    docker rm --force "test$i" > /dev/null 2>&1
+    docker rm --force "test$i" &> /dev/null
     i=$(( i + 1 ))
   done
   # Cleanup the files created by this run of the test to avoid foiling following test(s).
@@ -42,17 +42,22 @@ for hosts in "${letsencrypt_hosts[@]}"; do
   container="test$i"
 
   # Run an Nginx container passing one of the comma separated list as LETSENCRYPT_HOST env var.
-  docker run --rm -d \
+  if ! docker run --rm -d \
     --name "$container" \
     -e "VIRTUAL_HOST=${TEST_DOMAINS}" \
     -e "LETSENCRYPT_HOST=${hosts}" \
     -e "LETSENCRYPT_SINGLE_DOMAIN_CERTS=true" \
     --network boulder_bluenet \
-    nginx:alpine > /dev/null && echo "Started test web server for $hosts"
+    nginx:alpine > /dev/null;
+  then
+    echo "Could not start test web server for $hosts"
+  elif [[ "${DRY_RUN:-}" == 1 ]]; then
+    echo "Started test web server for $hosts"
+  fi
 
   for domain in "${domains[@]}"; do
       ## For all the domains in the $domains array ...
-      wait_for_symlink "${domain}" "$le_container_name"
+      wait_for_symlink "${domain}" "$le_container_name" "./${domain}/fullchain.pem"
       created_cert="$(docker exec "$le_container_name" \
         openssl x509 -in "/etc/nginx/certs/${domain}/cert.pem" -text -noout)"
       # ... as well as the certificate fingerprint.
@@ -61,12 +66,14 @@ for hosts in "${letsencrypt_hosts[@]}"; do
 
     # Check if the domain is on the certificate.
     if grep -q "$domain" <<< "$created_cert"; then
-      echo "$domain is on certificate."
+      if [[ "${DRY_RUN:-}" == 1 ]]; then
+        echo "$domain is on certificate."
+      fi
       for otherdomain in "${domains[@]}"; do
         if [ "$domain" != "$otherdomain" ]; then
           if grep -q "$otherdomain" <<< "$created_cert"; then
             echo "$otherdomain is on certificate for $domain, but it must not!"
-          else
+          elif [[ "${DRY_RUN:-}" == 1 ]]; then
             echo "$otherdomain did not appear on certificate for $domain."
           fi
         fi
@@ -91,12 +98,12 @@ for hosts in "${letsencrypt_hosts[@]}"; do
         | openssl x509 -text -noout \
         | sed 's/ = /=/g' )"
       diff -u <(echo "${created_cert// = /=}") <(echo "$served_cert")
-    else
-      echo "The correct certificate for $domain was served by Nginx."
+    elif [[ "${DRY_RUN:-}" == 1 ]]; then
+       echo "The correct certificate for $domain was served by Nginx."
     fi
   done
 
-  docker stop "$container" > /dev/null 2>&1
+  docker stop "$container" &> /dev/null
   docker exec "$le_container_name" bash -c 'rm -rf /etc/nginx/certs/le?.wtf* && rm -rf /etc/acme.sh/default/le?.wtf*'
   i=$(( i + 1 ))
 

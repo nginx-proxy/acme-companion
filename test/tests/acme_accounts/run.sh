@@ -16,7 +16,7 @@ IFS=',' read -r -a domains <<< "$TEST_DOMAINS"
 function cleanup {
   # Remove any remaining Nginx container(s) silently.
   for domain in "${domains[@]}"; do
-    docker rm --force "$domain" > /dev/null 2>&1
+    docker rm --force "$domain" &> /dev/null
   done
   # Cleanup the files created by this run of the test to avoid foiling following test(s).
   docker exec "$le_container_name" bash -c 'rm -rf /etc/nginx/certs/le?.wtf* && rm -rf /etc/acme.sh/default/le?.wtf*'
@@ -26,12 +26,7 @@ function cleanup {
 trap cleanup EXIT
 
 # Run an nginx container for ${domains[0]}.
-docker run --rm -d \
-  --name "${domains[0]}" \
-  -e "VIRTUAL_HOST=${domains[0]}" \
-  -e "LETSENCRYPT_HOST=${domains[0]}" \
-  --network boulder_bluenet \
-  nginx:alpine > /dev/null && echo "Started test web server for ${domains[0]}"
+run_nginx_container "${domains[0]}"
 
 # Wait for a symlink at /etc/nginx/certs/${domains[0]}.crt
 wait_for_symlink "${domains[0]}" "$le_container_name"
@@ -48,8 +43,8 @@ elif [[ "$(docker exec "$le_container_name" jq .contact "$json_file")" != '[]' ]
 fi
 
 # Stop the nginx and companion containers silently.
-docker stop "${domains[0]}" > /dev/null 2>&1
-docker stop "$le_container_name" > /dev/null 2>&1
+docker stop "${domains[0]}" &> /dev/null
+docker stop "$le_container_name" &> /dev/null
 
 # Run the companion container with the DEFAULT_EMAIL env var set.
 default_email="contact@${domains[1]}"
@@ -57,12 +52,7 @@ le_container_name="${le_container_name}_default"
 run_le_container "${1:?}" "$le_container_name" "--env DEFAULT_EMAIL=${default_email}"
 
 # Run an nginx container for ${domains[1]} without LETSENCRYPT_EMAIL set.
-docker run --rm -d \
-  --name "${domains[1]}" \
-  -e "VIRTUAL_HOST=${domains[1]}" \
-  -e "LETSENCRYPT_HOST=${domains[1]}" \
-  --network boulder_bluenet \
-  nginx:alpine > /dev/null && echo "Started test web server for ${domains[1]}"
+run_nginx_container "${domains[1]}"
 
 # Wait for a symlink at /etc/nginx/certs/${domains[1]}.crt
 wait_for_symlink "${domains[1]}" "$le_container_name"
@@ -80,13 +70,18 @@ fi
 
 # Run an nginx container for ${domains[2]} with LETSENCRYPT_EMAIL set.
 container_email="contact@${domains[2]}"
-docker run --rm -d \
+if ! docker run --rm -d \
   --name "${domains[2]}" \
   -e "VIRTUAL_HOST=${domains[2]}" \
   -e "LETSENCRYPT_HOST=${domains[2]}" \
   -e "LETSENCRYPT_EMAIL=${container_email}" \
   --network boulder_bluenet \
-  nginx:alpine > /dev/null && echo "Started test web server for ${domains[2]}"
+  nginx:alpine > /dev/null ; \
+then
+  echo "Failed to start test web server for ${domains[2]}"
+elif [[ "${DRY_RUN:-}" == 1 ]]; then
+  echo "Started test web server for ${domains[2]}"
+fi
 
 # Wait for a symlink at /etc/nginx/certs/${domains[2]}.crt
 wait_for_symlink "${domains[2]}" "$le_container_name"
@@ -103,5 +98,5 @@ elif [[ "$(docker exec "$le_container_name" jq -r '.contact|.[0]' "$json_file")"
 fi
 
 # Stop the nginx containers silently.
-docker stop "${domains[1]}" > /dev/null 2>&1
-docker stop "${domains[2]}" > /dev/null 2>&1
+docker stop "${domains[1]}" &> /dev/null
+docker stop "${domains[2]}" &> /dev/null

@@ -15,7 +15,7 @@ subdomain="sub.${domains[0]}"
 # Cleanup function with EXIT trap
 function cleanup {
   # Remove the Nginx container silently.
-  docker rm --force "$subdomain" > /dev/null 2>&1
+  docker rm --force "$subdomain" &> /dev/null
   # Cleanup the files created by this run of the test to avoid foiling following test(s).
   docker exec "$le_container_name" bash -c 'rm -rf /etc/nginx/certs/le?.wtf* && rm -rf /etc/acme.sh/default/le?.wtf*'
   # Stop the LE container
@@ -31,11 +31,16 @@ EOF
 
 # Run an nginx container with a VIRTUAL_HOST set to a subdomain of ${domains[0]} in order to check for
 # this regression : https://github.com/nginx-proxy/docker-letsencrypt-nginx-proxy-companion/issues/674
-docker run --rm -d \
+if ! docker run --rm -d \
     --name "$subdomain" \
     -e "VIRTUAL_HOST=$subdomain" \
     --network boulder_bluenet \
-    nginx:alpine > /dev/null && echo "Started test web server for $subdomain"
+    nginx:alpine > /dev/null;
+then
+  echo "Could not start test web server for $subdomain"
+elif [[ "${DRY_RUN:-}" == 1 ]]; then
+  echo "Started test web server for $subdomain"
+fi
 
 run_le_container "${1:?}" "$le_container_name" \
   "--volume ${TRAVIS_BUILD_DIR}/test/tests/certs_standalone/letsencrypt_user_data:/app/letsencrypt_user_data"
@@ -50,10 +55,10 @@ created_cert="$(docker exec "$le_container_name" \
   openssl x509 -in "/etc/nginx/certs/${domains[0]}/cert.pem" -text -noout)"
 
 # Check if the domain is on the certificate.
-if grep -q "${domains[0]}" <<< "$created_cert"; then
-  echo "Domain ${domains[0]} is on certificate."
-else
+if ! grep -q "${domains[0]}" <<< "$created_cert"; then
   echo "Domain ${domains[0]} did not appear on certificate."
+elif [[ "${DRY_RUN:-}" == 1 ]]; then
+  echo "Domain ${domains[0]} is on certificate."
 fi
 
 docker exec "$le_container_name" bash -c "[[ -f /etc/nginx/conf.d/standalone-cert-${domains[0]}.conf ]]" \
@@ -82,10 +87,10 @@ created_cert="$(docker exec "$le_container_name" \
 
 for domain in "${domains[1]}" "${domains[2]}"; do
   # Check if the domain is on the certificate.
-  if grep -q "$domain" <<< "$created_cert"; then
-    echo "Domain $domain is on certificate."
-  else
+  if ! grep -q "$domain" <<< "$created_cert"; then
     echo "Domain $domain did not appear on certificate."
+  elif [[ "${DRY_RUN:-}" == 1 ]]; then
+    echo "Domain $domain is on certificate."
   fi
 done
 
