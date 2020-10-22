@@ -49,10 +49,11 @@ run_le_container "${1:?}" "$le_container_name" \
 wait_for_standalone_conf "${domains[0]}" "$le_container_name"
 
 # Wait for a symlink at /etc/nginx/certs/${domains[0]}.crt
-# then grab the certificate in text form ...
-wait_for_symlink "${domains[0]}" "$le_container_name"
-created_cert="$(docker exec "$le_container_name" \
-  openssl x509 -in "/etc/nginx/certs/${domains[0]}/cert.pem" -text -noout)"
+if wait_for_symlink "${domains[0]}" "$le_container_name"; then
+  # then grab the certificate in text form ...
+  created_cert="$(docker exec "$le_container_name" \
+    openssl x509 -in "/etc/nginx/certs/${domains[0]}/cert.pem" -text -noout)"
+fi
 
 # Check if the domain is on the certificate.
 if ! grep -q "${domains[0]}" <<< "$created_cert"; then
@@ -80,10 +81,11 @@ for domain in "${domains[1]}" "${domains[2]}"; do
 done
 
 # Wait for a symlink at /etc/nginx/certs/${domains[1]}.crt
-# then grab the certificate in text form ...
-wait_for_symlink "${domains[1]}" "$le_container_name"
-created_cert="$(docker exec "$le_container_name" \
-  openssl x509 -in "/etc/nginx/certs/${domains[1]}/cert.pem" -text -noout)"
+if wait_for_symlink "${domains[1]}" "$le_container_name"; then
+  # then grab the certificate in text form ...
+  created_cert="$(docker exec "$le_container_name" \
+    openssl x509 -in "/etc/nginx/certs/${domains[1]}/cert.pem" -text -noout)"
+fi
 
 for domain in "${domains[1]}" "${domains[2]}"; do
   # Check if the domain is on the certificate.

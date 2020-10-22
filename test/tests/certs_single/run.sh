@@ -34,13 +34,15 @@ done
 for domain in "${domains[@]}"; do
 
   # Wait for a symlink at /etc/nginx/certs/$domain.crt
-  # then grab the certificate in text form from the file ...
-  wait_for_symlink "$domain" "$le_container_name" "./${domain}/fullchain.pem"
-  created_cert="$(docker exec "$le_container_name" \
-    openssl x509 -in "/etc/nginx/certs/${domain}/cert.pem" -text -noout)"
-  # ... as well as the certificate fingerprint.
-  created_cert_fingerprint="$(docker exec "$le_container_name" \
-    openssl x509 -in "/etc/nginx/certs/${domain}/cert.pem" -fingerprint -noout)"
+  if wait_for_symlink "$domain" "$le_container_name" "./${domain}/fullchain.pem" ; then
+    # then grab the certificate in text form from the file ...
+    created_cert="$(docker exec "$le_container_name" \
+      openssl x509 -in "/etc/nginx/certs/${domain}/cert.pem" -text -noout)"
+    # ... as well as the certificate fingerprint.
+    created_cert_fingerprint="$(docker exec "$le_container_name" \
+      openssl x509 -in "/etc/nginx/certs/${domain}/cert.pem" -fingerprint -noout)"
+  fi
+
 
   # Check if the domain is on the certificate.
   if ! grep -q "$domain" <<< "$created_cert"; then

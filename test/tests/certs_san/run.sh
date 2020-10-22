@@ -49,13 +49,14 @@ for hosts in "${letsencrypt_hosts[@]}"; do
   run_nginx_container "$hosts" "$container"
 
   # Wait for a symlink at /etc/nginx/certs/$base_domain.crt
-  # then grab the certificate in text form ...
-  wait_for_symlink "$base_domain" "$le_container_name" "./${base_domain}/fullchain.pem"
-  created_cert="$(docker exec "$le_container_name" \
-    openssl x509 -in "/etc/nginx/certs/${base_domain}/cert.pem" -text -noout)"
-  # ... as well as the certificate fingerprint.
-  created_cert_fingerprint="$(docker exec "$le_container_name" \
-    openssl x509 -in "/etc/nginx/certs/${base_domain}/cert.pem" -fingerprint -noout)"
+  if wait_for_symlink "$base_domain" "$le_container_name" "./${base_domain}/fullchain.pem"; then
+    # then grab the certificate in text form ...
+    created_cert="$(docker exec "$le_container_name" \
+      openssl x509 -in "/etc/nginx/certs/${base_domain}/cert.pem" -text -noout)"
+    # ... as well as the certificate fingerprint.
+    created_cert_fingerprint="$(docker exec "$le_container_name" \
+      openssl x509 -in "/etc/nginx/certs/${base_domain}/cert.pem" -fingerprint -noout)"
+  fi
 
   for domain in "${domains[@]}"; do
   ## For all the domains in the $domains array ...
