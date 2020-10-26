@@ -16,6 +16,7 @@ imageTests+=(
 	certs_standalone
 	force_renew
 	acme_accounts
+	private_keys
 	container_restart
 	permissions_default
 	permissions_custom
