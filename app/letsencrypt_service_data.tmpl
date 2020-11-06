@@ -31,6 +31,7 @@ LETSENCRYPT_CONTAINERS=(
                 ACME_{{ $cid }}_{{ $hostHash }}_CA_URI="{{ $container.Env.ACME_CA_URI }}"
                 ACME_{{ $cid }}_{{ $hostHash }}_EAB_KID="{{ $container.Env.ACME_EAB_KID }}"
                 ACME_{{ $cid }}_{{ $hostHash }}_EAB_HMAC_KEY="{{ $container.Env.ACME_EAB_HMAC_KEY }}"
+                ZEROSSL_{{ $cid }}_{{ $hostHash }}_API_KEY="{{ $container.Env.ZEROSSL_API_KEY }}"
                 LETSENCRYPT_{{ $cid }}_{{ $hostHash }}_RESTART_CONTAINER="{{ $container.Env.LETSENCRYPT_RESTART_CONTAINER }}"
             {{ end }}
         {{ else }}
@@ -41,6 +42,7 @@ LETSENCRYPT_CONTAINERS=(
             ACME_{{ $cid }}_CA_URI="{{ $container.Env.ACME_CA_URI }}"
             ACME_{{ $cid }}_EAB_KID="{{ $container.Env.ACME_EAB_KID }}"
             ACME_{{ $cid }}_EAB_HMAC_KEY="{{ $container.Env.ACME_EAB_HMAC_KEY }}"
+            ZEROSSL_{{ $cid }}_API_KEY="{{ $container.Env.ZEROSSL_API_KEY }}"
             LETSENCRYPT_{{ $cid }}_RESTART_CONTAINER="{{ $container.Env.LETSENCRYPT_RESTART_CONTAINER }}"
         {{ end }}
     {{ end }}
