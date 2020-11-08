@@ -1,6 +1,6 @@
 #!/bin/bash
 
-## Test for standalone certificates by NGINX container env variables
+## Test for spliting SAN certificates into single domain certificates by NGINX container env variables
 
 if [[ -z $TRAVIS ]]; then
   le_container_name="$(basename "${0%/*}")_$(date "+%Y-%m-%d_%H.%M.%S")"
