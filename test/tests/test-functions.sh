@@ -29,7 +29,7 @@ function run_le_container {
     --volume /var/run/docker.sock:/var/run/docker.sock:ro \
     "${cli_args_arr[@]}" \
     --env "DHPARAM_BITS=256" \
-    --env "DEBUG=2" \
+    --env "DEBUG=1" \
     --env "ACME_CA_URI=http://boulder:4001/directory" \
     --label com.github.jrcs.letsencrypt_nginx_proxy_companion.test_suite \
     --network boulder_bluenet \
