@@ -62,6 +62,10 @@ If you want to do this globally for all containers, set `ACME_CA_URI` on the **l
 
 The `ACME_CA_URI` environment variable is used to set the ACME API endpoint from which the container's certificate(s) will be requested (defaults to ``https://acme-v02.api.letsencrypt.org/directory``).
 
+#### Preferred chain
+
+If the ACME CA provides multiple cert chain, you can use the `ACME_PREFERRED_CHAIN` environment variable to select one. See [`acme.sh --preferred-chain` documentation](https://github.com/acmesh-official/acme.sh/wiki/Preferred-Chain) for more info.
+
 #### Container restart on cert renewal
 
 The `LETSENCRYPT_RESTART_CONTAINER` environment variable, when set to `true` on an application container, will restart this container whenever the corresponding cert (`LETSENCRYPT_HOST`) is renewed. This is useful when certificates are directly used inside a container for other purposes than HTTPS (e.g. an FTPS server), to make sure those containers always use an up to date certificate.
