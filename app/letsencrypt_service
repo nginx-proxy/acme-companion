@@ -135,6 +135,8 @@ function update_certs {
         echo "Warning: /app/letsencrypt_service_data not found, skipping data from containers."
     fi
 
+    should_reload_nginx='false'
+    
     # Load settings for standalone certs
     if [[ -f /app/letsencrypt_user_data ]]; then
         if source /app/letsencrypt_user_data; then
@@ -146,13 +148,13 @@ function update_certs {
                 done
             done
             reload_nginx
+            should_reload_nginx='true'
             LETSENCRYPT_CONTAINERS+=( "${LETSENCRYPT_STANDALONE_CERTS[@]}" )
         else
             echo "Warning: could not source /app/letsencrypt_user_data, skipping user data"
         fi
     fi
 
-    should_reload_nginx='false'
     for cid in "${LETSENCRYPT_CONTAINERS[@]}"; do
         should_restart_container='false'
         # Derive host and email variable names
@@ -342,6 +344,8 @@ function update_certs {
     done
 
     cleanup_links && should_reload_nginx='true'
+    remove_all_location_configurations
+    remove_all_standalone_configurations
 
     [[ "$should_reload_nginx" == 'true' ]] && reload_nginx
 }
