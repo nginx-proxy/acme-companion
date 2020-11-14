@@ -20,6 +20,8 @@
 
 [Standalone certificates](./Standalone-certificates.md)
 
+[Zero SSL](./Zero-SSL.md)
+
 #### Troubleshooting:
 
 [Invalid / failing authorizations](./Invalid-authorizations.md)
