@@ -11,7 +11,7 @@ RUN apk add --no-cache --virtual .build-deps \
         musl-dev \
     && go get github.com/jwilder/docker-gen \
     && cd /go/src/github.com/jwilder/docker-gen \
-    && git checkout $DOCKER_GEN_VERSION \
+    && git -c advice.detachedHead=false checkout $DOCKER_GEN_VERSION \
     && make get-deps \
     && make all \
     && go clean -cache \
