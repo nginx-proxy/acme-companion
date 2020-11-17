@@ -3,7 +3,7 @@
 set -e
 
 # Install git (required to fetch acme.sh)
-apk --update add git
+apk --no-cache --virtual .acmesh-deps add git
 
 # Get acme.sh Let's Encrypt client source
 tag="2.8.7"
@@ -22,5 +22,4 @@ git checkout "$tag"
 # Make house cleaning
 cd /
 rm -rf /src
-apk del git
-rm -rf /var/cache/apk/*
+apk del .acmesh-deps
