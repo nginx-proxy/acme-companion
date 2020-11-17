@@ -8,7 +8,7 @@
 
 It handles the automated creation, renewal and use of Let's Encrypt certificates for proxied Docker containers.
 
-Please note that **letsencrypt-nginx-proxy-companion** no longer supports ACME v1 endpoints. The last tagged version that supports ACME v1 is [v1.11](https://github.com/JrCs/docker-letsencrypt-nginx-proxy-companion/releases/tag/v1.11.2)
+The `v2.0.0` release of this project mark the switch of the ACME client used by the Docker image from [**simp.le**](https://github.com/zenhack/simp_le) to [**acme.sh**](https://github.com/acmesh-official/acme.sh). This switch result in some backward incompatible changes, so please read [this issue](https://github.com/nginx-proxy/docker-letsencrypt-nginx-proxy-companion/issues/510) for more details before updating your image. The last tagged version that uses **simp_le** is `v1.13.1`.
 
 ### Features:
 * Automated creation/renewal of Let's Encrypt (or other ACME CAs) certificates using [**acme.sh**](https://github.com/acmesh-official/acme.sh).
