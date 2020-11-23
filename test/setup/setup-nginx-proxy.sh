@@ -38,7 +38,7 @@ case $SETUP in
       --label com.github.jrcs.letsencrypt_nginx_proxy_companion.test_suite \
       --network boulder_bluenet \
       jwilder/docker-gen \
-      -notify-sighup $NGINX_CONTAINER_NAME -watch -wait 5s:30s /etc/docker-gen/templates/nginx.tmpl /etc/nginx/conf.d/default.conf
+      -notify-sighup $NGINX_CONTAINER_NAME -watch /etc/docker-gen/templates/nginx.tmpl /etc/nginx/conf.d/default.conf
     ;;
 
   *)
