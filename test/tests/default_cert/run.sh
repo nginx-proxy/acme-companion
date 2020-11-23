@@ -20,24 +20,32 @@ function cleanup {
 }
 trap cleanup EXIT
 
+function check_default_cert_existence {
+  docker exec "$le_container_name" [[ -f "/etc/nginx/certs/default.crt" ]]
+}
+
 function default_cert_fingerprint {
-  docker exec "$le_container_name" openssl x509 -in "/etc/nginx/certs/default.crt" -fingerprint -noout
+  if check_default_cert_existence; then
+    docker exec "$le_container_name" openssl x509 -in "/etc/nginx/certs/default.crt" -fingerprint -noout
+  fi
 }
 
 function default_cert_subject {
-  docker exec "$le_container_name" openssl x509 -in "/etc/nginx/certs/default.crt" -subject -noout
+  if check_default_cert_existence; then
+    docker exec "$le_container_name" openssl x509 -in "/etc/nginx/certs/default.crt" -subject -noout
+  fi
 }
 
 user_cn="user-provided"
 
-i=0
+timeout="$(date +%s)"
+timeout="$((timeout + 60))"
 until docker exec "$le_container_name" [[ -f /etc/nginx/certs/default.crt ]]; do
-  if [ $i -gt 60 ]; then
+  if [[ "$(date +%s)" -gt "$timeout" ]]; then
     echo "Default cert wasn't created under one minute at container first launch."
     break
   fi
-  i=$((i + 2))
-  sleep 2
+  sleep 0.1
 done
 
 # Connection test to unconfigured domains
@@ -50,15 +58,15 @@ done
 for file in 'default.key' 'default.crt'; do
   old_default_cert_fingerprint="$(default_cert_fingerprint)"
   docker exec "$le_container_name" rm -f /etc/nginx/certs/$file
-  docker restart "$le_container_name" > /dev/null && sleep 5
-  i=0
+  docker restart "$le_container_name" > /dev/null
+  timeout="$(date +%s)"
+  timeout="$((timeout + 60))"
   while [[ "$(default_cert_fingerprint)" == "$old_default_cert_fingerprint" ]]; do
-    if [ $i -gt 55 ]; then
+    if [[ "$(date +%s)" -gt "$timeout" ]]; then
       echo "Default cert wasn't re-created under one minute after $file deletion."
       break
     fi
-    i=$((i + 2))
-    sleep 2
+    sleep 0.1
   done
 done
 
@@ -72,14 +80,14 @@ docker exec "$le_container_name" openssl req -x509 \
   -out /etc/nginx/certs/default.crt > /dev/null 2>&1
 old_default_cert_fingerprint="$(default_cert_fingerprint)"
 docker restart "$le_container_name" > /dev/null && sleep 5
-i=0
+timeout="$(date +%s)"
+timeout="$((timeout + 55))"
 while [[ "$(default_cert_fingerprint)" == "$old_default_cert_fingerprint" ]]; do
-  if [ $i -gt 55 ]; then
+  if [[ "$(date +%s)" -gt "$timeout" ]]; then
     echo "Default cert wasn't re-created under one minute when the certificate expire in less than three months."
     break
   fi
-  i=$((i + 2))
-  sleep 2
+  sleep 0.1
 done
 
 # Test that a user provided default certificate isn't overwrited

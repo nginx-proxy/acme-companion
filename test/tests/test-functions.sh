@@ -36,14 +36,15 @@ export -f run_le_container
 function wait_for_standalone_conf {
   local domain="${1:?}"
   local name="${2:?}"
-  local i=0
+  local timeout
+  timeout="$(date +%s)"
+  timeout="$((timeout + 60))"
   local target
   until docker exec "$name" [ -f "/etc/nginx/conf.d/standalone-cert-$domain.conf" ]; do
-    if [ $i -gt 600 ]; then
+    if [[ "$(date +%s)" -gt "$timeout" ]]; then
       echo "Standalone configuration file for $domain was not generated under one minute, timing out."
       return 1
     fi
-    i=$((i + 10))
     sleep 0.1
   done
 }
@@ -54,15 +55,16 @@ export -f wait_for_standalone_conf
 function wait_for_symlink {
   local domain="${1:?}"
   local name="${2:?}"
-  local i=0
+  local timeout
+  timeout="$(date +%s)"
+  timeout="$((timeout + 60))"
   local target
   until docker exec "$name" [ -L "/etc/nginx/certs/$domain.crt" ]; do
-    if [ $i -gt 60 ]; then
+    if [[ "$(date +%s)" -gt "$timeout" ]]; then
       echo "Symlink for $domain certificate was not generated under one minute, timing out."
       return 1
     fi
-    i=$((i + 2))
-    sleep 2
+    sleep 0.1
   done
   target="$(docker exec "$name" readlink "/etc/nginx/certs/$domain.crt")"
   echo "Symlink to $domain certificate has been generated."
@@ -75,14 +77,15 @@ export -f wait_for_symlink
 function wait_for_symlink_rm {
   local domain="${1:?}"
   local name="${2:?}"
-  local i=0
+  local timeout
+  timeout="$(date +%s)"
+  timeout="$((timeout + 60))"
   until docker exec "$name" [ ! -L "/etc/nginx/certs/$domain.crt" ]; do
-    if [ $i -gt 60 ]; then
+    if [[ "$(date +%s)" -gt "$timeout" ]]; then
       echo "Certificate symlink for $domain was not removed under one minute, timing out."
       return 1
     fi
-    i=$((i + 2))
-    sleep 2
+    sleep 0.1
   done
   echo "Symlink to $domain certificate has been removed."
 }
@@ -181,17 +184,18 @@ function wait_for_conn {
     esac
   done
 
-  local i=0
+  local timeout
+  timeout="$(date +%s)"
+  timeout="$((timeout + 60))"
   action="${action:---no-match}"
   string="${string:-letsencrypt-nginx-proxy-companion}"
 
   until check_cert_subj --domain "$domain" "$action" "$string"; do
-    if [ $i -gt 120 ]; then
+    if [[ "$(date +%s)" -gt "$timeout" ]]; then
       echo "Could not connect to $domain using https under two minutes, timing out."
       return 1
     fi
-    i=$((i + 2))
-    sleep 2
+    sleep 0.1
   done
   echo "Connection to $domain using https was successful."
 }

@@ -50,19 +50,14 @@ done
 for domain in "${domains[@]}"; do
 
   # Check if container restarted
-  i=0
-  until grep "$domain" ${TRAVIS_BUILD_DIR}/test/tests/container_restart/docker_event_out.txt; do
-    if [ "$waited_once" = true ]; then
+  timeout="$(date +%s)"
+  timeout="$((timeout + 60))"
+  until grep "$domain" "${TRAVIS_BUILD_DIR}"/test/tests/container_restart/docker_event_out.txt; do
+    if [[ "$(date +%s)" -gt "$timeout" ]]; then
       echo "Container $domain didn't restart in under one minute."
-      break
-    elif [ $i -gt 60 ]; then
-      echo "Container $domain didn't restart in under one minute."
-      # Wait only once for all containers (since all containers are started together)
-      waited_once=true
       break
     fi
-    i=$((i + 2))
-    sleep 2
+    sleep 0.1
   done
   
   # Stop the Nginx container silently.
