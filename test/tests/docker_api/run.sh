@@ -233,7 +233,7 @@ Container $docker_gen received signal 1
 Container $nginx_lbl received signal 1
 $docker_gen
 $labeled_nginx1_cid
-Container $nginx_lbl received signal 15
+Container $nginx_lbl received signal 3
 Container $docker_gen_lbl received signal 1
 Container $nginx_vol received signal 1
 $labeled_docker_gen_cid
