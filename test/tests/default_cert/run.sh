@@ -15,7 +15,7 @@ IFS=',' read -r -a domains <<< "$TEST_DOMAINS"
 # Cleanup function with EXIT trap
 function cleanup {
   # Cleanup the files created by this run of the test to avoid foiling following test(s).
-  docker exec "$le_container_name" bash -c 'rm -f /etc/nginx/certs/default.*'
+  docker exec "$le_container_name" /app/cleanup_test_artifacts --default-cert
   docker stop "$le_container_name" > /dev/null
 }
 trap cleanup EXIT

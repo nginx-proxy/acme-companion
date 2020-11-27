@@ -1,0 +1,40 @@
+#!/bin/bash
+
+# This script should not be run outside of a test container
+[[ "$TEST_MODE" == 'true' ]] || exit 1
+
+while [[ $# -gt 0 ]]; do
+    flag="$1"
+
+    case $flag in
+        --default-cert)
+        for filename in default.crt default.key; do
+            filepath="/etc/nginx/certs/$filename"
+            [[ -f "$filepath" ]] && rm -rf "$filepath"
+        done
+        shift
+        ;;
+
+        --location-config)
+        for filepath in '/etc/nginx/vhost.d/le1.wtf' '/etc/nginx/vhost.d/*.example.com' '/etc/nginx/vhost.d/test.*'; do
+            [[ -f "$filepath" ]] && rm -rf "$filepath"
+        done
+        shift
+        ;;
+
+        *) #Unknown option
+        shift
+        ;;
+    esac
+done
+
+for domain in le1.wtf le2.wtf le3.wtf le4.wtf lim.it; do
+    folder="/etc/nginx/certs/$domain"
+    [[ -d "$folder" ]] && rm -rf "$folder"
+    location_file="/etc/nginx/vhost.d/$domain"
+    [[ -f "$location_file" ]] && rm -rf "$location_file" 2> /dev/null
+    for extension in key crt chain.pem dhparam.pem; do
+        symlink="/etc/nginx/certs/${domain}.${extension}"
+        [[ -L "$symlink" ]] && rm -rf "$symlink"
+    done
+done
