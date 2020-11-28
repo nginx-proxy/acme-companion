@@ -44,8 +44,8 @@ wait_for_symlink "${domains[2]}" "$le_container_name" "./${domains[2]}/fullchain
 docker exec "$le_container_name" mkdir -p /etc/nginx/certs/le4.wtf
 docker exec "$le_container_name" cp /etc/nginx/certs/le1.wtf/fullchain.pem /etc/nginx/certs/le4.wtf/
 docker exec "$le_container_name" cp /etc/nginx/certs/le1.wtf/key.pem /etc/nginx/certs/le4.wtf/
-docker exec "$le_container_name" ln -s /etc/nginx/certs/le4.wtf/fullchain.pem /etc/nginx/certs/le4.wtf.crt
-docker exec "$le_container_name" ln -s /etc/nginx/certs/le4.wtf/key.pem /etc/nginx/certs/le4.wtf.key
+docker exec "$le_container_name" bash -c 'cd /etc/nginx/certs; ln -s ./le4.wtf/fullchain.pem ./le4.wtf.crt'
+docker exec "$le_container_name" bash -c 'cd /etc/nginx/certs; ln -s ./le4.wtf/key.pem ./le4.wtf.key'
 
 # Stop the nginx containers for ${domains[0]} and ${domains[1]} silently,
 # then check if the corresponding symlinks are removed.
@@ -90,7 +90,7 @@ done
 run_nginx_container "${domains[1]}" "symlink-le2"
 
 # Check where the symlink points (should be ./le2.wtf/fullchain.pem)
-wait_for_symlink "${domains[1]}" "$le_container_name"
+wait_for_symlink "${domains[1]}" "$le_container_name" "./${domains[1]}/fullchain.pem"
 
 # Stop the nginx container silently and try to put ${domains[1]} on a
 # san certificate whose authorization will fail.
