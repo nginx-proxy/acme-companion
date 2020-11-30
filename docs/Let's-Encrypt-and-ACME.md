@@ -58,11 +58,11 @@ The `LETSENCRYPT_TEST` environment variable, when set to `true` on a proxied app
 
 If you want to do this globally for all containers, set `ACME_CA_URI` on the **letsencrypt-nginx-proxy-companion** container as described in [Container configuration](./Container-configuration.md).
 
-#### ACME CA URI
+#### ACME CA URI
 
 The `ACME_CA_URI` environment variable is used to set the ACME API endpoint from which the container's certificate(s) will be requested (defaults to ``https://acme-v02.api.letsencrypt.org/directory``).
 
-#### Preferred chain
+#### Preferred chain
 
 If the ACME CA provides multiple cert chain, you can use the `ACME_PREFERRED_CHAIN` environment variable to select one. See [`acme.sh --preferred-chain` documentation](https://github.com/acmesh-official/acme.sh/wiki/Preferred-Chain) for more info.
 
@@ -86,7 +86,7 @@ Reusing private keys can help if you intend to use [HPKP](https://developer.mozi
 
 - Use one `acme.sh` configuration directory (`--config-home`) per account email address.
 - Each `acme.sh` configuration directory can hold several accounts on different ACME service providers. But only one per service provider.
-- The `defaut` configuration directory holds the configuration for empty account email address.
+- The `default` configuration directory holds the configuration for empty account email address.
 - When in testing mode (`LETSENCRYPT_TEST=true`):
     1. The container will use the special purpose `staging` configuration directory.
     1. The directory URI is forced to The Let's Encrypt v2 staging one (`ACME_CA_URI` is ignored)
