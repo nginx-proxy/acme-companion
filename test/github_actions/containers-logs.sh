@@ -8,8 +8,8 @@ fold_end() {
   echo -e "\ntravis_fold:end:$1\r"
 }
 
-if [[ -f "$TRAVIS_BUILD_DIR/test/travis/failed_tests.txt" ]]; then
-  mapfile -t containers < "$TRAVIS_BUILD_DIR/test/travis/failed_tests.txt"
+if [[ -f "$GITHUB_WORKSPACE/test/github_actions/failed_tests.txt" ]]; then
+  mapfile -t containers < "$GITHUB_WORKSPACE/test/github_actions/failed_tests.txt"
 fi
 
 containers+=("$NGINX_CONTAINER_NAME")

@@ -203,7 +203,7 @@ dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 self="$(basename "$0")"
 failed_tests=()
 
-if [[ -z $TRAVIS ]] && [[ -f "$dir/local_test_env.sh" ]]; then
+if [[ -z $GITHUB_ACTIONS ]] && [[ -f "$dir/local_test_env.sh" ]]; then
 	# shellcheck source=/dev/null
 	source "$dir/local_test_env.sh"
 fi
@@ -448,9 +448,9 @@ done
 
 if [ "$didFail" ]; then
 	## Next five lines were added by jrcs/docker-letsencrypt-nginx-proxy-companion
-	if [[ $TRAVIS == 'true' ]]; then
+	if [[ $GITHUB_ACTIONS == 'true' ]]; then
 		for test in "${failed_tests[@]}"; do
-			echo "$test" >> "$dir/travis/failed_tests.txt"
+			echo "$test" >> "$dir/github_actions/failed_tests.txt"
 		done
 	fi
 	## End of additional code

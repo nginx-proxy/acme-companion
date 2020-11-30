@@ -1,0 +1,79 @@
+name: Test
+
+on: [push, pull_request]
+
+env:
+  IMAGE: jrcs/letsencrypt-nginx-proxy-companion
+  NGINX_CONTAINER_NAME: nginx-proxy
+  DOCKER_GEN_CONTAINER_NAME: nginx-proxy-gen
+  TEST_DOMAINS: le1.wtf,le2.wtf,le3.wtf
+  DOCKER_COMPOSE_VERSION: 1.24.0
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+      - name: Build Image
+        run: docker build -t "$IMAGE" .
+      - name: Inspect Image
+        run: docker inspect "$IMAGE"
+      - name: Get acme.sh Version
+        run: docker run --rm "$IMAGE" acme.sh --version
+      - name: List Docker Images
+        run: docker images
+      - name: Export Image Artifact
+        run: docker save $IMAGE > image.tar
+      - name: Upload Image Artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: image.tar
+          path: image.tar
+
+  test:
+    needs: build
+    strategy:
+      fail-fast: true
+      matrix:
+        setup: [2containers, 3containers]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+      # PREPARE RUNNER ENV
+      - name: Add Test Domains in /etc/hosts
+        run: |
+          test_domains=$(echo $TEST_DOMAINS | tr "," "\n")
+          for domain in $test_domains
+          do
+              echo "127.0.0.1 $domain" | sudo tee -a /etc/hosts
+          done
+      - run: cat /etc/hosts
+      - name: Add Test Dependencies
+        uses: actions/checkout@v2
+        with:
+          repository: docker-library/official-images
+          path: official-images
+      - name: Setup Boulder
+        run: test/setup/setup-boulder.sh
+      - name: Setup NGINX Proxy
+        env:
+          SETUP: ${{ matrix.setup }}
+        run: test/setup/setup-nginx-proxy.sh
+      # ADD BUILDED IMAGE
+      - name: Download Builded Image
+        uses: actions/download-artifact@v2
+        with:
+          name: image.tar
+      - name: Import Builded Image
+        run: docker load < image.tar
+      # TEST
+      - name: Test Image 1
+        run: official-images/test/run.sh "$IMAGE"
+      - name: Test Image 2
+        run: test/run.sh "$IMAGE"
+      - if: ${{ failure() }}
+        run: test/github_actions/containers-logs.sh

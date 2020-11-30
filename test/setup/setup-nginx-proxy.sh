@@ -18,7 +18,7 @@ case $SETUP in
     ;;
 
   3containers)
-    curl https://raw.githubusercontent.com/jwilder/nginx-proxy/master/nginx.tmpl > "${TRAVIS_BUILD_DIR}/nginx.tmpl"
+    curl https://raw.githubusercontent.com/jwilder/nginx-proxy/master/nginx.tmpl > "${GITHUB_WORKSPACE}/nginx.tmpl"
 
     docker run -d -p 80:80 -p 443:443 \
       --name "$NGINX_CONTAINER_NAME" \
@@ -33,7 +33,7 @@ case $SETUP in
     docker run -d \
       --name "$DOCKER_GEN_CONTAINER_NAME" \
       --volumes-from "$NGINX_CONTAINER_NAME" \
-      -v "${TRAVIS_BUILD_DIR}/nginx.tmpl:/etc/docker-gen/templates/nginx.tmpl:ro" \
+      -v "${GITHUB_WORKSPACE}/nginx.tmpl:/etc/docker-gen/templates/nginx.tmpl:ro" \
       -v /var/run/docker.sock:/tmp/docker.sock:ro \
       --label com.github.jrcs.letsencrypt_nginx_proxy_companion.test_suite \
       --network boulder_bluenet \

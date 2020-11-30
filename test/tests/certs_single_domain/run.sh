@@ -2,7 +2,7 @@
 
 ## Test for spliting SAN certificates into single domain certificates by NGINX container env variables
 
-if [[ -z $TRAVIS ]]; then
+if [[ -z $GITHUB_ACTIONS ]]; then
   le_container_name="$(basename "${0%/*}")_$(date "+%Y-%m-%d_%H.%M.%S")"
 else
   le_container_name="$(basename "${0%/*}")"

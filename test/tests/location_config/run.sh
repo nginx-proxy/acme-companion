@@ -7,7 +7,7 @@ test_comment='### This is a test comment'
 vhost_path='/etc/nginx/vhost.d'
 
 # Create custom location configuration file to be bind mounted
-location_file="${TRAVIS_BUILD_DIR}/test/tests/location_config/le2.wtf"
+location_file="${GITHUB_WORKSPACE}/test/tests/location_config/le2.wtf"
 echo "$test_comment" > "$location_file"
 
 # Create le1.wtf configuration file, *.le3.wtf and test.* from inside the nginx container
@@ -18,7 +18,7 @@ docker exec "$NGINX_CONTAINER_NAME" sh -c "echo '### This is a test comment' > /
 # Zero the default configuration file.
 docker exec "$NGINX_CONTAINER_NAME" sh -c "echo '' > /etc/nginx/vhost.d/default"
 
-if [[ -z $TRAVIS ]]; then
+if [[ -z $GITHUB_ACTIONS ]]; then
   le_container_name="$(basename "${0%/*}")_$(date "+%Y-%m-%d_%H.%M.%S")"
 else
   le_container_name="$(basename "${0%/*}")"

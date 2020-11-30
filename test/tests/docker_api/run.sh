@@ -78,7 +78,7 @@ case $SETUP in
     "$1" \
     bash -c "$commands" 2>&1
 
-  cat > "${TRAVIS_BUILD_DIR}/test/tests/docker_api/expected-std-out.txt" <<EOF
+  cat > "${GITHUB_WORKSPACE}/test/tests/docker_api/expected-std-out.txt" <<EOF
 Container $nginx_vol received exec_start: sh -c /app/docker-entrypoint.sh /usr/local/bin/docker-gen /app/nginx.tmpl /etc/nginx/conf.d/default.conf; /usr/sbin/nginx -s reload
 $nginx_vol
 Container $nginx_env received exec_start: sh -c /app/docker-entrypoint.sh /usr/local/bin/docker-gen /app/nginx.tmpl /etc/nginx/conf.d/default.conf; /usr/sbin/nginx -s reload
@@ -220,7 +220,7 @@ EOF
     "$1" \
     bash -c "$commands" 2>&1
 
-    cat > "${TRAVIS_BUILD_DIR}/test/tests/docker_api/expected-std-out.txt" <<EOF
+    cat > "${GITHUB_WORKSPACE}/test/tests/docker_api/expected-std-out.txt" <<EOF
 Container $docker_gen received signal 1
 Container $nginx_vol received signal 1
 $docker_gen

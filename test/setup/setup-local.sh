@@ -6,22 +6,23 @@ function get_environment {
   dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
   LOCAL_BUILD_DIR="$(cd "$dir/../.." && pwd)"
-  export TRAVIS_BUILD_DIR="$LOCAL_BUILD_DIR"
+  export GITHUB_WORKSPACE="$LOCAL_BUILD_DIR"
 
   # shellcheck source=/dev/null
-  [[ -f "${TRAVIS_BUILD_DIR}/test/local_test_env.sh" ]] && \
-    source "${TRAVIS_BUILD_DIR}/test/local_test_env.sh"
+  [[ -f "${GITHUB_WORKSPACE}/test/local_test_env.sh" ]] && \
+    source "${GITHUB_WORKSPACE}/test/local_test_env.sh"
 
-  # Get the environment variables from the .travis.yml file with sed
-  declare -a travis_yml
-  travis_yml[0]="$(sed -n 's/.*- NGINX_CONTAINER_NAME=//p' "$LOCAL_BUILD_DIR/.travis.yml")"
-  travis_yml[1]="$(sed -n 's/.*- DOCKER_GEN_CONTAINER_NAME=//p' "$LOCAL_BUILD_DIR/.travis.yml")"
-  travis_yml[2]="$(sed -n 's/.*- TEST_DOMAINS=//p' "$LOCAL_BUILD_DIR/.travis.yml")"
+  # Get the environment variables from the .github/workflows/test.yml file with sed
+  declare -a ci_test_yml
+  ci_test_yml[0]="$(sed -n 's/.* NGINX_CONTAINER_NAME: //p' "$LOCAL_BUILD_DIR/.github/workflows/test.yml")"
+  ci_test_yml[1]="$(sed -n 's/.* DOCKER_GEN_CONTAINER_NAME: //p' "$LOCAL_BUILD_DIR/.github/workflows/test.yml")"
+  ci_test_yml[2]="$(sed -n 's/.* TEST_DOMAINS: //p' "$LOCAL_BUILD_DIR/.github/workflows/test.yml")"
 
-  # If environment variable where sourced or manually set use them, else use those from .travis.yml
-  export NGINX_CONTAINER_NAME="${NGINX_CONTAINER_NAME:-${travis_yml[0]}}"
-  export DOCKER_GEN_CONTAINER_NAME="${DOCKER_GEN_CONTAINER_NAME:-${travis_yml[1]}}"
-  export TEST_DOMAINS="${TEST_DOMAINS:-${travis_yml[2]}}"
+  # If environment variable where sourced or manually set use them, else use those from 
+  # .github/workflows/test.yml
+  export NGINX_CONTAINER_NAME="${NGINX_CONTAINER_NAME:-${ci_test_yml[0]}}"
+  export DOCKER_GEN_CONTAINER_NAME="${DOCKER_GEN_CONTAINER_NAME:-${ci_test_yml[1]}}"
+  export TEST_DOMAINS="${TEST_DOMAINS:-${ci_test_yml[2]}}"
 
   # Build the array containing domains to add to /etc/hosts
   IFS=',' read -r -a domains <<< "$TEST_DOMAINS"
@@ -57,8 +58,8 @@ case $1 in
     get_environment
 
     # Prepare the env file that run.sh will source
-    cat > "${TRAVIS_BUILD_DIR}/test/local_test_env.sh" <<EOF
-export TRAVIS_BUILD_DIR="$LOCAL_BUILD_DIR"
+    cat > "${GITHUB_WORKSPACE}/test/local_test_env.sh" <<EOF
+export GITHUB_WORKSPACE="$LOCAL_BUILD_DIR"
 export NGINX_CONTAINER_NAME="$NGINX_CONTAINER_NAME"
 export DOCKER_GEN_CONTAINER_NAME="$DOCKER_GEN_CONTAINER_NAME"
 export TEST_DOMAINS="$TEST_DOMAINS"
@@ -77,8 +78,8 @@ EOF
     docker pull nginx:alpine
 
     # Prepare the test setup using the setup scripts
-    "${TRAVIS_BUILD_DIR}/test/setup/setup-boulder.sh"
-    "${TRAVIS_BUILD_DIR}/test/setup/setup-nginx-proxy.sh"
+    "${GITHUB_WORKSPACE}/test/setup/setup-boulder.sh"
+    "${GITHUB_WORKSPACE}/test/setup/setup-nginx-proxy.sh"
     ;;
 
   --teardown)
@@ -92,14 +93,14 @@ EOF
 
     # Stop and remove boulder
     docker-compose --project-name 'boulder' \
-      --file "${TRAVIS_BUILD_DIR}/go/src/github.com/letsencrypt/boulder/docker-compose.yml" \
+      --file "${GITHUB_WORKSPACE}/go/src/github.com/letsencrypt/boulder/docker-compose.yml" \
       down --volumes
 
     # Cleanup files created by the setup
-    if [[ -n "${TRAVIS_BUILD_DIR// }" ]]; then
-      [[ -f "${TRAVIS_BUILD_DIR}/nginx.tmpl" ]]&& rm "${TRAVIS_BUILD_DIR}/nginx.tmpl"
-      rm "${TRAVIS_BUILD_DIR}/test/local_test_env.sh"
-      echo "The ${TRAVIS_BUILD_DIR}/go folder require superuser permission to fully remove."
+    if [[ -n "${GITHUB_WORKSPACE// }" ]]; then
+      [[ -f "${GITHUB_WORKSPACE}/nginx.tmpl" ]]&& rm "${GITHUB_WORKSPACE}/nginx.tmpl"
+      rm "${GITHUB_WORKSPACE}/test/local_test_env.sh"
+      echo "The ${GITHUB_WORKSPACE}/go folder require superuser permission to fully remove."
       echo "Doing sudo rm -rf in scripts is dangerous, so the folder won't be automatically removed."
     fi
 
