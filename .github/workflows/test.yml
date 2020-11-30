@@ -31,7 +31,28 @@ jobs:
           name: image.tar
           path: image.tar
 
-  test:
+  docker-specs-testing:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+        with:
+          repository: docker-library/official-images
+          path: official-images
+      - name: Download Builded Image
+        uses: actions/download-artifact@v2
+        with:
+          name: image.tar
+      - name: Import Builded Image
+        run: docker load < image.tar
+      - name: Docker Specifications Testing
+        run: official-images/test/run.sh "$IMAGE"
+      - if: ${{ failure() }}
+        run: test/github_actions/containers-logs.sh
+
+  integration-testing:
     needs: build
     strategy:
       fail-fast: true
@@ -50,12 +71,6 @@ jobs:
           do
               echo "127.0.0.1 $domain" | sudo tee -a /etc/hosts
           done
-      - run: cat /etc/hosts
-      - name: Add Test Dependencies
-        uses: actions/checkout@v2
-        with:
-          repository: docker-library/official-images
-          path: official-images
       - name: Setup Boulder
         run: test/setup/setup-boulder.sh
       - name: Setup NGINX Proxy
@@ -70,9 +85,7 @@ jobs:
       - name: Import Builded Image
         run: docker load < image.tar
       # TEST
-      - name: Test Image 1
-        run: official-images/test/run.sh "$IMAGE"
-      - name: Test Image 2
+      - name: Integration Testing
         run: test/run.sh "$IMAGE"
       - if: ${{ failure() }}
         run: test/github_actions/containers-logs.sh
