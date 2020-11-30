@@ -19,9 +19,9 @@ docker exec "$NGINX_CONTAINER_NAME" sh -c "echo '### This is a test comment' > /
 docker exec "$NGINX_CONTAINER_NAME" sh -c "echo '' > /etc/nginx/vhost.d/default"
 
 if [[ -z $TRAVIS ]]; then
-  le_container_name="$(basename ${0%/*})_$(date "+%Y-%m-%d_%H.%M.%S")"
+  le_container_name="$(basename "${0%/*}")_$(date "+%Y-%m-%d_%H.%M.%S")"
 else
-  le_container_name="$(basename ${0%/*})"
+  le_container_name="$(basename "${0%/*}")"
 fi
 run_le_container "${1:?}" "$le_container_name" "--volume $location_file:$vhost_path/le2.wtf"
 
@@ -31,9 +31,7 @@ IFS=',' read -r -a domains <<< "$TEST_DOMAINS"
 # Cleanup function with EXIT trap
 function cleanup {
   # Cleanup the files created by this run of the test to avoid foiling following test(s).
-  docker exec "$le_container_name" bash -c 'rm -rf /etc/nginx/vhost.d/le1.wtf'
-  docker exec "$le_container_name" bash -c 'rm -rf /etc/nginx/vhost.d/\*.example.com'
-  docker exec "$le_container_name" bash -c 'rm -rf /etc/nginx/vhost.d/test.\*'
+  docker exec "$le_container_name" /app/cleanup_test_artifacts --location-config
   # Stop the LE container
   docker stop "$le_container_name" > /dev/null
 }

@@ -3,11 +3,11 @@
 ## Test for default certificate creation.
 
 if [[ -z $TRAVIS ]]; then
-  le_container_name="$(basename ${0%/*})_$(date "+%Y-%m-%d_%H.%M.%S")"
+  le_container_name="$(basename "${0%/*}")_$(date "+%Y-%m-%d_%H.%M.%S")"
 else
-  le_container_name="$(basename ${0%/*})"
+  le_container_name="$(basename "${0%/*}")"
 fi
-run_le_container ${1:?} "$le_container_name"
+run_le_container "${1:?}" "$le_container_name"
 
 # Create the $domains array from comma separated domains in TEST_DOMAINS.
 IFS=',' read -r -a domains <<< "$TEST_DOMAINS"
@@ -15,7 +15,7 @@ IFS=',' read -r -a domains <<< "$TEST_DOMAINS"
 # Cleanup function with EXIT trap
 function cleanup {
   # Cleanup the files created by this run of the test to avoid foiling following test(s).
-  docker exec "$le_container_name" bash -c 'rm -f /etc/nginx/certs/default.*'
+  docker exec "$le_container_name" /app/cleanup_test_artifacts --default-cert
   docker stop "$le_container_name" > /dev/null
 }
 trap cleanup EXIT
@@ -77,7 +77,7 @@ docker exec "$le_container_name" openssl req -x509 \
   -newkey rsa:4096 -sha256 -nodes -days 60 \
   -subj "/CN=letsencrypt-nginx-proxy-companion" \
   -keyout /etc/nginx/certs/default.key \
-  -out /etc/nginx/certs/default.crt > /dev/null 2>&1
+  -out /etc/nginx/certs/default.crt &> /dev/null
 old_default_cert_fingerprint="$(default_cert_fingerprint)"
 docker restart "$le_container_name" > /dev/null && sleep 5
 timeout="$(date +%s)"
@@ -96,7 +96,7 @@ docker exec "$le_container_name" openssl req -x509 \
   -newkey rsa:4096 -sha256 -nodes -days 60 \
   -subj "/CN=$user_cn" \
   -keyout /etc/nginx/certs/default.key \
-  -out /etc/nginx/certs/default.crt > /dev/null 2>&1
+  -out /etc/nginx/certs/default.crt &> /dev/null
 docker restart "$le_container_name" > /dev/null
 
 # Connection test to unconfigured domains

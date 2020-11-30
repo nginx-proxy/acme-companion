@@ -3,11 +3,11 @@
 ## Test for SAN (Subject Alternative Names) certificates.
 
 if [[ -z $TRAVIS ]]; then
-  le_container_name="$(basename ${0%/*})_$(date "+%Y-%m-%d_%H.%M.%S")"
+  le_container_name="$(basename "${0%/*}")_$(date "+%Y-%m-%d_%H.%M.%S")"
 else
-  le_container_name="$(basename ${0%/*})"
+  le_container_name="$(basename "${0%/*}")"
 fi
-run_le_container ${1:?} "$le_container_name"
+run_le_container "${1:?}" "$le_container_name"
 
 # Create the $domains array from comma separated domains in TEST_DOMAINS.
 IFS=',' read -r -a domains <<< "$TEST_DOMAINS"
@@ -17,11 +17,11 @@ function cleanup {
   # Remove any remaining Nginx container(s) silently.
   i=1
   for hosts in "${letsencrypt_hosts[@]}"; do
-    docker rm --force "test$i" > /dev/null 2>&1
-    i=$(( $i + 1 ))
+    docker rm --force "test$i" &> /dev/null
+    i=$(( i + 1 ))
   done
   # Cleanup the files created by this run of the test to avoid foiling following test(s).
-  docker exec "$le_container_name" bash -c 'rm -rf /etc/nginx/certs/le?.wtf*'
+  docker exec "$le_container_name" /app/cleanup_test_artifacts
   # Stop the LE container
   docker stop "$le_container_name" > /dev/null
 }
@@ -35,7 +35,7 @@ letsencrypt_hosts=( \
   [0]="${domains[0]},${domains[1]},${domains[2]}" \     #straight comma separated list
   [1]="${domains[1]}, ${domains[2]}, ${domains[0]}" \   #comma separated list with spaces
   [2]="${domains[2]}, ${domains[0]}, ${domains[1]}," \  #comma separated list with spaces and a trailing comma
-  [3]="${domains[0]}.,${domains[1]}.,${domains[2]}" )   #trailing dots
+  [3]="${domains[0]}.,${domains[2]}.,${domains[1]}" )   #trailing dots
 
 i=1
 
@@ -46,36 +46,32 @@ for hosts in "${letsencrypt_hosts[@]}"; do
   container="test$i"
 
   # Run an Nginx container passing one of the comma separated list as LETSENCRYPT_HOST env var.
-  docker run --rm -d \
-    --name "$container" \
-    -e "VIRTUAL_HOST=${TEST_DOMAINS}" \
-    -e "LETSENCRYPT_HOST=${hosts}" \
-    --network boulder_bluenet \
-    nginx:alpine > /dev/null && echo "Started test web server for $hosts"
+  run_nginx_container "$hosts" "$container"
 
   # Wait for a symlink at /etc/nginx/certs/$base_domain.crt
-  # then grab the certificate in text form ...
-  wait_for_symlink "$base_domain" "$le_container_name"
-  created_cert="$(docker exec "$le_container_name" \
-    openssl x509 -in /etc/nginx/certs/${base_domain}/cert.pem -text -noout)"
-  # ... as well as the certificate fingerprint.
-  created_cert_fingerprint="$(docker exec "$le_container_name" \
-    sh -c "openssl x509 -in "/etc/nginx/certs/${base_domain}/cert.pem" -fingerprint -noout")"
+  if wait_for_symlink "$base_domain" "$le_container_name" "./${base_domain}/fullchain.pem"; then
+    # then grab the certificate in text form ...
+    created_cert="$(docker exec "$le_container_name" \
+      openssl x509 -in "/etc/nginx/certs/${base_domain}/cert.pem" -text -noout)"
+    # ... as well as the certificate fingerprint.
+    created_cert_fingerprint="$(docker exec "$le_container_name" \
+      openssl x509 -in "/etc/nginx/certs/${base_domain}/cert.pem" -fingerprint -noout)"
+  fi
 
   for domain in "${domains[@]}"; do
   ## For all the domains in the $domains array ...
 
     # Check if the domain is on the certificate.
-    if grep -q "$domain" <<< "$created_cert"; then
-      echo "$domain is on certificate."
-    else
+    if ! grep -q "$domain" <<< "$created_cert"; then
       echo "$domain did not appear on certificate."
+    elif [[ "${DRY_RUN:-}" == 1 ]]; then
+      echo "$domain is on certificate."
     fi
 
     # Wait for a connection to https://domain then grab the served certificate in text form.
     wait_for_conn --domain "$domain"
     served_cert_fingerprint="$(echo \
-      | openssl s_client -showcerts -servername $domain -connect $domain:443 2>/dev/null \
+      | openssl s_client -showcerts -servername "$domain" -connect "$domain:443" 2>/dev/null \
       | openssl x509 -fingerprint -noout)"
 
 
@@ -87,14 +83,15 @@ for hosts in "${letsencrypt_hosts[@]}"; do
         | openssl s_client -showcerts -servername "$domain" -connect "$domain:443" 2>/dev/null \
         | openssl x509 -text -noout \
         | sed 's/ = /=/g' )"
-      diff -u <(echo "$created_cert" | sed 's/ = /=/g') <(echo "$served_cert")
-    else
-      echo "The correct certificate for $domain was served by Nginx."
+      diff -u <(echo "${created_cert// = /=}") <(echo "$served_cert")
+    elif [[ "${DRY_RUN:-}" == 1 ]]; then
+       echo "The correct certificate for $domain was served by Nginx."
     fi
   done
 
-  docker stop "$container" > /dev/null 2>&1
-  docker exec "$le_container_name" bash -c 'rm -rf /etc/nginx/certs/le?.wtf*'
-  i=$(( $i + 1 ))
+  docker stop "$container" &> /dev/null
+  docker exec "$le_container_name" rm -rf /etc/nginx/certs/le?.wtf*
+  docker exec "$le_container_name" rm -rf /etc/acme.sh/default/le?.wtf*
+  i=$(( i + 1 ))
 
 done

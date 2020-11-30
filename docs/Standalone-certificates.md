@@ -55,11 +55,9 @@ Those are all single bash variables.
 
 `LETSENCRYPT_uniqueidentifier_EMAIL` : must be a valid email and will be used by Let's Encrypt to warn you of impeding certificate expiration (should the automated renewal fail).
 
-`LETSENCRYPT_uniqueidentifier_KEYSIZE` : determines the size of the requested private key (in bit, defaults to 4096).
+`LETSENCRYPT_uniqueidentifier_KEYSIZE` : determines the size of the requested private key. See [private key size](./Let's-Encrypt-and-ACME.md#private-key-size) for accepted values.
 
 `LETSENCRYPT_uniqueidentifier_TEST` : if set to true, the corresponding certificate will be a test certificates: it won't have the 5 certs/week/domain limits and will be signed by an untrusted intermediate (ie it won't be trusted by browsers).
-
-`LETSENCRYPT_uniqueidentifier_ACCOUNT_ALIAS` : see the [ACME account documentation](./Let's-Encrypt-and-ACME.md#multiple-accounts-per-endpoint).
 
 ### Picking up changes to letsencrypt_user_data
 
@@ -69,6 +67,6 @@ Changes will either be picked up every hour when the service loop execute again,
 
 ### Proxying to something else than a Docker container
 
-Please see the [**nginx-proxy** documentation](https://github.com/jwilder/nginx-proxy#proxy-wide).
+Please see the [**nginx-proxy** documentation](https://github.com/nginx-proxy/nginx-proxy#proxy-wide).
 
 No support will be provided on the **letsencrypt-nginx-proxy-companion** repo for proxying related issues or questions.

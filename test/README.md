@@ -5,7 +5,7 @@ The test suite can be run locally on a Linux or macOS host.
 To prepare the test setup:
 
 ```bash
-git clone https://github.com/JrCs/docker-letsencrypt-nginx-proxy-companion.git
+git clone https://github.com/nginx-proxy/docker-letsencrypt-nginx-proxy-companion.git
 cd docker-letsencrypt-nginx-proxy-companion
 test/setup/setup-local.sh --setup
 ```

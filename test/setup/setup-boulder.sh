@@ -8,25 +8,23 @@ setup_boulder() {
   export GOPATH=${TRAVIS_BUILD_DIR}/go
   [[ ! -d $GOPATH/src/github.com/letsencrypt/boulder ]] \
     && git clone https://github.com/letsencrypt/boulder \
-      $GOPATH/src/github.com/letsencrypt/boulder
-  pushd $GOPATH/src/github.com/letsencrypt/boulder
-  git checkout release-2019-10-07
+      "$GOPATH/src/github.com/letsencrypt/boulder"
+  pushd "$GOPATH/src/github.com/letsencrypt/boulder"
+  git checkout release-2020-10-19
   if [[ "$(uname)" == 'Darwin' ]]; then
     # Set Standard Ports
-    sed -i '' 's/ 5002/ 80/g' test/config/va.json
-    sed -i '' 's/ 5001/ 443/g' test/config/va.json
-    # Set certificate lifetime to 88 days
-    sed -i '' 's/2160h/2112h/g' test/config/ca-a.json
-    sed -i '' 's/2160h/2112h/g' test/config/ca-b.json
+    for file in test/config/va.json test/config/va-remote-a.json test/config/va-remote-b.json; do
+      sed -i '' 's/ 5002/ 80/g' "$file"
+      sed -i '' 's/ 5001/ 443/g' "$file"
+    done
     # Modify custom rate limit
     sed -i '' 's/le.wtf,le1.wtf/le1.wtf,le2.wtf,le3.wtf/g' test/rate-limit-policies.yml
   else
     # Set Standard Ports
-    sed --in-place 's/ 5002/ 80/g' test/config/va.json
-    sed --in-place 's/ 5001/ 443/g' test/config/va.json
-    # Set certificate lifetime to 88 days
-    sed --in-place 's/2160h/2112h/g' test/config/ca-a.json
-    sed --in-place 's/2160h/2112h/g' test/config/ca-b.json
+    for file in test/config/va.json test/config/va-remote-a.json test/config/va-remote-b.json; do
+      sed --in-place 's/ 5002/ 80/g' "$file"
+      sed --in-place 's/ 5001/ 443/g' "$file"
+    done
     # Modify custom rate limit
     sed --in-place 's/le.wtf,le1.wtf/le1.wtf,le2.wtf,le3.wtf/g' test/rate-limit-policies.yml
   fi

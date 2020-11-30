@@ -28,8 +28,7 @@ before_install:
 install:
   - docker build -t "$IMAGE" .
   - docker inspect "$IMAGE"
-  - docker run --rm "$IMAGE" simp_le --version
-  - docker run --rm "$IMAGE" simp_le -v --test
+  - docker run --rm "$IMAGE" acme.sh --version
   - docker images
 
 before_script:

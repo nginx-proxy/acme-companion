@@ -4,12 +4,10 @@ set -u
 
 # shellcheck source=functions.sh
 source /app/functions.sh
-DEBUG="$(lc "$DEBUG")"
 
-function check_deprecated_env_var {
-    if [[ -n "${ACME_TOS_HASH:-}" ]]; then
-        echo "Info: the ACME_TOS_HASH environment variable is no longer used by simp_le and has been deprecated."
-        echo "simp_le now implicitly agree to the ACME CA ToS."
+function print_version {
+    if [[ -n "${COMPANION_VERSION:-}" ]]; then
+        echo "Info: running letsencrypt-nginx-proxy-companion version ${COMPANION_VERSION}"
     fi
 }
 
@@ -48,7 +46,7 @@ function check_writable_directory {
 
 function check_dh_group {
     # Credits to Steve Kamerman for the background Diffie-Hellman creation logic.
-    # https://github.com/jwilder/nginx-proxy/pull/589
+    # https://github.com/nginx-proxy/nginx-proxy/pull/589
     local DHPARAM_BITS="${DHPARAM_BITS:-2048}"
     re='^[0-9]*$'
     if ! [[ "$DHPARAM_BITS" =~ $re ]] ; then
@@ -79,8 +77,7 @@ function check_dh_group {
     fi
 
     echo "Info: Creating Diffie-Hellman group in the background."
-    echo "A pre-generated Diffie-Hellman group will be used for now while the new one
-is being created."
+    echo "A pre-generated Diffie-Hellman group will be used for now while the new one is being created."
 
     # Put the default dhparam file in place so we can start immediately
     cp "$PREGEN_DHPARAM_FILE" "$DHPARAM_FILE"
@@ -109,7 +106,7 @@ function check_default_cert_key {
         # than 3 months / 7776000 seconds (60 x 60 x 24 x 30 x 3).
         check_cert_min_validity /etc/nginx/certs/default.crt 7776000
         cert_validity=$?
-        [[ "$DEBUG" == true ]] && echo "Debug: a default certificate with $default_cert_cn is present."
+        [[ "$DEBUG" == 1 ]] && echo "Debug: a default certificate with $default_cert_cn is present."
     fi
 
     # Create a default cert and private key if:
@@ -124,25 +121,29 @@ function check_default_cert_key {
             -keyout /etc/nginx/certs/default.key.new \
             -out /etc/nginx/certs/default.crt.new \
         && mv /etc/nginx/certs/default.key.new /etc/nginx/certs/default.key \
-        && mv /etc/nginx/certs/default.crt.new /etc/nginx/certs/default.crt
+        && mv /etc/nginx/certs/default.crt.new /etc/nginx/certs/default.crt \
+        && reload_nginx
         echo "Info: a default key and certificate have been created at /etc/nginx/certs/default.key and /etc/nginx/certs/default.crt."
-    elif [[ "$DEBUG" == true && "${default_cert_cn:-}" =~ $cn ]]; then
+    elif [[ "$DEBUG" == 1 && "${default_cert_cn:-}" =~ $cn ]]; then
         echo "Debug: the self generated default certificate is still valid for more than three months. Skipping default certificate creation."
-    elif [[ "$DEBUG" == true ]]; then
+    elif [[ "$DEBUG" == 1 ]]; then
         echo "Debug: the default certificate is user provided. Skipping default certificate creation."
     fi
     set_ownership_and_permissions "/etc/nginx/certs/default.key"
     set_ownership_and_permissions "/etc/nginx/certs/default.crt"
 }
 
-if [[ "$*" == "/bin/bash /app/start.sh" ]]; then
-    acmev1_r='acme-(v01\|staging)\.api\.letsencrypt\.org'
-    if [[ "${ACME_CA_URI:-}" =~ $acmev1_r ]]; then
-        echo "Error: the ACME v1 API is no longer supported by simp_le."
-        echo "See https://github.com/zenhack/simp_le/pull/119"
-        echo "Please use one of Let's Encrypt ACME v2 endpoints instead."
-        exit 1
+function check_default_account {
+    # The default account is now for empty account email
+    if [[ -f /etc/acme.sh/default/account.conf ]]; then
+        if grep -q ACCOUNT_EMAIL /etc/acme.sh/default/account.conf; then
+            sed -i '/ACCOUNT_EMAIL/d' /etc/acme.sh/default/account.conf
+        fi
     fi
+}
+
+if [[ "$*" == "/bin/bash /app/start.sh" ]]; then
+    print_version
     check_docker_socket
     if [[ -z "$(get_nginx_proxy_container)" ]]; then
         echo "Error: can't get nginx-proxy container ID !" >&2
@@ -160,12 +161,13 @@ if [[ "$*" == "/bin/bash /app/start.sh" ]]; then
     fi
     check_writable_directory '/etc/nginx/certs'
     check_writable_directory '/etc/nginx/vhost.d'
+    check_writable_directory '/etc/acme.sh'
     check_writable_directory '/usr/share/nginx/html'
     [[ -f /app/letsencrypt_user_data ]] && check_writable_directory '/etc/nginx/conf.d'
-    check_deprecated_env_var
     check_default_cert_key
     check_dh_group
     reload_nginx
+    check_default_account
 fi
 
 exec "$@"
