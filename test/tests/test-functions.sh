@@ -28,6 +28,7 @@ function run_le_container {
     --volumes-from "$NGINX_CONTAINER_NAME" \
     --volume /var/run/docker.sock:/var/run/docker.sock:ro \
     "${cli_args_arr[@]}" \
+    --env "DOCKER_GEN_WAIT=500ms:2s" \
     --env "TEST_MODE=true" \
     --env "DHPARAM_BITS=256" \
     --env "DEBUG=1" \
