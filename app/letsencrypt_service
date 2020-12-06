@@ -72,9 +72,8 @@ function cleanup_links {
     [[ -f /app/letsencrypt_user_data ]] && source /app/letsencrypt_user_data
     LETSENCRYPT_CONTAINERS+=( "${LETSENCRYPT_STANDALONE_CERTS[@]}" )
     for cid in "${LETSENCRYPT_CONTAINERS[@]}"; do
-      host_varname="LETSENCRYPT_${cid}_HOST"
-      hosts_array="${host_varname}[@]"
-      for domain in "${!hosts_array}"; do
+      local -n hosts_array="LETSENCRYPT_${cid}_HOST"
+      for domain in "${hosts_array[@]}"; do
         # Add domain to the array storing currently enabled domains.
         ENABLED_DOMAINS+=("$domain")
       done
@@ -124,13 +123,9 @@ function cleanup_links {
 
 function update_cert {
     local cid="${1:?}"
-    # Derive host and email variable names
-    local host_varname="LETSENCRYPT_${cid}_HOST"
-    # Array variable indirection hack: http://stackoverflow.com/a/25880676/350221
-    local -a hosts_array="${host_varname}[@]"
-    local hosts_array_expanded=("${!hosts_array}")
+    local -n hosts_array="LETSENCRYPT_${cid}_HOST"
     # First domain will be our base domain
-    local base_domain="${hosts_array_expanded[0]}"
+    local base_domain="${hosts_array[0]}"
 
     local should_restart_container='false'
 
@@ -146,20 +141,18 @@ function update_cert {
     local -a params_issue_arr
     params_issue_arr+=(--webroot /usr/share/nginx/html)
 
-    local keysize_varname="LETSENCRYPT_${cid}_KEYSIZE"
-    local cert_keysize="${!keysize_varname:-"<no value>"}"
-    if [[ "$cert_keysize" == "<no value>" ]] || \
+    local -n cert_keysize="LETSENCRYPT_${cid}_KEYSIZE"
+    if [[ -z "$cert_keysize" || "$cert_keysize" == "<no value>" ]] || \
         [[ ! "$cert_keysize" =~ ^(2048|3072|4096|8192|ec-256|ec-384|ec-512)$ ]]; then
         cert_keysize=$DEFAULT_KEY_SIZE
     fi
     params_issue_arr+=(--keylength "$cert_keysize")
 
-    local accountemail_varname="LETSENCRYPT_${cid}_EMAIL"
-    local accountemail="${!accountemail_varname:-"<no value>"}"
+    local -n accountemail="LETSENCRYPT_${cid}_EMAIL"
     local config_home
     # If we don't have a LETSENCRYPT_EMAIL from the proxied container
     # and DEFAULT_EMAIL is set to a non empty value, use the latter.
-    if [[ "$accountemail" == "<no value>" ]]; then
+    if [[ -z "$accountemail" || "$accountemail" == "<no value>" ]]; then
         if [[ -n "${DEFAULT_EMAIL// }" ]]; then
             accountemail="$DEFAULT_EMAIL"
         else
@@ -174,15 +167,14 @@ function update_cert {
         config_home="/etc/acme.sh/default"
     fi 
 
-    local acme_ca_uri_varname="ACME_${cid}_CA_URI"
-    local acme_ca_uri="${!acme_ca_uri_varname:-"<no value>"}"
-    if [[ "$acme_ca_uri" == "<no value>" ]]; then
+    local -n acme_ca_uri="ACME_${cid}_CA_URI"
+    if [[ -z "$acme_ca_uri" || "$acme_ca_uri" == "<no value>" ]]; then
         # Use default or user provided ACME end point
         acme_ca_uri="$ACME_CA_URI"
     fi
     # LETSENCRYPT_TEST overrides LETSENCRYPT_ACME_CA_URI
-    local test_certificate_varname="LETSENCRYPT_${cid}_TEST"
-    if [[ $(lc "${!test_certificate_varname:-}") == true ]]; then
+    local -n test_certificate="LETSENCRYPT_${cid}_TEST"
+    if [[ $(lc "$test_certificate") == true ]]; then
         # Use Let's Encrypt ACME V2 staging end point
         acme_ca_uri="$ACME_CA_TEST_URI"
     fi
@@ -218,17 +210,14 @@ function update_cert {
 
     # Zero SSL External Account Binding (EAB)
     if [[ "$acme_ca_uri" == "https://acme.zerossl.com/v2/DV90" ]]; then
-        local eab_kid_varname="ACME_${cid}_EAB_KID"
-        local eab_kid="${!eab_kid_varname:-"<no value>"}"
-        local eab_hmac_key_varname="ACME_${cid}_EAB_HMAC_KEY"
-        local eab_hmac_key="${!eab_hmac_key_varname:-"<no value>"}"
-        local zerossl_api_key_varname="ZEROSSL_${cid}_API_KEY"
-        local zerossl_api_key="${!zerossl_api_key_varname:-"<no value>"}"
+        local -n eab_kid="ACME_${cid}_EAB_KID"
+        local -n eab_hmac_key="ACME_${cid}_EAB_HMAC_KEY"
+        local -n zerossl_api_key="ZEROSSL_${cid}_API_KEY"
         if [[ ! -f "$account_file" ]]; then
-            if [[ "$eab_kid" != "<no value>" && "$eab_hmac_key" != "<no value>" ]]; then
+            if [[ -n "${eab_kid// }" && "$eab_kid" != "<no value>" && -n "${eab_hmac_key// }" && "$eab_hmac_key" != "<no value>" ]]; then
                 # Register the ACME account with the per container EAB credentials.
                 params_register_arr+=(--eab-kid "$eab_kid" --eab-hmac-key "$eab_hmac_key")
-            elif [[ "$zerossl_api_key" != "<no value>" ]]; then
+            elif [[ -n "${zerossl_api_key// }" && "$zerossl_api_key" != "<no value>" ]]; then
                 # We have a Zero SSL API key but no per-container EAB kid and hmac key.
                 # Generate a set of ACME EAB credentials using the ZeroSSL API.
                 local zerossl_api_response
@@ -283,9 +272,8 @@ function update_cert {
         return 1
     fi
 
-    local acme_preferred_chain_varname="ACME_${cid}_PREFERRED_CHAIN"
-    local acme_preferred_chain="${!acme_preferred_chain_varname:-"<no value>"}"
-    if [[ "$acme_preferred_chain" != "<no value>" ]]; then
+    local -n acme_preferred_chain="ACME_${cid}_PREFERRED_CHAIN"
+    if [[ -n "${acme_preferred_chain// }" && "$acme_preferred_chain" != "<no value>" ]]; then
         # Using amce.sh --preferred-chain to select alternate chain.
         params_issue_arr+=(--preferred-chain "$acme_preferred_chain")
     fi
@@ -296,7 +284,7 @@ function update_cert {
     mkdir -p "$certificate_dir"
     set_ownership_and_permissions "$certificate_dir"
 
-    for domain in "${!hosts_array}"; do
+    for domain in "${hosts_array[@]}"; do
         # Add all the domains to certificate
         params_issue_arr+=(--domain "$domain")
         # Add location configuration for the domain
@@ -305,14 +293,14 @@ function update_cert {
 
     params_issue_arr=("${params_base_arr[@]}" "${params_issue_arr[@]}")
     [[ "$DEBUG" == 1 ]] && echo "Calling acme.sh --issue with the following parameters : ${params_issue_arr[*]}"
-    echo "Creating/renewal $base_domain certificates... (${hosts_array_expanded[*]})"
+    echo "Creating/renewal $base_domain certificates... (${hosts_array[*]})"
     acme.sh --issue "${params_issue_arr[@]}"
 
     local acmesh_return=$?
 
     # 0 = success, 2 = RENEW_SKIP
     if [[ $acmesh_return == 0 || $acmesh_return == 2 ]]; then
-        for domain in "${!hosts_array}"; do
+        for domain in "${hosts_array[@]}"; do
             if [[ $acme_ca_uri =~ ^https://acme-staging.* ]]; then
                 create_links "_test_$base_domain" "$domain" \
                     && should_reload_nginx='true' \
@@ -337,13 +325,13 @@ function update_cert {
     fi
 
     # Restart container if certs are updated and the respective environmental variable is set
-    local restart_container_var="LETSENCRYPT_${cid}_RESTART_CONTAINER"
-    if [[ $(lc "${!restart_container_var:-}") == true ]] && [[ "$should_restart_container" == 'true' ]]; then
+    local -n restart_container="LETSENCRYPT_${cid}_RESTART_CONTAINER"
+    if [[ $(lc "$restart_container") == true ]] && [[ "$should_restart_container" == 'true' ]]; then
         echo "Restarting container (${cid})..."
         docker_restart "${cid}"
     fi
 
-    for domain in "${!hosts_array}"; do
+    for domain in "${hosts_array[@]}"; do
         if [[ -f "/etc/nginx/conf.d/standalone-cert-$domain.conf" ]]; then
             [[ "$DEBUG" == 1 ]] && echo "Debug: removing standalone configuration file /etc/nginx/conf.d/standalone-cert-$domain.conf"
             rm -f "/etc/nginx/conf.d/standalone-cert-$domain.conf" && should_reload_nginx='true'
@@ -370,9 +358,8 @@ function update_certs {
     if [[ -f /app/letsencrypt_user_data ]]; then
         if source /app/letsencrypt_user_data; then
             for cid in "${LETSENCRYPT_STANDALONE_CERTS[@]}"; do
-                host_varname="LETSENCRYPT_${cid}_HOST"
-                hosts_array="${host_varname}[@]"
-                for domain in "${!hosts_array}"; do
+                local -n hosts_array="LETSENCRYPT_${cid}_HOST"
+                for domain in "${hosts_array[@]}"; do
                     add_standalone_configuration "$domain"
                 done
             done
