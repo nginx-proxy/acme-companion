@@ -50,7 +50,7 @@ The `LETSENCRYPT_EMAIL` environment variable must be a valid email and will be u
 
 #### Private key size
 
-The `LETSENCRYPT_KEYSIZE` environment variable determines the type and size of the requested key. Supported values are `2048`, `3072`, `4096` and `8192` for RSA keys, and `ec-256`, `ec-384` or `ec-512` for elliptic curve keys. The default is RSA 4096.
+The `LETSENCRYPT_KEYSIZE` environment variable determines the type and size of the requested key. Supported values are `2048`, `3072` and `4096` for RSA keys, and `ec-256` or `ec-384` for elliptic curve keys. The default is RSA 4096.
 
 #### Test certificates
 

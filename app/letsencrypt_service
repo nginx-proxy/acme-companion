@@ -143,7 +143,7 @@ function update_cert {
 
     local -n cert_keysize="LETSENCRYPT_${cid}_KEYSIZE"
     if [[ -z "$cert_keysize" || "$cert_keysize" == "<no value>" ]] || \
-        [[ ! "$cert_keysize" =~ ^(2048|3072|4096|8192|ec-256|ec-384|ec-512)$ ]]; then
+        [[ ! "$cert_keysize" =~ ^(2048|3072|4096|ec-256|ec-384)$ ]]; then
         cert_keysize=$DEFAULT_KEY_SIZE
     fi
     params_issue_arr+=(--keylength "$cert_keysize")
@@ -277,7 +277,9 @@ function update_cert {
         # Using amce.sh --preferred-chain to select alternate chain.
         params_issue_arr+=(--preferred-chain "$acme_preferred_chain")
     fi
-    [[ "$RENEW_PRIVATE_KEYS" == false || "$REUSE_PRIVATE_KEYS" == true ]] && params_issue_arr+=(--always-force-new-domain-key)
+    if [[ "$RENEW_PRIVATE_KEYS" != 'false' && "$REUSE_PRIVATE_KEYS" != 'true' ]]; then
+        params_issue_arr+=(--always-force-new-domain-key)      
+    fi
     [[ "${2:-}" == "--force-renew" ]] && params_issue_arr+=(--force)
 
     # Create directory for the first domain
