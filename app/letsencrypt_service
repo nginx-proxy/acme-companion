@@ -213,6 +213,10 @@ function update_cert {
         local -n eab_kid="ACME_${cid}_EAB_KID"
         local -n eab_hmac_key="ACME_${cid}_EAB_HMAC_KEY"
         local -n zerossl_api_key="ZEROSSL_${cid}_API_KEY"
+        if [[ -z "$zerossl_api_key" || "$zerossl_api_key" == "<no value>" ]]; then
+            # Try using the default API key
+            zerossl_api_key="$ZEROSSL_API_KEY"
+        fi
         if [[ ! -f "$account_file" ]]; then
             if [[ -n "${eab_kid// }" && "$eab_kid" != "<no value>" && -n "${eab_hmac_key// }" && "$eab_hmac_key" != "<no value>" ]]; then
                 # Register the ACME account with the per container EAB credentials.
