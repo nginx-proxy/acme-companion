@@ -27,12 +27,11 @@ trap cleanup EXIT
 
 declare -A key_types
 key_types=( \
-  ['1024']='RSA Public-Key: (1024 bit)' \
   ['2048']='RSA Public-Key: (2048 bit)' \
+  ['3072']='RSA Public-Key: (3072 bit)' \
   ['4096']='RSA Public-Key: (4096 bit)' \
-  ['ec256']='secp256r1' \
-  ['ec384']='secp384r1' \
-  ['ec512']='secp512r1' \
+  ['ec-256']='prime256v1' \
+  ['ec-384']='secp384r1' \
 )
 
 for key in "${!key_types[@]}"; do
@@ -42,7 +41,7 @@ for key in "${!key_types[@]}"; do
     --name "${key}" \
     -e "VIRTUAL_HOST=${domains[0]}" \
     -e "LETSENCRYPT_HOST=${domains[0]}" \
-    -e "LETSENCRYPT_PRIVATE_KEY=${key}" \
+    -e "LETSENCRYPT_KEYSIZE=${key}" \
     --network boulder_bluenet \
     nginx:alpine > /dev/null;
   then
@@ -54,14 +53,15 @@ for key in "${!key_types[@]}"; do
   # Grep the expected string from the public key in text form.
   if wait_for_symlink "${domains[0]}" "$le_container_name"; then
     public_key=$(docker exec "$le_container_name" openssl pkey -in "/etc/nginx/certs/${domains[0]}.key" -noout -text_pub)
-    if ! grep "${key_types[$key]}" <<< "$public_key"; then
+    if ! grep -q "${key_types[$key]}" <<< "$public_key"; then
       echo "Keys for test $key were not of the correct type, expected ${key_types[$key]} and got the following:"
       echo "$public_key"
     fi
+  else
+    echo "${key_types[$key]} key test timed out"
   fi
 
   docker stop "${key}" &> /dev/null
-  docker exec "$le_container_name" rm -rf /etc/nginx/certs/le?.wtf*
-  docker exec "$le_container_name" rm -rf /etc/acme.sh/default/le?.wtf*
+  docker exec "$le_container_name" /app/cleanup_test_artifacts
 
 done
