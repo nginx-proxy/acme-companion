@@ -1,12 +1,7 @@
 #!/bin/bash
 set -e
 
-testAlias+=(
-	[jrcs/letsencrypt-nginx-proxy-companion]='le-companion'
-)
-
-imageTests+=(
-	[le-companion]='
+globalTests+=(
 	docker_api
 	location_config
 	default_cert
@@ -21,5 +16,4 @@ imageTests+=(
 	permissions_default
 	permissions_custom
 	symlinks
-	'
 )
