@@ -55,9 +55,26 @@ jobs:
   integration-testing:
     needs: build
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
         setup: [2containers, 3containers]
+        test-name:
+          [
+            docker_api,
+            location_config,
+            default_cert,
+            certs_single,
+            certs_san,
+            certs_single_domain,
+            certs_standalone,
+            force_renew,
+            acme_accounts,
+            private_keys,
+            container_restart,
+            permissions_default,
+            permissions_custom,
+            symlinks,
+          ]
     runs-on: ubuntu-latest
 
     steps:
@@ -86,6 +103,6 @@ jobs:
         run: docker load < image.tar
       # TEST
       - name: Integration Testing
-        run: test/run.sh "$IMAGE"
+        run: test/run.sh -t ${{ matrix.test-name }} "$IMAGE"
       - if: ${{ failure() }}
         run: test/github_actions/containers-logs.sh
