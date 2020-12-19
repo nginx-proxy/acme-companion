@@ -8,7 +8,7 @@ Three writable volumes must be declared on the **nginx-proxy** container so that
 
 Additionally, a fourth volume must be declared on the **letsencrypt-nginx-proxy-companion** container to store `acme.sh` configuration and state: `/etc/acme.sh`.
 
-Please also read the doc about [data persistence](./docs/persistent-data.md).
+Please also read the doc about [data persistence](./Persistent-data.md).
 
 Example of use:
 
