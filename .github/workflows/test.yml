@@ -9,7 +9,7 @@ env:
   TEST_DOMAINS: le1.wtf,le2.wtf,le3.wtf
 
 jobs:
-  build:
+  companion-build:
     runs-on: ubuntu-latest
 
     steps:
@@ -24,15 +24,42 @@ jobs:
       - name: List Docker Images
         run: docker images
       - name: Export Image Artifact
-        run: docker save $IMAGE > image.tar
+        run: docker save $IMAGE > companion.tar
       - name: Upload Image Artifact
         uses: actions/upload-artifact@v2
         with:
-          name: image.tar
-          path: image.tar
+          name: companion.tar
+          path: companion.tar
+
+  nginx-proxy-build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+      - name: Build patched nginx-proxy Image
+        run: docker build -t "jwilder/nginx-proxy:latest" ./test/setup/nginx-proxy
+      - name: Build patched docker-gen Image
+        run: docker build -t "jwilder/docker-gen:latest" ./test/setup/docker-gen
+      - name: List Docker Images
+        run: docker images
+      - name: Export Images Artifacts
+        run: |
+          docker save jwilder/nginx-proxy:latest > nginx-proxy.tar
+          docker save jwilder/docker-gen:latest > docker-gen.tar
+      - name: Upload nginx-proxy Image Artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: nginx-proxy.tar
+          path: nginx-proxy.tar
+      - name: Upload docker-gen Image Artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: docker-gen.tar
+          path: docker-gen.tar
 
   docker-specs-testing:
-    needs: build
+    needs: companion-build
     runs-on: ubuntu-latest
 
     steps:
@@ -44,16 +71,18 @@ jobs:
       - name: Download Builded Image
         uses: actions/download-artifact@v2
         with:
-          name: image.tar
+          name: companion.tar
       - name: Import Builded Image
-        run: docker load < image.tar
+        run: docker load < companion.tar
       - name: Docker Specifications Testing
         run: official-images/test/run.sh "$IMAGE"
       - if: ${{ failure() }}
         run: test/github_actions/containers-logs.sh
 
   integration-testing:
-    needs: build
+    needs: 
+      - companion-build
+      - nginx-proxy-build
     strategy:
       fail-fast: false
       matrix:
@@ -90,6 +119,18 @@ jobs:
           done
       - name: Setup Boulder
         run: test/setup/setup-boulder.sh
+      - name: Download nginx-proxy Patched Image
+        uses: actions/download-artifact@v2
+        with:
+          name: nginx-proxy.tar
+      - name: Download docker-gen Patched Image
+        uses: actions/download-artifact@v2
+        with:
+          name: docker-gen.tar
+      - name: Import nginx-proxy patched Images
+        run: |
+          docker load < nginx-proxy.tar
+          docker load < docker-gen.tar
       - name: Setup NGINX Proxy
         env:
           SETUP: ${{ matrix.setup }}
@@ -98,11 +139,13 @@ jobs:
       - name: Download Builded Image
         uses: actions/download-artifact@v2
         with:
-          name: image.tar
+          name: companion.tar
       - name: Import Builded Image
-        run: docker load < image.tar
+        run: docker load < companion.tar
       # TEST
       - name: Integration Testing
+        env:
+          SETUP: ${{ matrix.setup }}
         run: test/run.sh -t ${{ matrix.test-name }} "$IMAGE"
       - if: ${{ failure() }}
         run: test/github_actions/containers-logs.sh
