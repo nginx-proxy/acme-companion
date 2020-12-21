@@ -8,6 +8,12 @@ on:
       - stable
     tags:
       - 'v*.*.*'
+    paths:
+      - '.dockerignore'
+      - '.github/worklflows/dockerhub.yml'
+      - 'app/*'
+      - 'Dockerfile'
+      - 'install_acme.sh'
 
 jobs:
   multiarch-build:
