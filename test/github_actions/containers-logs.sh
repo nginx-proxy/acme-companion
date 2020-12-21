@@ -1,11 +1,7 @@
 #!/bin/bash
 
-fold_start() {
-  echo -e "travis_fold:start:$1\033[33;1m$2\033[0m"
-}
-
-fold_end() {
-  echo -e "\ntravis_fold:end:$1\r"
+bold_echo() {
+  echo -e "\033[33;1m$1\033[0m"
 }
 
 if [[ -f "$GITHUB_WORKSPACE/test/github_actions/failed_tests.txt" ]]; then
@@ -17,12 +13,12 @@ containers+=("$NGINX_CONTAINER_NAME")
 containers+=("boulder")
 
 for container in "${containers[@]}"; do
-  fold_start "$container" "Docker container output for $container"
+  bold_echo "Docker container output for $container"
   docker logs "$container"
-  fold_end "$container"
+  docker inspect "$container"
   if [[ "$container" == "acme_accounts" ]]; then
-    fold_start "${container}_default" "Docker container output for ${container}_default"
+    bold_echo "Docker container output for ${container}_default"
     docker logs "${container}_default"
-    fold_end "${container}_default"
+    docker inspect "${container}_default"
   fi
 done
