@@ -3,6 +3,10 @@ dist: focal
 
 language: shell
 
+branches:
+  only:
+  - master
+
 addons:
   hosts:
     - le1.wtf
