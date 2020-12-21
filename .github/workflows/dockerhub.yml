@@ -10,7 +10,7 @@ on:
       - 'v*.*.*'
     paths:
       - '.dockerignore'
-      - '.github/worklflows/dockerhub.yml'
+      - '.github/workflows/dockerhub.yml'
       - 'app/*'
       - 'Dockerfile'
       - 'install_acme.sh'
