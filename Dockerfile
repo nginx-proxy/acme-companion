@@ -53,7 +53,5 @@ COPY /app/ /app/
 
 WORKDIR /app
 
-VOLUME ["/etc/acme.sh", "/etc/nginx/certs"]
-
 ENTRYPOINT [ "/bin/bash", "/app/entrypoint.sh" ]
 CMD [ "/bin/bash", "/app/start.sh" ]
