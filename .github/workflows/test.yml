@@ -1,6 +1,15 @@
-name: Test
+name: Tests
 
-on: [push, pull_request]
+on:
+  push:
+    paths-ignore:
+    - 'docs/**'
+    - '*.md'
+  pull_request:
+    paths-ignore:
+    - 'docs/**'
+    - '*.md'
+
 
 env:
   DOCKER_GEN_CONTAINER_NAME: nginx-proxy-gen
