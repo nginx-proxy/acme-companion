@@ -24,6 +24,10 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v2
+      - name: Patch the Dockerfile's docker-gen
+        run: |
+          sed -i 's#DOCKER_GEN_VERSION=.*$#DOCKER_GEN_VERSION=fix-current-container-id#g' Dockerfile
+          sed -i 's#go get github.com/jwilder/docker-gen#go get github.com/buchdag/docker-gen \&\& mv /go/src/github.com/buchdag /go/src/github.com/jwilder#g' Dockerfile
       - name: Build Image
         run: docker build -t "$IMAGE" .
       - name: Inspect Image

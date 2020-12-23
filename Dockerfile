@@ -1,6 +1,6 @@
 FROM golang:1.15-alpine AS go-builder
 
-ENV DOCKER_GEN_VERSION=fix-current-container-id
+ENV DOCKER_GEN_VERSION=0.7.4
 
 # Build docker-gen
 RUN apk add --no-cache --virtual .build-deps \
@@ -9,8 +9,7 @@ RUN apk add --no-cache --virtual .build-deps \
         git \
         make \
         musl-dev \
-    && go get github.com/buchdag/docker-gen \
-    && mv /go/src/github.com/buchdag /go/src/github.com/jwilder \
+    && go get github.com/jwilder/docker-gen \
     && cd /go/src/github.com/jwilder/docker-gen \
     && git -c advice.detachedHead=false checkout $DOCKER_GEN_VERSION \
     && make get-deps \
