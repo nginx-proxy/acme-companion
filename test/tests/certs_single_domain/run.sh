@@ -2,7 +2,7 @@
 
 ## Test for spliting SAN certificates into single domain certificates by NGINX container env variables
 
-if [[ -z $TRAVIS ]]; then
+if [[ -z $GITHUB_ACTIONS ]]; then
   le_container_name="$(basename "${0%/*}")_$(date "+%Y-%m-%d_%H.%M.%S")"
 else
   le_container_name="$(basename "${0%/*}")"
@@ -107,8 +107,7 @@ for hosts in "${letsencrypt_hosts[@]}"; do
   done
 
   docker stop "$container" &> /dev/null
-  docker exec "$le_container_name" rm -rf /etc/nginx/certs/le?.wtf*
-  docker exec "$le_container_name" rm -rf /etc/acme.sh/default/le?.wtf*
+  docker exec "$le_container_name" /app/cleanup_test_artifacts --default-cert
   i=$(( i + 1 ))
 
 done

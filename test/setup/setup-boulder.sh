@@ -5,7 +5,7 @@ set -e
 acme_endpoint='http://boulder:4001/directory'
 
 setup_boulder() {
-  export GOPATH=${TRAVIS_BUILD_DIR}/go
+  export GOPATH=${GITHUB_WORKSPACE}/go
   [[ ! -d $GOPATH/src/github.com/letsencrypt/boulder ]] \
     && git clone https://github.com/letsencrypt/boulder \
       "$GOPATH/src/github.com/letsencrypt/boulder"

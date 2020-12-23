@@ -2,7 +2,7 @@
 
 ## Test for default certificate creation.
 
-if [[ -z $TRAVIS ]]; then
+if [[ -z $GITHUB_ACTIONS ]]; then
   le_container_name="$(basename "${0%/*}")_$(date "+%Y-%m-%d_%H.%M.%S")"
 else
   le_container_name="$(basename "${0%/*}")"
@@ -57,7 +57,7 @@ done
 # the certificate or private key file are deleted
 for file in 'default.key' 'default.crt'; do
   old_default_cert_fingerprint="$(default_cert_fingerprint)"
-  docker exec "$le_container_name" rm -f /etc/nginx/certs/$file
+  docker exec "$le_container_name" /app/cleanup_test_artifacts --default-cert
   docker restart "$le_container_name" > /dev/null
   timeout="$(date +%s)"
   timeout="$((timeout + 60))"

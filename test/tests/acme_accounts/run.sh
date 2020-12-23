@@ -2,7 +2,7 @@
 
 ## Test for ACME accounts handling.
 
-if [[ -z $TRAVIS ]]; then
+if [[ -z $GITHUB_ACTIONS ]]; then
   le_container_name="$(basename "${0%/*}")_$(date "+%Y-%m-%d_%H.%M.%S")"
 else
   le_container_name="$(basename "${0%/*}")"

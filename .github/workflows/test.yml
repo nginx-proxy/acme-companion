@@ -1,0 +1,164 @@
+name: Tests
+
+on:
+  push:
+    paths-ignore:
+    - 'docs/**'
+    - '*.md'
+  pull_request:
+    paths-ignore:
+    - 'docs/**'
+    - '*.md'
+
+
+env:
+  DOCKER_GEN_CONTAINER_NAME: nginx-proxy-gen
+  IMAGE: jrcs/letsencrypt-nginx-proxy-companion
+  NGINX_CONTAINER_NAME: nginx-proxy
+  TEST_DOMAINS: le1.wtf,le2.wtf,le3.wtf
+
+jobs:
+  companion-build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+      - name: Patch the Dockerfile's docker-gen
+        run: |
+          sed -i 's#DOCKER_GEN_VERSION=.*$#DOCKER_GEN_VERSION=fix-current-container-id#g' Dockerfile
+          sed -i 's#go get github.com/jwilder/docker-gen#go get github.com/buchdag/docker-gen \&\& mv /go/src/github.com/buchdag /go/src/github.com/jwilder#g' Dockerfile
+      - name: Build Image
+        run: docker build -t "$IMAGE" .
+      - name: Inspect Image
+        run: docker inspect "$IMAGE"
+      - name: Get acme.sh Version
+        run: docker run --rm "$IMAGE" acme.sh --version
+      - name: List Docker Images
+        run: docker images
+      - name: Export Image Artifact
+        run: docker save $IMAGE > companion.tar
+      - name: Upload Image Artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: companion.tar
+          path: companion.tar
+
+  nginx-proxy-build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+      - name: Build patched nginx-proxy Image
+        run: docker build -t "jwilder/nginx-proxy:latest" ./test/setup/nginx-proxy
+      - name: Build patched docker-gen Image
+        run: docker build -t "jwilder/docker-gen:latest" ./test/setup/docker-gen
+      - name: List Docker Images
+        run: docker images
+      - name: Export Images Artifacts
+        run: |
+          docker save jwilder/nginx-proxy:latest > nginx-proxy.tar
+          docker save jwilder/docker-gen:latest > docker-gen.tar
+      - name: Upload nginx-proxy Image Artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: nginx-proxy.tar
+          path: nginx-proxy.tar
+      - name: Upload docker-gen Image Artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: docker-gen.tar
+          path: docker-gen.tar
+
+  docker-specs-testing:
+    needs: companion-build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+        with:
+          repository: docker-library/official-images
+          path: official-images
+      - name: Download Builded Image
+        uses: actions/download-artifact@v2
+        with:
+          name: companion.tar
+      - name: Import Builded Image
+        run: docker load < companion.tar
+      - name: Docker Specifications Testing
+        run: official-images/test/run.sh "$IMAGE"
+      - if: ${{ failure() }}
+        run: test/github_actions/containers-logs.sh
+
+  integration-testing:
+    needs: 
+      - companion-build
+      - nginx-proxy-build
+    strategy:
+      fail-fast: false
+      matrix:
+        setup: [2containers, 3containers]
+        test-name:
+          [
+            docker_api,
+            location_config,
+            default_cert,
+            certs_single,
+            certs_san,
+            certs_single_domain,
+            certs_standalone,
+            force_renew,
+            acme_accounts,
+            private_keys,
+            container_restart,
+            permissions_default,
+            permissions_custom,
+            symlinks,
+          ]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+      # PREPARE RUNNER ENV
+      - name: Add Test Domains in /etc/hosts
+        run: |
+          test_domains=$(echo $TEST_DOMAINS | tr "," "\n")
+          for domain in $test_domains
+          do
+              echo "127.0.0.1 $domain" | sudo tee -a /etc/hosts
+          done
+      - name: Setup Boulder
+        run: test/setup/setup-boulder.sh
+      - name: Download nginx-proxy Patched Image
+        uses: actions/download-artifact@v2
+        with:
+          name: nginx-proxy.tar
+      - name: Download docker-gen Patched Image
+        uses: actions/download-artifact@v2
+        with:
+          name: docker-gen.tar
+      - name: Import nginx-proxy patched Images
+        run: |
+          docker load < nginx-proxy.tar
+          docker load < docker-gen.tar
+      - name: Setup NGINX Proxy
+        env:
+          SETUP: ${{ matrix.setup }}
+        run: test/setup/setup-nginx-proxy.sh
+      # ADD BUILDED IMAGE
+      - name: Download Builded Image
+        uses: actions/download-artifact@v2
+        with:
+          name: companion.tar
+      - name: Import Builded Image
+        run: docker load < companion.tar
+      # TEST
+      - name: Integration Testing
+        env:
+          SETUP: ${{ matrix.setup }}
+        run: test/run.sh -t ${{ matrix.test-name }} "$IMAGE"
+      - if: ${{ failure() }}
+        run: test/github_actions/containers-logs.sh
