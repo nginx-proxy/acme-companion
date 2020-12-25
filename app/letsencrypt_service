@@ -148,6 +148,12 @@ function update_cert {
     fi
     params_issue_arr+=(--keylength "$cert_keysize")
 
+    # OCSP-Must-Staple extension
+    local -n ocsp="ACME_${cid}_OCSP"
+    if [[ $(lc "$ocsp") == true ]]; then
+        params_issue_arr+=(--ocsp-must-staple)
+    fi
+
     local -n accountemail="LETSENCRYPT_${cid}_EMAIL"
     local config_home
     # If we don't have a LETSENCRYPT_EMAIL from the proxied container

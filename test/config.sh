@@ -12,6 +12,7 @@ globalTests+=(
 	force_renew
 	acme_accounts
 	private_keys
+	ocsp_must_staple
 	container_restart
 	permissions_default
 	permissions_custom
