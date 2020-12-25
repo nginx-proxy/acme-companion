@@ -52,6 +52,10 @@ The `LETSENCRYPT_EMAIL` environment variable must be a valid email and will be u
 
 The `LETSENCRYPT_KEYSIZE` environment variable determines the type and size of the requested key. Supported values are `2048`, `3072` and `4096` for RSA keys, and `ec-256` or `ec-384` for elliptic curve keys. The default is RSA 4096.
 
+#### OCSP stapling
+
+The `ACME_OCSP` environment variable, when set to `true` on a proxied application container, will add the [OCSP Must-Staple extension](https://blog.apnic.net/2019/01/15/is-the-web-ready-for-ocsp-must-staple/) to the issued certificate. Please read about OCSP Must-Staple support in Nginx if you intend to use this feature (https://trac.nginx.org/nginx/ticket/812 and https://trac.nginx.org/nginx/ticket/1830)
+
 #### Test certificates
 
 The `LETSENCRYPT_TEST` environment variable, when set to `true` on a proxied application container, will create a test certificates that don't have the [5 certs/week/domain limits](https://letsencrypt.org/docs/rate-limits/) and are signed by an untrusted intermediate (they won't be trusted by browsers).
