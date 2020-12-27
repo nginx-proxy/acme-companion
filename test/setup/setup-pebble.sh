@@ -10,7 +10,6 @@ setup_pebble() {
     docker run -d \
         --name pebble \
         --volume "${GITHUB_WORKSPACE}/test/setup/pebble-config.json:/test/config/pebble-config.json" \
-        --env PEBBLE_WFE_NONCEREJECT=0 \
         --network acme_net \
         --ip="10.30.50.2" \
         --publish 14000:14000 \
