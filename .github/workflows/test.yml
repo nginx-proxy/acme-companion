@@ -99,8 +99,6 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        setup: [2containers, 3containers]
-        acme-ca: [pebble]
         test-name:
           [
             docker_api,
@@ -118,12 +116,14 @@ jobs:
             permissions_custom,
             symlinks,
           ]
+        setup: [2containers, 3containers]
+        acme-ca: [pebble]
         include:
-          - setup: 2containers
-            test-name: ocsp_must_staple
+          - test-name: ocsp_must_staple
+            setup: 2containers
             acme-ca: boulder
-          - setup: 3containers
-            test-name: ocsp_must_staple
+          - test-name: ocsp_must_staple
+            setup: 3containers
             acme-ca: boulder
     runs-on: ubuntu-latest
 
