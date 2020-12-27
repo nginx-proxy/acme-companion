@@ -14,7 +14,7 @@ setup_pebble() {
         --network acme_net \
         --ip="10.30.50.2" \
         --publish 14000:14000 \
-        letsencrypt/pebble:v2.1.0 \
+        letsencrypt/pebble:v2.3.1 \
         pebble -config /test/config/pebble-config.json -dnsserver 10.30.50.3:8053
 
     docker run -d \
@@ -22,7 +22,7 @@ setup_pebble() {
         --network acme_net \
         --ip="10.30.50.3" \
         --publish 8055:8055 \
-        letsencrypt/pebble-challtestsrv:v2.1.0 \
+        letsencrypt/pebble-challtestsrv:v2.3.1 \
         pebble-challtestsrv -tlsalpn01 ""
 }
 
