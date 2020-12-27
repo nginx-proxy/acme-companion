@@ -42,7 +42,7 @@ for key in "${!key_types[@]}"; do
     -e "VIRTUAL_HOST=${domains[0]}" \
     -e "LETSENCRYPT_HOST=${domains[0]}" \
     -e "LETSENCRYPT_KEYSIZE=${key}" \
-    --network boulder_bluenet \
+    --network acme_net \
     nginx:alpine > /dev/null;
   then
     echo "Could not start test web server for ${key}"

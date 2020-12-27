@@ -126,13 +126,14 @@ jobs:
       # PREPARE RUNNER ENV
       - name: Add Test Domains in /etc/hosts
         run: |
-          test_domains=$(echo $TEST_DOMAINS | tr "," "\n")
-          for domain in $test_domains
+          IFS=',' read -r -a test_domains <<< "$TEST_DOMAINS"
+          test_domains+=(pebble pebble-challtestsrv)
+          for domain in "${test_domains[@]}"
           do
               echo "127.0.0.1 $domain" | sudo tee -a /etc/hosts
           done
-      - name: Setup Boulder
-        run: test/setup/setup-boulder.sh
+      - name: Setup Pebble
+        run: test/setup/setup-pebble.sh
       - name: Download nginx-proxy Patched Image
         uses: actions/download-artifact@v2
         with:

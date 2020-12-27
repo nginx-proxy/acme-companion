@@ -31,7 +31,7 @@ if docker run --rm -d \
   -e "VIRTUAL_HOST=${domains[0]}" \
   -e "LETSENCRYPT_HOST=${domains[0]}" \
   -e "ACME_OCSP=true" \
-  --network boulder_bluenet \
+  --network acme_net \
   nginx:alpine > /dev/null; \
 then
   [[ "${DRY_RUN:-}" == 1 ]] && echo "Started test web server for ${domains[0]} (ACME_OCSP=true)"

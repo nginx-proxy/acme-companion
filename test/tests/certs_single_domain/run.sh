@@ -47,7 +47,7 @@ for hosts in "${letsencrypt_hosts[@]}"; do
     -e "VIRTUAL_HOST=${TEST_DOMAINS}" \
     -e "LETSENCRYPT_HOST=${hosts}" \
     -e "LETSENCRYPT_SINGLE_DOMAIN_CERTS=true" \
-    --network boulder_bluenet \
+    --network acme_net \
     nginx:alpine > /dev/null;
   then
     echo "Could not start test web server for $hosts"

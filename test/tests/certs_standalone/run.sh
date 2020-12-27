@@ -34,7 +34,7 @@ EOF
 if ! docker run --rm -d \
     --name "$subdomain" \
     -e "VIRTUAL_HOST=$subdomain" \
-    --network boulder_bluenet \
+    --network acme_net \
     nginx:alpine > /dev/null;
 then
   echo "Could not start test web server for $subdomain"

@@ -42,7 +42,7 @@ for domain in "${domains[@]}"; do
     -e "VIRTUAL_HOST=${domain}" \
     -e "LETSENCRYPT_HOST=${domain}" \
     -e "LETSENCRYPT_RESTART_CONTAINER=true" \
-    --network boulder_bluenet \
+    --network acme_net \
     nginx:alpine > /dev/null; \
   then
     [[ "${DRY_RUN:-}" == 1 ]] && echo "Started test web server for $domain"

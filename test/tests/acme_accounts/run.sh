@@ -32,14 +32,15 @@ run_nginx_container "${domains[0]}"
 wait_for_symlink "${domains[0]}" "$le_container_name"
 
 # Test if the expected folder / file / content are there.
-json_file="/etc/acme.sh/default/ca/boulder/account.json"
+json_file="/etc/acme.sh/default/ca/pebble/account.json"
 if docker exec "$le_container_name" [[ ! -d "/etc/acme.sh/default" ]]; then
   echo "The /etc/acme.sh/default folder does not exist."
 elif docker exec "$le_container_name" [[ ! -f "$json_file" ]]; then
   echo "The $json_file file does not exist."
-elif [[ "$(docker exec "$le_container_name" jq .contact "$json_file")" != '[]' ]]; then
+elif [[ "$(docker exec "$le_container_name" jq .contact "$json_file")" != 'null' ]]; then
   echo "There is an address set on ${json_file}."
   docker exec "$le_container_name" jq . "$json_file"
+  docker exec "$le_container_name" jq .contact "$json_file"
 fi
 
 # Stop the nginx and companion containers silently.
@@ -58,7 +59,7 @@ run_nginx_container "${domains[1]}"
 wait_for_symlink "${domains[1]}" "$le_container_name"
 
 # Test if the expected folder / file / content are there.
-json_file="/etc/acme.sh/${default_email}/ca/boulder/account.json"
+json_file="/etc/acme.sh/${default_email}/ca/pebble/account.json"
 if docker exec "$le_container_name" [[ ! -d "/etc/acme.sh/$default_email" ]]; then
   echo "The /etc/acme.sh/$default_email folder does not exist."
 elif docker exec "$le_container_name" [[ ! -f "$json_file" ]]; then
@@ -75,7 +76,7 @@ if ! docker run --rm -d \
   -e "VIRTUAL_HOST=${domains[2]}" \
   -e "LETSENCRYPT_HOST=${domains[2]}" \
   -e "LETSENCRYPT_EMAIL=${container_email}" \
-  --network boulder_bluenet \
+  --network acme_net \
   nginx:alpine > /dev/null ; \
 then
   echo "Failed to start test web server for ${domains[2]}"
@@ -87,7 +88,7 @@ fi
 wait_for_symlink "${domains[2]}" "$le_container_name"
 
 # Test if the expected folder / file / content are there.
-json_file="/etc/acme.sh/${container_email}/ca/boulder/account.json"
+json_file="/etc/acme.sh/${container_email}/ca/pebble/account.json"
 if docker exec "$le_container_name" [[ ! -d "/etc/acme.sh/$container_email" ]]; then
   echo "The /etc/acme.sh/$container_email folder does not exist."
 elif docker exec "$le_container_name" [[ ! -f "$json_file" ]]; then

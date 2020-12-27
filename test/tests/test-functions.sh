@@ -27,14 +27,16 @@ function run_le_container {
     --name "$name" \
     --volumes-from "$NGINX_CONTAINER_NAME" \
     --volume /var/run/docker.sock:/var/run/docker.sock:ro \
+    --volume "${GITHUB_WORKSPACE}/pebble.minica.pem:/pebble.minica.pem" \
     "${cli_args_arr[@]}" \
     --env "DOCKER_GEN_WAIT=500ms:2s" \
     --env "TEST_MODE=true" \
     --env "DHPARAM_BITS=256" \
     --env "DEBUG=1" \
-    --env "ACME_CA_URI=http://boulder:4001/directory" \
+    --env "ACME_CA_URI=https://pebble:14000/dir" \
+    --env "CA_BUNDLE=/pebble.minica.pem" \
     --label com.github.jrcs.letsencrypt_nginx_proxy_companion.test_suite \
-    --network boulder_bluenet \
+    --network acme_net \
     "$image" > /dev/null; \
   then
     [[ "${DRY_RUN:-}" == 1 ]] && echo "Started letsencrypt container for test ${name%%_2*}"
@@ -56,7 +58,7 @@ function run_nginx_container {
     --name "$container_name" \
     -e "VIRTUAL_HOST=$virtual_host" \
     -e "LETSENCRYPT_HOST=$le_host" \
-    --network boulder_bluenet \
+    --network acme_net \
     nginx:alpine > /dev/null ; \
   then
     [[ "${DRY_RUN:-}" == 1 ]] && echo "Started $container_name nginx container."
