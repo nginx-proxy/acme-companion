@@ -2,6 +2,18 @@
 
 ## Test for standalone certificates.
 
+case $ACME_CA in
+  pebble)
+    test_net='acme_net'
+  ;;
+  boulder)
+    test_net='boulder_bluenet'
+  ;;
+  *)
+    echo "$0 $ACME_CA: invalid option."
+    exit 1
+esac
+
 if [[ -z $GITHUB_ACTIONS ]]; then
   le_container_name="$(basename "${0%/*}")_$(date "+%Y-%m-%d_%H.%M.%S")"
 else
@@ -34,7 +46,7 @@ EOF
 if ! docker run --rm -d \
     --name "$subdomain" \
     -e "VIRTUAL_HOST=$subdomain" \
-    --network acme_net \
+    --network "$test_net" \
     nginx:alpine > /dev/null;
 then
   echo "Could not start test web server for $subdomain"

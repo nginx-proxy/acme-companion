@@ -22,7 +22,18 @@ function run_le_container {
   if [[ "$SETUP" == '3containers' ]]; then
     cli_args_arr+=(--env "NGINX_DOCKER_GEN_CONTAINER=$DOCKER_GEN_CONTAINER_NAME")
   fi
-  
+
+  if [[ "$ACME_CA" == 'boulder' ]]; then
+    cli_args_arr+=(--env "ACME_CA_URI=http://boulder:4001/directory")
+    cli_args_arr+=(--network boulder_bluenet)
+  elif [[ "$ACME_CA" == 'pebble' ]]; then
+    cli_args_arr+=(--env "ACME_CA_URI=https://pebble:14000/dir")
+    cli_args_arr+=(--env "CA_BUNDLE=/pebble.minica.pem")
+    cli_args_arr+=(--network acme_net)
+  else
+    return 1
+  fi
+
   if docker run -d \
     --name "$name" \
     --volumes-from "$NGINX_CONTAINER_NAME" \
@@ -33,10 +44,7 @@ function run_le_container {
     --env "TEST_MODE=true" \
     --env "DHPARAM_BITS=256" \
     --env "DEBUG=1" \
-    --env "ACME_CA_URI=https://pebble:14000/dir" \
-    --env "CA_BUNDLE=/pebble.minica.pem" \
     --label com.github.jrcs.letsencrypt_nginx_proxy_companion.test_suite \
-    --network acme_net \
     "$image" > /dev/null; \
   then
     [[ "${DRY_RUN:-}" == 1 ]] && echo "Started letsencrypt container for test ${name%%_2*}"
@@ -53,12 +61,22 @@ function run_nginx_container {
   local le_host="${1:?}"
   local virtual_host="${le_host// /}"; virtual_host="${virtual_host//.,/,}"; virtual_host="${virtual_host%,}"
   local container_name="${2:-$virtual_host}"
+  
+  local -a cli_args_arr
+  if [[ "$ACME_CA" == 'boulder' ]]; then
+    cli_args_arr+=(--network boulder_bluenet)
+  elif [[ "$ACME_CA" == 'pebble' ]]; then
+    cli_args_arr+=(--network acme_net)
+  else
+    return 1
+  fi
+
   [[ "${DRY_RUN:-}" == 1 ]] && echo "Starting $container_name nginx container, with environment variables VIRTUAL_HOST=$virtual_host and LETSENCRYPT_HOST=$le_host"
   if docker run --rm -d \
     --name "$container_name" \
     -e "VIRTUAL_HOST=$virtual_host" \
     -e "LETSENCRYPT_HOST=$le_host" \
-    --network acme_net \
+    "${cli_args_arr[@]}" \
     nginx:alpine > /dev/null ; \
   then
     [[ "${DRY_RUN:-}" == 1 ]] && echo "Started $container_name nginx container."

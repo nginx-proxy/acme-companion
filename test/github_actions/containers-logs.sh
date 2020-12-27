@@ -10,7 +10,8 @@ fi
 
 containers+=("$NGINX_CONTAINER_NAME")
 [[ $SETUP = "3containers" ]] && containers+=("$DOCKER_GEN_CONTAINER_NAME")
-containers+=(pebble challtestserv)
+[[ $ACME_CA = "boulder" ]] && containers+=(boulder)
+[[ $ACME_CA = "pebble" ]] && containers+=(pebble challtestserv)
 
 for container in "${containers[@]}"; do
   bold_echo "Docker container output for $container"

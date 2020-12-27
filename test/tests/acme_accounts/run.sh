@@ -2,6 +2,18 @@
 
 ## Test for ACME accounts handling.
 
+case $ACME_CA in
+  pebble)
+    test_net='acme_net'
+  ;;
+  boulder)
+    test_net='boulder_bluenet'
+  ;;
+  *)
+    echo "$0 $ACME_CA: invalid option."
+    exit 1
+esac
+
 if [[ -z $GITHUB_ACTIONS ]]; then
   le_container_name="$(basename "${0%/*}")_$(date "+%Y-%m-%d_%H.%M.%S")"
 else
@@ -32,7 +44,7 @@ run_nginx_container "${domains[0]}"
 wait_for_symlink "${domains[0]}" "$le_container_name"
 
 # Test if the expected folder / file / content are there.
-json_file="/etc/acme.sh/default/ca/pebble/account.json"
+json_file="/etc/acme.sh/default/ca/$ACME_CA/account.json"
 if docker exec "$le_container_name" [[ ! -d "/etc/acme.sh/default" ]]; then
   echo "The /etc/acme.sh/default folder does not exist."
 elif docker exec "$le_container_name" [[ ! -f "$json_file" ]]; then
@@ -59,7 +71,7 @@ run_nginx_container "${domains[1]}"
 wait_for_symlink "${domains[1]}" "$le_container_name"
 
 # Test if the expected folder / file / content are there.
-json_file="/etc/acme.sh/${default_email}/ca/pebble/account.json"
+json_file="/etc/acme.sh/${default_email}/ca/$ACME_CA/account.json"
 if docker exec "$le_container_name" [[ ! -d "/etc/acme.sh/$default_email" ]]; then
   echo "The /etc/acme.sh/$default_email folder does not exist."
 elif docker exec "$le_container_name" [[ ! -f "$json_file" ]]; then
@@ -76,7 +88,7 @@ if ! docker run --rm -d \
   -e "VIRTUAL_HOST=${domains[2]}" \
   -e "LETSENCRYPT_HOST=${domains[2]}" \
   -e "LETSENCRYPT_EMAIL=${container_email}" \
-  --network acme_net \
+  --network "$test_net" \
   nginx:alpine > /dev/null ; \
 then
   echo "Failed to start test web server for ${domains[2]}"
@@ -88,7 +100,7 @@ fi
 wait_for_symlink "${domains[2]}" "$le_container_name"
 
 # Test if the expected folder / file / content are there.
-json_file="/etc/acme.sh/${container_email}/ca/pebble/account.json"
+json_file="/etc/acme.sh/${container_email}/ca/$ACME_CA/account.json"
 if docker exec "$le_container_name" [[ ! -d "/etc/acme.sh/$container_email" ]]; then
   echo "The /etc/acme.sh/$container_email folder does not exist."
 elif docker exec "$le_container_name" [[ ! -f "$json_file" ]]; then

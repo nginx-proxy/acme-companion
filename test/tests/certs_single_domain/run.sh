@@ -2,6 +2,18 @@
 
 ## Test for spliting SAN certificates into single domain certificates by NGINX container env variables
 
+case $ACME_CA in
+  pebble)
+    test_net='acme_net'
+  ;;
+  boulder)
+    test_net='boulder_bluenet'
+  ;;
+  *)
+    echo "$0 $ACME_CA: invalid option."
+    exit 1
+esac
+
 if [[ -z $GITHUB_ACTIONS ]]; then
   le_container_name="$(basename "${0%/*}")_$(date "+%Y-%m-%d_%H.%M.%S")"
 else
@@ -47,7 +59,7 @@ for hosts in "${letsencrypt_hosts[@]}"; do
     -e "VIRTUAL_HOST=${TEST_DOMAINS}" \
     -e "LETSENCRYPT_HOST=${hosts}" \
     -e "LETSENCRYPT_SINGLE_DOMAIN_CERTS=true" \
-    --network acme_net \
+    --network "$test_net" \
     nginx:alpine > /dev/null;
   then
     echo "Could not start test web server for $hosts"

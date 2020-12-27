@@ -2,6 +2,22 @@
 
 set -e
 
+case $ACME_CA in
+
+  pebble)
+    test_net='acme_net'
+  ;;
+
+  boulder)
+    test_net='boulder_bluenet'
+  ;;
+
+  *)
+    echo "$0 $ACME_CA: invalid option."
+    exit 1
+
+esac
+
 case $SETUP in
 
   2containers)
@@ -13,7 +29,7 @@ case $SETUP in
       -v /usr/share/nginx/html \
       -v /var/run/docker.sock:/tmp/docker.sock:ro \
       --label com.github.jrcs.letsencrypt_nginx_proxy_companion.test_suite \
-      --network acme_net \
+      --network "$test_net" \
       jwilder/nginx-proxy
     ;;
 
@@ -27,7 +43,7 @@ case $SETUP in
       -v /etc/nginx/vhost.d \
       -v /usr/share/nginx/html \
       --label com.github.jrcs.letsencrypt_nginx_proxy_companion.test_suite \
-      --network acme_net \
+      --network "$test_net" \
       nginx:alpine
 
     docker run -d \
@@ -36,7 +52,7 @@ case $SETUP in
       -v "${GITHUB_WORKSPACE}/nginx.tmpl:/etc/docker-gen/templates/nginx.tmpl:ro" \
       -v /var/run/docker.sock:/tmp/docker.sock:ro \
       --label com.github.jrcs.letsencrypt_nginx_proxy_companion.test_suite \
-      --network acme_net \
+      --network "$test_net" \
       jwilder/docker-gen \
       -notify-sighup "$NGINX_CONTAINER_NAME" -watch /etc/docker-gen/templates/nginx.tmpl /etc/nginx/conf.d/default.conf
     ;;

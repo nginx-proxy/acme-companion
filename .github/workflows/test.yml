@@ -71,7 +71,7 @@ jobs:
           name: docker-gen.tar
           path: docker-gen.tar
 
-  docker-specs-testing:
+  docker-specs-tests:
     needs: companion-build
     runs-on: ubuntu-latest
 
@@ -92,7 +92,7 @@ jobs:
       - if: ${{ failure() }}
         run: test/github_actions/containers-logs.sh
 
-  integration-testing:
+  integration-tests:
     needs: 
       - companion-build
       - nginx-proxy-build
@@ -100,6 +100,7 @@ jobs:
       fail-fast: false
       matrix:
         setup: [2containers, 3containers]
+        acme-ca: [pebble]
         test-name:
           [
             docker_api,
@@ -112,12 +113,18 @@ jobs:
             force_renew,
             acme_accounts,
             private_keys,
-            ocsp_must_staple,
             container_restart,
             permissions_default,
             permissions_custom,
             symlinks,
           ]
+        include:
+          - setup: 2containers
+            test-name: ocsp_must_staple
+            acme-ca: boulder
+          - setup: 3containers
+            test-name: ocsp_must_staple
+            acme-ca: boulder
     runs-on: ubuntu-latest
 
     steps:
@@ -133,7 +140,11 @@ jobs:
               echo "127.0.0.1 $domain" | sudo tee -a /etc/hosts
           done
       - name: Setup Pebble
+        if: ${{ matrix.acme-ca == 'pebble' }}
         run: test/setup/setup-pebble.sh
+      - name: Setup Boulder
+        if: ${{ matrix.acme-ca == 'boulder' }}
+        run: test/setup/setup-boulder.sh
       - name: Download nginx-proxy Patched Image
         uses: actions/download-artifact@v2
         with:
@@ -149,6 +160,7 @@ jobs:
       - name: Setup NGINX Proxy
         env:
           SETUP: ${{ matrix.setup }}
+          ACME_CA: ${{ matrix.acme-ca }}
         run: test/setup/setup-nginx-proxy.sh
       # ADD BUILDED IMAGE
       - name: Download Builded Image
@@ -161,6 +173,10 @@ jobs:
       - name: Integration Testing
         env:
           SETUP: ${{ matrix.setup }}
+          ACME_CA: ${{ matrix.acme-ca }}
         run: test/run.sh -t ${{ matrix.test-name }} "$IMAGE"
       - if: ${{ failure() }}
+        env:
+          SETUP: ${{ matrix.setup }}
+          ACME_CA: ${{ matrix.acme-ca }}
         run: test/github_actions/containers-logs.sh
