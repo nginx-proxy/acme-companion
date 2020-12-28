@@ -46,7 +46,7 @@ for hosts in "${letsencrypt_hosts[@]}"; do
   container="test$i"
 
   # Run an Nginx container passing one of the comma separated list as LETSENCRYPT_HOST env var.
-  run_nginx_container "$hosts" "$container"
+  run_nginx_container --hosts "$hosts" --name "$container"
 
   # Wait for a symlink at /etc/nginx/certs/$base_domain.crt
   if wait_for_symlink "$base_domain" "$le_container_name" "./${base_domain}/fullchain.pem"; then

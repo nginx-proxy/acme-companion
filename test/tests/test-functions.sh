@@ -58,11 +58,37 @@ export -f run_le_container
 
 # Run an nginx container
 function run_nginx_container {
-  local le_host="${1:?}"
-  local virtual_host="${le_host// /}"; virtual_host="${virtual_host//.,/,}"; virtual_host="${virtual_host%,}"
-  local container_name="${2:-$virtual_host}"
-  
   local -a cli_args_arr
+
+  while [[ $# -gt 0 ]]; do
+  local flag="$1"
+
+    case $flag in
+      -h|--hosts)
+      local le_host="${2:?}"
+      local virtual_host="${le_host// /}"; virtual_host="${virtual_host//.,/,}"; virtual_host="${virtual_host%,}"
+      shift 2
+      ;;
+
+      -n|--name)
+      local container_name="${2:?}"
+      shift 2
+      ;;
+
+      -c|--cli-args)
+      local cli_args_str="${2:?}"
+      for arg in $cli_args_str; do
+        cli_args_arr+=("$arg")
+      done
+      shift 2
+      ;;
+
+      *) #Unknown option
+      shift
+      ;;
+    esac
+  done
+
   if [[ "$ACME_CA" == 'boulder' ]]; then
     cli_args_arr+=(--network boulder_bluenet)
   elif [[ "$ACME_CA" == 'pebble' ]]; then
@@ -71,9 +97,10 @@ function run_nginx_container {
     return 1
   fi
 
-  [[ "${DRY_RUN:-}" == 1 ]] && echo "Starting $container_name nginx container, with environment variables VIRTUAL_HOST=$virtual_host and LETSENCRYPT_HOST=$le_host"
+  [[ "${DRY_RUN:-}" == 1 ]] && echo "Starting $container_name nginx container, with VIRTUAL_HOST=$virtual_host, LETSENCRYPT_HOST=$le_host and the following cli arguments : ${cli_args_arr[*]}."
+  
   if docker run --rm -d \
-    --name "$container_name" \
+    --name "${container_name:-$virtual_host}" \
     -e "VIRTUAL_HOST=$virtual_host" \
     -e "LETSENCRYPT_HOST=$le_host" \
     "${cli_args_arr[@]}" \
@@ -81,7 +108,7 @@ function run_nginx_container {
   then
     [[ "${DRY_RUN:-}" == 1 ]] && echo "Started $container_name nginx container."
   else
-    echo "Failed to start test web server for $le_host"
+    echo "Failed to start $container_name nginx container, with VIRTUAL_HOST=$virtual_host, LETSENCRYPT_HOST=$le_host and the following cli arguments : ${cli_args_arr[*]}."
     return 1
   fi
   return 0

@@ -2,18 +2,6 @@
 
 ## Test for ACME accounts handling.
 
-case $ACME_CA in
-  pebble)
-    test_net='acme_net'
-  ;;
-  boulder)
-    test_net='boulder_bluenet'
-  ;;
-  *)
-    echo "$0 $ACME_CA: invalid option."
-    exit 1
-esac
-
 if [[ -z $GITHUB_ACTIONS ]]; then
   le_container_name="$(basename "${0%/*}")_$(date "+%Y-%m-%d_%H.%M.%S")"
 else
@@ -38,7 +26,7 @@ function cleanup {
 trap cleanup EXIT
 
 # Run an nginx container for ${domains[0]}.
-run_nginx_container "${domains[0]}"
+run_nginx_container --hosts "${domains[0]}"
 
 # Wait for a symlink at /etc/nginx/certs/${domains[0]}.crt
 wait_for_symlink "${domains[0]}" "$le_container_name"
@@ -65,7 +53,7 @@ le_container_name="${le_container_name}_default"
 run_le_container "${1:?}" "$le_container_name" "--env DEFAULT_EMAIL=${default_email}"
 
 # Run an nginx container for ${domains[1]} without LETSENCRYPT_EMAIL set.
-run_nginx_container "${domains[1]}"
+run_nginx_container --hosts "${domains[1]}"
 
 # Wait for a symlink at /etc/nginx/certs/${domains[1]}.crt
 wait_for_symlink "${domains[1]}" "$le_container_name"
@@ -83,18 +71,7 @@ fi
 
 # Run an nginx container for ${domains[2]} with LETSENCRYPT_EMAIL set.
 container_email="contact@${domains[2]}"
-if ! docker run --rm -d \
-  --name "${domains[2]}" \
-  -e "VIRTUAL_HOST=${domains[2]}" \
-  -e "LETSENCRYPT_HOST=${domains[2]}" \
-  -e "LETSENCRYPT_EMAIL=${container_email}" \
-  --network "$test_net" \
-  nginx:alpine > /dev/null ; \
-then
-  echo "Failed to start test web server for ${domains[2]}"
-elif [[ "${DRY_RUN:-}" == 1 ]]; then
-  echo "Started test web server for ${domains[2]}"
-fi
+run_nginx_container --hosts "${domains[2]}" --cli-args "--env LETSENCRYPT_EMAIL=${container_email}"
 
 # Wait for a symlink at /etc/nginx/certs/${domains[2]}.crt
 wait_for_symlink "${domains[2]}" "$le_container_name"

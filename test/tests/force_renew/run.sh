@@ -24,7 +24,7 @@ function cleanup {
 trap cleanup EXIT
 
 # Run a nginx container for ${domains[0]}.
-run_nginx_container "${domains[0]}"
+run_nginx_container --hosts "${domains[0]}"
 
 # Wait for a symlink at /etc/nginx/certs/${domains[0]}.crt
 # Grab the expiration time of the certificate

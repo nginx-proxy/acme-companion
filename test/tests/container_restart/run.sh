@@ -2,18 +2,6 @@
 
 ## Test for LETSENCRYPT_RESTART_CONTAINER variable.
 
-case $ACME_CA in
-  pebble)
-    test_net='acme_net'
-  ;;
-  boulder)
-    test_net='boulder_bluenet'
-  ;;
-  *)
-    echo "$0 $ACME_CA: invalid option."
-    exit 1
-esac
-
 if [[ -z $GITHUB_ACTIONS ]]; then
   le_container_name="$(basename "${0%/*}")_$(date "+%Y-%m-%d_%H.%M.%S")"
 else
@@ -49,18 +37,7 @@ trap cleanup EXIT
 
 # Run a separate nginx container for each domain in the $domains array.
 for domain in "${domains[@]}"; do
-  if docker run --rm -d \
-    --name "$domain" \
-    -e "VIRTUAL_HOST=${domain}" \
-    -e "LETSENCRYPT_HOST=${domain}" \
-    -e "LETSENCRYPT_RESTART_CONTAINER=true" \
-    --network "$test_net" \
-    nginx:alpine > /dev/null; \
-  then
-    [[ "${DRY_RUN:-}" == 1 ]] && echo "Started test web server for $domain"
-  else
-    echo "Could not start test web server for $domain"
-  fi
+  run_nginx_container --hosts "$domain" --cli-args "--env LETSENCRYPT_RESTART_CONTAINER=true"
 
   # Check if container restarted
   timeout="$(date +%s)"

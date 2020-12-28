@@ -30,7 +30,7 @@ function cleanup {
 trap cleanup EXIT
 
 # Run an nginx container for ${domains[0]}.
-run_nginx_container "${domains[0]}"
+run_nginx_container --hosts "${domains[0]}"
 
 # Wait for the cert symlink.
 wait_for_symlink "${domains[0]}" "$le_container_name"

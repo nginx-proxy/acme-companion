@@ -2,18 +2,6 @@
 
 ## Test for OCSP Must-Staple extension.
 
-case $ACME_CA in
-  pebble)
-    test_net='acme_net'
-  ;;
-  boulder)
-    test_net='boulder_bluenet'
-  ;;
-  *)
-    echo "$0 $ACME_CA: invalid option."
-    exit 1
-esac
-
 if [[ -z $GITHUB_ACTIONS ]]; then
   le_container_name="$(basename "${0%/*}")_$(date "+%Y-%m-%d_%H.%M.%S")"
 else
@@ -38,21 +26,10 @@ function cleanup {
 trap cleanup EXIT
 
 # Run an nginx container with ACME_OCSP=true
-if docker run --rm -d \
-  --name "${domains[0]}" \
-  -e "VIRTUAL_HOST=${domains[0]}" \
-  -e "LETSENCRYPT_HOST=${domains[0]}" \
-  -e "ACME_OCSP=true" \
-  --network "$test_net" \
-  nginx:alpine > /dev/null; \
-then
-  [[ "${DRY_RUN:-}" == 1 ]] && echo "Started test web server for ${domains[0]} (ACME_OCSP=true)"
-else
-  echo "Could not start test web server for ${domains[0]} (ACME_OCSP=true)"
-fi
+run_nginx_container --hosts "${domains[0]}" --cli-args "--env ACME_OCSP=true"
 
 # Run an second nginx container without ACME_OCSP=true
-run_nginx_container "${domains[1]}"
+run_nginx_container --hosts "${domains[1]}"
 
 # Wait for the symlink to the ${domains[0]} certificate
 wait_for_symlink "${domains[0]}" "$le_container_name"
