@@ -22,19 +22,29 @@ function run_le_container {
   if [[ "$SETUP" == '3containers' ]]; then
     cli_args_arr+=(--env "NGINX_DOCKER_GEN_CONTAINER=$DOCKER_GEN_CONTAINER_NAME")
   fi
-  
+
+  if [[ "$ACME_CA" == 'boulder' ]]; then
+    cli_args_arr+=(--env "ACME_CA_URI=http://boulder:4001/directory")
+    cli_args_arr+=(--network boulder_bluenet)
+  elif [[ "$ACME_CA" == 'pebble' ]]; then
+    cli_args_arr+=(--env "ACME_CA_URI=https://pebble:14000/dir")
+    cli_args_arr+=(--env "CA_BUNDLE=/pebble.minica.pem")
+    cli_args_arr+=(--network acme_net)
+  else
+    return 1
+  fi
+
   if docker run -d \
     --name "$name" \
     --volumes-from "$NGINX_CONTAINER_NAME" \
     --volume /var/run/docker.sock:/var/run/docker.sock:ro \
+    --volume "${GITHUB_WORKSPACE}/pebble.minica.pem:/pebble.minica.pem" \
     "${cli_args_arr[@]}" \
     --env "DOCKER_GEN_WAIT=500ms:2s" \
     --env "TEST_MODE=true" \
     --env "DHPARAM_BITS=256" \
     --env "DEBUG=1" \
-    --env "ACME_CA_URI=http://boulder:4001/directory" \
     --label com.github.jrcs.letsencrypt_nginx_proxy_companion.test_suite \
-    --network boulder_bluenet \
     "$image" > /dev/null; \
   then
     [[ "${DRY_RUN:-}" == 1 ]] && echo "Started letsencrypt container for test ${name%%_2*}"
@@ -48,20 +58,58 @@ export -f run_le_container
 
 # Run an nginx container
 function run_nginx_container {
-  local le_host="${1:?}"
-  local virtual_host="${le_host// /}"; virtual_host="${virtual_host//.,/,}"; virtual_host="${virtual_host%,}"
-  local container_name="${2:-$virtual_host}"
-  [[ "${DRY_RUN:-}" == 1 ]] && echo "Starting $container_name nginx container, with environment variables VIRTUAL_HOST=$virtual_host and LETSENCRYPT_HOST=$le_host"
+  local -a cli_args_arr
+
+  while [[ $# -gt 0 ]]; do
+  local flag="$1"
+
+    case $flag in
+      -h|--hosts)
+      local le_host="${2:?}"
+      local virtual_host="${le_host// /}"; virtual_host="${virtual_host//.,/,}"; virtual_host="${virtual_host%,}"
+      shift 2
+      ;;
+
+      -n|--name)
+      local container_name="${2:?}"
+      shift 2
+      ;;
+
+      -c|--cli-args)
+      local cli_args_str="${2:?}"
+      for arg in $cli_args_str; do
+        cli_args_arr+=("$arg")
+      done
+      shift 2
+      ;;
+
+      *) #Unknown option
+      shift
+      ;;
+    esac
+  done
+
+  if [[ "$ACME_CA" == 'boulder' ]]; then
+    cli_args_arr+=(--network boulder_bluenet)
+  elif [[ "$ACME_CA" == 'pebble' ]]; then
+    cli_args_arr+=(--network acme_net)
+  else
+    return 1
+  fi
+
+  [[ "${DRY_RUN:-}" == 1 ]] && echo "Starting $container_name nginx container, with VIRTUAL_HOST=$virtual_host, LETSENCRYPT_HOST=$le_host and the following cli arguments : ${cli_args_arr[*]}."
+  
   if docker run --rm -d \
-    --name "$container_name" \
+    --name "${container_name:-$virtual_host}" \
     -e "VIRTUAL_HOST=$virtual_host" \
     -e "LETSENCRYPT_HOST=$le_host" \
-    --network boulder_bluenet \
+    --label com.github.jrcs.letsencrypt_nginx_proxy_companion.test_suite \
+    "${cli_args_arr[@]}" \
     nginx:alpine > /dev/null ; \
   then
     [[ "${DRY_RUN:-}" == 1 ]] && echo "Started $container_name nginx container."
   else
-    echo "Failed to start test web server for $le_host"
+    echo "Failed to start $container_name nginx container, with VIRTUAL_HOST=$virtual_host, LETSENCRYPT_HOST=$le_host and the following cli arguments : ${cli_args_arr[*]}."
     return 1
   fi
   return 0

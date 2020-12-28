@@ -37,18 +37,7 @@ trap cleanup EXIT
 
 # Run a separate nginx container for each domain in the $domains array.
 for domain in "${domains[@]}"; do
-  if docker run --rm -d \
-    --name "$domain" \
-    -e "VIRTUAL_HOST=${domain}" \
-    -e "LETSENCRYPT_HOST=${domain}" \
-    -e "LETSENCRYPT_RESTART_CONTAINER=true" \
-    --network boulder_bluenet \
-    nginx:alpine > /dev/null; \
-  then
-    [[ "${DRY_RUN:-}" == 1 ]] && echo "Started test web server for $domain"
-  else
-    echo "Could not start test web server for $domain"
-  fi
+  run_nginx_container --hosts "$domain" --cli-args "--env LETSENCRYPT_RESTART_CONTAINER=true"
 
   # Check if container restarted
   timeout="$(date +%s)"

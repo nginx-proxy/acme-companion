@@ -26,21 +26,10 @@ function cleanup {
 trap cleanup EXIT
 
 # Run an nginx container with ACME_OCSP=true
-if docker run --rm -d \
-  --name "${domains[0]}" \
-  -e "VIRTUAL_HOST=${domains[0]}" \
-  -e "LETSENCRYPT_HOST=${domains[0]}" \
-  -e "ACME_OCSP=true" \
-  --network boulder_bluenet \
-  nginx:alpine > /dev/null; \
-then
-  [[ "${DRY_RUN:-}" == 1 ]] && echo "Started test web server for ${domains[0]} (ACME_OCSP=true)"
-else
-  echo "Could not start test web server for ${domains[0]} (ACME_OCSP=true)"
-fi
+run_nginx_container --hosts "${domains[0]}" --cli-args "--env ACME_OCSP=true"
 
 # Run an second nginx container without ACME_OCSP=true
-run_nginx_container "${domains[1]}"
+run_nginx_container --hosts "${domains[1]}"
 
 # Wait for the symlink to the ${domains[0]} certificate
 wait_for_symlink "${domains[0]}" "$le_container_name"

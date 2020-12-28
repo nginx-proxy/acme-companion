@@ -42,18 +42,7 @@ for hosts in "${letsencrypt_hosts[@]}"; do
   container="test$i"
 
   # Run an Nginx container passing one of the comma separated list as LETSENCRYPT_HOST env var.
-  if ! docker run --rm -d \
-    --name "$container" \
-    -e "VIRTUAL_HOST=${TEST_DOMAINS}" \
-    -e "LETSENCRYPT_HOST=${hosts}" \
-    -e "LETSENCRYPT_SINGLE_DOMAIN_CERTS=true" \
-    --network boulder_bluenet \
-    nginx:alpine > /dev/null;
-  then
-    echo "Could not start test web server for $hosts"
-  elif [[ "${DRY_RUN:-}" == 1 ]]; then
-    echo "Started test web server for $hosts"
-  fi
+  run_nginx_container --hosts "${hosts}" --name "$container" --cli-args "--env LETSENCRYPT_SINGLE_DOMAIN_CERTS=true"
 
   for domain in "${domains[@]}"; do
       ## For all the domains in the $domains array ...
