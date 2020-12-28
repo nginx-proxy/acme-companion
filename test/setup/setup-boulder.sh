@@ -10,7 +10,7 @@ setup_boulder() {
     && git clone https://github.com/letsencrypt/boulder \
       "$GOPATH/src/github.com/letsencrypt/boulder"
   pushd "$GOPATH/src/github.com/letsencrypt/boulder"
-  git checkout release-2020-10-19
+  git checkout release-2020-12-14
   if [[ "$(uname)" == 'Darwin' ]]; then
     # Set Standard Ports
     for file in test/config/va.json test/config/va-remote-a.json test/config/va-remote-b.json; do
