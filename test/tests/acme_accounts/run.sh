@@ -33,11 +33,16 @@ wait_for_symlink "${domains[0]}" "$le_container_name"
 
 # Test if the expected folder / file / content are there.
 json_file="/etc/acme.sh/default/ca/$ACME_CA/account.json"
+if [[ "$ACME_CA" == 'boulder' ]]; then
+  no_mail_str='[]'
+elif [[ "$ACME_CA" == 'pebble' ]]; then
+  no_mail_str='null'
+fi
 if docker exec "$le_container_name" [[ ! -d "/etc/acme.sh/default" ]]; then
   echo "The /etc/acme.sh/default folder does not exist."
 elif docker exec "$le_container_name" [[ ! -f "$json_file" ]]; then
   echo "The $json_file file does not exist."
-elif [[ "$(docker exec "$le_container_name" jq .contact "$json_file")" != 'null' ]]; then
+elif [[ "$(docker exec "$le_container_name" jq .contact "$json_file")" != "$no_mail_str" ]]; then
   echo "There is an address set on ${json_file}."
   docker exec "$le_container_name" jq . "$json_file"
   docker exec "$le_container_name" jq .contact "$json_file"

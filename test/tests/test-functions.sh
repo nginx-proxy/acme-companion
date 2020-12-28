@@ -103,6 +103,7 @@ function run_nginx_container {
     --name "${container_name:-$virtual_host}" \
     -e "VIRTUAL_HOST=$virtual_host" \
     -e "LETSENCRYPT_HOST=$le_host" \
+    --label com.github.jrcs.letsencrypt_nginx_proxy_companion.test_suite \
     "${cli_args_arr[@]}" \
     nginx:alpine > /dev/null ; \
   then

@@ -13,6 +13,7 @@ setup_pebble() {
         --network acme_net \
         --ip="10.30.50.2" \
         --publish 14000:14000 \
+        --label com.github.jrcs.letsencrypt_nginx_proxy_companion.test_suite \
         letsencrypt/pebble:v2.3.1 \
         pebble -config /test/config/pebble-config.json -dnsserver 10.30.50.3:8053
 
@@ -21,6 +22,7 @@ setup_pebble() {
         --network acme_net \
         --ip="10.30.50.3" \
         --publish 8055:8055 \
+        --label com.github.jrcs.letsencrypt_nginx_proxy_companion.test_suite \
         letsencrypt/pebble-challtestsrv:v2.3.1 \
         pebble-challtestsrv -tlsalpn01 ""
 }
