@@ -3,7 +3,7 @@
 # shellcheck source=functions.sh
 source /app/functions.sh
 
-SECONDS_TO_WAIT="${SECONDS_TO_WAIT:-3600}"
+CERTS_UPDATE_INTERVAL="${CERTS_UPDATE_INTERVAL:-3600}"
 ACME_CA_URI="${ACME_CA_URI:-"https://acme-v02.api.letsencrypt.org/directory"}"
 ACME_CA_TEST_URI="https://acme-staging-v02.api.letsencrypt.org/directory"
 DEFAULT_KEY_SIZE="${DEFAULT_KEY_SIZE:-4096}"
@@ -418,7 +418,7 @@ trap 'trap - EXIT' INT TERM
 update_certs "$@"
 
 # Wait some amount of time
-echo "Sleep for ${SECONDS_TO_WAIT}s"
-sleep $SECONDS_TO_WAIT & pid=$!
+echo "Sleep for ${CERTS_UPDATE_INTERVAL}s"
+sleep $CERTS_UPDATE_INTERVAL & pid=$!
 wait
 pid=
