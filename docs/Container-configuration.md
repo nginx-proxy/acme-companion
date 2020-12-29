@@ -25,4 +25,4 @@ You can also create test certificates per container (see [Test certificates](./L
 
 * `CA_BUNDLE` - This is a test only variable [for use with Pebble](https://github.com/letsencrypt/pebble#avoiding-client-https-errors). It changes the trusted root CA used by `acme.sh`, from the default Alpine trust store to the CA bundle file located at the provided path (inside the container). Do **not** use it in production unless you are running your own ACME CA.
 
-* `CERTS_UPDATE_INTERVAL` - 1 hour by default, this defines how often the container will check if the certificates require update.
+* `CERTS_UPDATE_INTERVAL` - 3600 seconds by default, this defines how often the container will check if the certificates require update.
