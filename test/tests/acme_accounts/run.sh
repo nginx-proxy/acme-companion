@@ -26,20 +26,26 @@ function cleanup {
 trap cleanup EXIT
 
 # Run an nginx container for ${domains[0]}.
-run_nginx_container "${domains[0]}"
+run_nginx_container --hosts "${domains[0]}"
 
 # Wait for a symlink at /etc/nginx/certs/${domains[0]}.crt
 wait_for_symlink "${domains[0]}" "$le_container_name"
 
 # Test if the expected folder / file / content are there.
-json_file="/etc/acme.sh/default/ca/boulder/account.json"
+json_file="/etc/acme.sh/default/ca/$ACME_CA/account.json"
+if [[ "$ACME_CA" == 'boulder' ]]; then
+  no_mail_str='[]'
+elif [[ "$ACME_CA" == 'pebble' ]]; then
+  no_mail_str='null'
+fi
 if docker exec "$le_container_name" [[ ! -d "/etc/acme.sh/default" ]]; then
   echo "The /etc/acme.sh/default folder does not exist."
 elif docker exec "$le_container_name" [[ ! -f "$json_file" ]]; then
   echo "The $json_file file does not exist."
-elif [[ "$(docker exec "$le_container_name" jq .contact "$json_file")" != '[]' ]]; then
+elif [[ "$(docker exec "$le_container_name" jq .contact "$json_file")" != "$no_mail_str" ]]; then
   echo "There is an address set on ${json_file}."
   docker exec "$le_container_name" jq . "$json_file"
+  docker exec "$le_container_name" jq .contact "$json_file"
 fi
 
 # Stop the nginx and companion containers silently.
@@ -52,13 +58,13 @@ le_container_name="${le_container_name}_default"
 run_le_container "${1:?}" "$le_container_name" "--env DEFAULT_EMAIL=${default_email}"
 
 # Run an nginx container for ${domains[1]} without LETSENCRYPT_EMAIL set.
-run_nginx_container "${domains[1]}"
+run_nginx_container --hosts "${domains[1]}"
 
 # Wait for a symlink at /etc/nginx/certs/${domains[1]}.crt
 wait_for_symlink "${domains[1]}" "$le_container_name"
 
 # Test if the expected folder / file / content are there.
-json_file="/etc/acme.sh/${default_email}/ca/boulder/account.json"
+json_file="/etc/acme.sh/${default_email}/ca/$ACME_CA/account.json"
 if docker exec "$le_container_name" [[ ! -d "/etc/acme.sh/$default_email" ]]; then
   echo "The /etc/acme.sh/$default_email folder does not exist."
 elif docker exec "$le_container_name" [[ ! -f "$json_file" ]]; then
@@ -70,24 +76,13 @@ fi
 
 # Run an nginx container for ${domains[2]} with LETSENCRYPT_EMAIL set.
 container_email="contact@${domains[2]}"
-if ! docker run --rm -d \
-  --name "${domains[2]}" \
-  -e "VIRTUAL_HOST=${domains[2]}" \
-  -e "LETSENCRYPT_HOST=${domains[2]}" \
-  -e "LETSENCRYPT_EMAIL=${container_email}" \
-  --network boulder_bluenet \
-  nginx:alpine > /dev/null ; \
-then
-  echo "Failed to start test web server for ${domains[2]}"
-elif [[ "${DRY_RUN:-}" == 1 ]]; then
-  echo "Started test web server for ${domains[2]}"
-fi
+run_nginx_container --hosts "${domains[2]}" --cli-args "--env LETSENCRYPT_EMAIL=${container_email}"
 
 # Wait for a symlink at /etc/nginx/certs/${domains[2]}.crt
 wait_for_symlink "${domains[2]}" "$le_container_name"
 
 # Test if the expected folder / file / content are there.
-json_file="/etc/acme.sh/${container_email}/ca/boulder/account.json"
+json_file="/etc/acme.sh/${container_email}/ca/$ACME_CA/account.json"
 if docker exec "$le_container_name" [[ ! -d "/etc/acme.sh/$container_email" ]]; then
   echo "The /etc/acme.sh/$container_email folder does not exist."
 elif docker exec "$le_container_name" [[ ! -f "$json_file" ]]; then

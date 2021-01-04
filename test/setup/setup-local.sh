@@ -49,8 +49,31 @@ function get_environment {
       esac
     done
   fi
-
   export SETUP="${SETUP:-$setup}"
+
+  if [[ -z $ACME_CA ]]; then
+    while true; do
+      echo "Which ACME CA do you want to use or remove ?"
+      echo ""
+      echo "    1) Boulder https://github.com/letsencrypt/boulder"
+      echo "    2) Pebble  https://github.com/letsencrypt/pebble"
+      read -re -p "Select an option [1-2]: " option
+      case $option in
+        1)
+        acme_ca="boulder"
+        break
+        ;;
+        2)
+        acme_ca="pebble"
+        break
+        ;;
+        *)
+        :
+        ;;
+      esac
+    done
+  fi
+  export ACME_CA="${ACME_CA:-$acme_ca}"
 }
 
 case $1 in
@@ -64,13 +87,18 @@ export NGINX_CONTAINER_NAME="$NGINX_CONTAINER_NAME"
 export DOCKER_GEN_CONTAINER_NAME="$DOCKER_GEN_CONTAINER_NAME"
 export TEST_DOMAINS="$TEST_DOMAINS"
 export SETUP="$SETUP"
+export ACME_CA="$ACME_CA"
 EOF
 
     # Add the required custom entries to /etc/hosts
     echo "Adding custom entries to /etc/hosts (requires sudo)."
-    for domain in "${domains[@]}"; do
-      grep -q "127.0.0.1 $domain # le-companion test suite" /etc/hosts \
-        || echo "127.0.0.1 $domain # le-companion test suite" \
+    declare -a hosts=("${domains[@]}")
+    if [[ "$ACME_CA" == 'pebble' ]]; then
+      hosts+=(pebble pebble-challtestsrv)
+    fi
+    for host in "${hosts[@]}"; do
+      grep -q "127.0.0.1 $host # le-companion test suite" /etc/hosts \
+        || echo "127.0.0.1 $host # le-companion test suite" \
         | sudo tee -a /etc/hosts
     done
 
@@ -78,7 +106,14 @@ EOF
     docker pull nginx:alpine
 
     # Prepare the test setup using the setup scripts
-    "${GITHUB_WORKSPACE}/test/setup/setup-boulder.sh"
+    if [[ "$ACME_CA" == 'boulder' ]]; then
+      "${GITHUB_WORKSPACE}/test/setup/setup-boulder.sh"
+    elif [[ "$ACME_CA" == 'pebble' ]]; then
+      "${GITHUB_WORKSPACE}/test/setup/setup-pebble.sh"
+    else
+      echo "ACME_CA is not set, aborting."
+      exit 1
+    fi
     "${GITHUB_WORKSPACE}/test/setup/setup-nginx-proxy.sh"
     ;;
 
@@ -91,14 +126,19 @@ EOF
       docker rm --volumes "$cid"
     done
 
-    # Stop and remove boulder
-    docker-compose --project-name 'boulder' \
-      --file "${GITHUB_WORKSPACE}/go/src/github.com/letsencrypt/boulder/docker-compose.yml" \
-      down --volumes
+    if [[ "$ACME_CA" == 'boulder' ]]; then
+      # Stop and remove boulder
+      docker-compose --project-name 'boulder' \
+        --file "${GITHUB_WORKSPACE}/go/src/github.com/letsencrypt/boulder/docker-compose.yml" \
+        down --volumes
+    elif [[ "$ACME_CA" == 'pebble' ]]; then
+      docker network rm acme_net
+      [[ -f "${GITHUB_WORKSPACE}/pebble.minica.pem" ]] && rm "${GITHUB_WORKSPACE}/pebble.minica.pem"
+    fi
 
     # Cleanup files created by the setup
     if [[ -n "${GITHUB_WORKSPACE// }" ]]; then
-      [[ -f "${GITHUB_WORKSPACE}/nginx.tmpl" ]]&& rm "${GITHUB_WORKSPACE}/nginx.tmpl"
+      [[ -f "${GITHUB_WORKSPACE}/nginx.tmpl" ]] && rm "${GITHUB_WORKSPACE}/nginx.tmpl"
       rm "${GITHUB_WORKSPACE}/test/local_test_env.sh"
       echo "The ${GITHUB_WORKSPACE}/go folder require superuser permission to fully remove."
       echo "Doing sudo rm -rf in scripts is dangerous, so the folder won't be automatically removed."
@@ -106,11 +146,15 @@ EOF
 
     # Remove custom entries to /etc/hosts
     echo "Removing custom entries from /etc/hosts (requires sudo)."
-    for domain in "${domains[@]}"; do
+    declare -a hosts=("${domains[@]}")
+    if [[ "$ACME_CA" == 'pebble' ]]; then
+      hosts+=(pebble pebble-challtestsrv)
+    fi
+    for host in "${hosts[@]}"; do
       if [[ "$(uname)" == 'Darwin' ]]; then
-        sudo sed -i '' "/127\.0\.0\.1 $domain # le-companion test suite/d" /etc/hosts
+        sudo sed -i '' "/127\.0\.0\.1 $host # le-companion test suite/d" /etc/hosts
       else
-        sudo sed --in-place "/127\.0\.0\.1 $domain # le-companion test suite/d" /etc/hosts
+        sudo sed --in-place "/127\.0\.0\.1 $host # le-companion test suite/d" /etc/hosts
       fi
     done
     ;;

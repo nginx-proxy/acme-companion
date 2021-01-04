@@ -30,10 +30,10 @@ function cleanup {
 trap cleanup EXIT
 
 # Run a nginx container for the firs two domain in the $domains array ...
-run_nginx_container "${domains[0]},${domains[1]}" "symlink-le1-le2"
+run_nginx_container --hosts "${domains[0]},${domains[1]}" --name "symlink-le1-le2"
 
 # ... plus another nginx container for the third domain.
-run_nginx_container "${domains[2]}" "symlink-le3"
+run_nginx_container --hosts "${domains[2]}" --name "symlink-le3"
 
 # Wait for a file at /etc/nginx/certs/$domain/cert.pem
 wait_for_symlink "${domains[0]}" "$le_container_name" "./${domains[0]}/fullchain.pem"
@@ -65,7 +65,7 @@ wait_for_symlink_rm "${domains[2]}" "$le_container_name"
 
 # Start the nginx containers for ${domains[2]} again,
 # and check if the corresponding symlink is re-created.
-run_nginx_container "${domains[2]}" "symlink-le3"
+run_nginx_container --hosts "${domains[2]}" --name "symlink-le3"
 wait_for_symlink "${domains[2]}" "$le_container_name" "./${domains[2]}/fullchain.pem"
 
 # Stop the nginx containers for ${domains[2]} silently and wait for symlink removal.
@@ -73,7 +73,7 @@ docker stop "symlink-le3" > /dev/null
 wait_for_symlink_rm "${domains[2]}" "$le_container_name"
 
 # Move ${domains[2]} to a san certificate with ${domains[0]} and ${domains[1]}
-run_nginx_container "${domains[0]},${domains[1]},${domains[2]}" "symlink-le1-le2-le3"
+run_nginx_container --hosts "${domains[0]},${domains[1]},${domains[2]}" --name "symlink-le1-le2-le3"
 
 # Check where the symlink points (should be ./le1.wtf/fullchain.pem)
 wait_for_symlink "${domains[2]}" "$le_container_name" "./${domains[0]}/fullchain.pem"
@@ -87,7 +87,7 @@ for domain in "${domains[@]}"; do
 done
 
 # Move ${domains[1]} to a new single domain certificate
-run_nginx_container "${domains[1]}" "symlink-le2"
+run_nginx_container --hosts "${domains[1]}" --name "symlink-le2"
 
 # Check where the symlink points (should be ./le2.wtf/fullchain.pem)
 wait_for_symlink "${domains[1]}" "$le_container_name" "./${domains[1]}/fullchain.pem"
@@ -95,7 +95,7 @@ wait_for_symlink "${domains[1]}" "$le_container_name" "./${domains[1]}/fullchain
 # Stop the nginx container silently and try to put ${domains[1]} on a
 # san certificate whose authorization will fail.
 docker stop "symlink-le2" > /dev/null
-run_nginx_container "lim.it,${domains[1]}" "symlink-lim-le2"
+run_nginx_container --hosts "lim.it,${domains[1]}" --name "symlink-lim-le2"
 
 # The symlink creation for lim.it should time out, and the ${domains[1]}
 # symlink should still point to ./le2.wtf/fullchain.pem

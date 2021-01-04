@@ -3,7 +3,7 @@
 # shellcheck source=functions.sh
 source /app/functions.sh
 
-seconds_to_wait=3600
+CERTS_UPDATE_INTERVAL="${CERTS_UPDATE_INTERVAL:-3600}"
 ACME_CA_URI="${ACME_CA_URI:-"https://acme-v02.api.letsencrypt.org/directory"}"
 ACME_CA_TEST_URI="https://acme-staging-v02.api.letsencrypt.org/directory"
 DEFAULT_KEY_SIZE="${DEFAULT_KEY_SIZE:-4096}"
@@ -133,6 +133,16 @@ function update_cert {
     local -a params_base_arr
     params_base_arr+=(--log /dev/null)
     [[ "$DEBUG" == 1 ]] && params_base_arr+=(--debug 2)
+
+    # Alternative trusted root CA path, used for test with Pebble
+    if [[ -n "${CA_BUNDLE// }" ]]; then
+        if [[ -f "$CA_BUNDLE" ]]; then
+            params_base_arr+=(--ca-bundle "$CA_BUNDLE")
+            [[ "$DEBUG" == 1 ]] && echo "Debug: acme.sh will use $CA_BUNDLE as trusted root CA."
+        else
+            echo "Warning: the path to the alternate CA bundle ($CA_BUNDLE) is not valid, using default Alpine trust store."
+        fi
+    fi
 
     # CLI parameters array used for --register-account
     local -a params_register_arr
@@ -408,7 +418,7 @@ trap 'trap - EXIT' INT TERM
 update_certs "$@"
 
 # Wait some amount of time
-echo "Sleep for ${seconds_to_wait}s"
-sleep $seconds_to_wait & pid=$!
+echo "Sleep for ${CERTS_UPDATE_INTERVAL}s"
+sleep $CERTS_UPDATE_INTERVAL & pid=$!
 wait
 pid=

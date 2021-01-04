@@ -28,7 +28,7 @@ trap cleanup EXIT
 # Run a separate nginx container for each domain in the $domains array.
 # Start all the containers in a row so that docker-gen debounce timers fire only once.
 for domain in "${domains[@]}"; do
-  run_nginx_container "$domain"
+  run_nginx_container --hosts "$domain"
 done
 
 for domain in "${domains[@]}"; do

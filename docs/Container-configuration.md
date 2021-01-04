@@ -39,3 +39,7 @@ $ docker run --detach \
 ```
 
 The created companion will discover only the containers, that are also connected to the `domains_group_a` network.
+
+* `CA_BUNDLE` - This is a test only variable [for use with Pebble](https://github.com/letsencrypt/pebble#avoiding-client-https-errors). It changes the trusted root CA used by `acme.sh`, from the default Alpine trust store to the CA bundle file located at the provided path (inside the container). Do **not** use it in production unless you are running your own ACME CA.
+
+* `CERTS_UPDATE_INTERVAL` - 3600 seconds by default, this defines how often the container will check if the certificates require update.

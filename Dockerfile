@@ -1,4 +1,4 @@
-FROM golang:1.15-alpine AS go-builder
+FROM golang:1.15.6-alpine AS go-builder
 
 ENV DOCKER_GEN_VERSION=0.7.4
 
@@ -19,7 +19,7 @@ RUN apk add --no-cache --virtual .build-deps \
     && rm -rf /go/src \
     && apk del .build-deps
 
-FROM alpine:3.12
+FROM alpine:3.12.3
 
 LABEL maintainer="Nicolas Duchon <nicolas.duchon@gmail.com> (@buchdag)"
 
