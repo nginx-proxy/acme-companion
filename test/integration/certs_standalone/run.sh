@@ -36,7 +36,7 @@ function cleanup {
 trap cleanup EXIT
 
 # Create letsencrypt_user_data with a single domain cert
-cat > "${GITHUB_WORKSPACE}/test/tests/certs_standalone/letsencrypt_user_data" <<EOF
+cat > "${GITHUB_WORKSPACE}/test/integration/certs_standalone/letsencrypt_user_data" <<EOF
 LETSENCRYPT_STANDALONE_CERTS=('single')
 LETSENCRYPT_single_HOST=('${domains[0]}')
 EOF
@@ -55,7 +55,7 @@ elif [[ "${DRY_RUN:-}" == 1 ]]; then
 fi
 
 run_le_container "${1:?}" "$le_container_name" \
-  "--volume ${GITHUB_WORKSPACE}/test/tests/certs_standalone/letsencrypt_user_data:/app/letsencrypt_user_data"
+  "--volume ${GITHUB_WORKSPACE}/test/integration/certs_standalone/letsencrypt_user_data:/app/letsencrypt_user_data"
 
 # Wait for a file at /etc/nginx/conf.d/standalone-cert-${domains[0]}.conf
 wait_for_standalone_conf "${domains[0]}" "$le_container_name"
@@ -78,7 +78,7 @@ docker exec "$le_container_name" bash -c "[[ -f /etc/nginx/conf.d/standalone-cer
   && echo "Standalone configuration for ${domains[0]} wasn't correctly removed."
 
 # Add another (SAN) certificate to letsencrypt_user_data
-cat > "${GITHUB_WORKSPACE}/test/tests/certs_standalone/letsencrypt_user_data" <<EOF
+cat > "${GITHUB_WORKSPACE}/test/integration/certs_standalone/letsencrypt_user_data" <<EOF
 LETSENCRYPT_STANDALONE_CERTS=('single' 'san')
 LETSENCRYPT_single_HOST=('${domains[0]}')
 LETSENCRYPT_san_HOST=('${domains[1]}' '${domains[2]}')

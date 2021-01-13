@@ -7,7 +7,7 @@ test_comment='### This is a test comment'
 vhost_path='/etc/nginx/vhost.d'
 
 # Create custom location configuration file to be bind mounted
-location_file="${GITHUB_WORKSPACE}/test/tests/location_config/le2.wtf"
+location_file="${GITHUB_WORKSPACE}/test/integration/location_config/le2.wtf"
 echo "$test_comment" > "$location_file"
 
 # Create le1.wtf configuration file, *.le3.wtf and test.* from inside the nginx container

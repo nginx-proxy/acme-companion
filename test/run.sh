@@ -208,8 +208,8 @@ if [[ -z $GITHUB_ACTIONS ]] && [[ -f "$dir/local_test_env.sh" ]]; then
 	source "$dir/local_test_env.sh"
 fi
 
-# shellcheck source=./tests/test-functions.sh
-source "$dir/tests/test-functions.sh"
+# shellcheck source=./integration/test-functions.sh
+source "$dir/integration/test-functions.sh"
 ## End of additional code
 
 usage() {
@@ -296,12 +296,12 @@ for conf in "${configs[@]}"; do
 	for testName in ${globalTests[@]} ${imageTests[@]}; do
 		[ "${testPaths[$testName]}" ] && continue
 
-		if [ -d "$confDir/tests/$testName" ]; then
+		if [ -d "$confDir/integration/$testName" ]; then
 			# Test directory found relative to the conf file
-			testPaths[$testName]="$confDir/tests/$testName"
-		elif [ -d "$dir/tests/$testName" ]; then
+			testPaths[$testName]="$confDir/integration/$testName"
+		elif [ -d "$dir/integration/$testName" ]; then
 			# Test directory found in the main tests/ directory
-			testPaths[$testName]="$dir/tests/$testName"
+			testPaths[$testName]="$dir/integration/$testName"
 		fi
 	done
 done
