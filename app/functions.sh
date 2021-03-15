@@ -79,13 +79,13 @@ function add_location_configuration {
     # If the domain does not have an exact matching location file, test the possible
     # wildcard locations files. Use default is no location file is present at all.
     if [[ ! -f "${VHOST_DIR}/${domain}" ]]; then
-      for wildcard_domain in $(enumerate_wildcard_locations "$domain"); do
+      while read -r wildcard_domain; do
         if [[ -f "${VHOST_DIR}/${wildcard_domain}" ]]; then
           domain="$wildcard_domain"
           break
         fi
         domain='default'
-      done
+      done <<< "$(enumerate_wildcard_locations "$domain")"
     fi
 
     if [[ -f "${VHOST_DIR}/${domain}" && -n $(sed -n "/$START_HEADER/,/$END_HEADER/p" "${VHOST_DIR}/${domain}") ]]; then

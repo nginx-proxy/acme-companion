@@ -16,8 +16,8 @@ while [[ $# -gt 0 ]]; do
         ;;
 
         --location-config)
-        for filepath in '/etc/nginx/vhost.d/le1.wtf' '/etc/nginx/vhost.d/*.example.com' '/etc/nginx/vhost.d/test.*'; do
-            [[ -f "$filepath" ]] && rm -rf "$filepath"
+        for domain in 'le1.wtf' '*.example.com' 'test.*' 'le3.pizza' 'subdomain.example.com' 'test.domain.tld'; do
+            [[ -f "/etc/nginx/vhost.d/$domain" ]] && rm -f "/etc/nginx/vhost.d/$domain"
         done
         shift
         ;;
