@@ -8,6 +8,6 @@ vhost.d/
 go/
 nginx.tmpl
 test/local_test_env.sh
-test/tests/docker_api/expected-std-out.txt
-test/tests/container_restart/docker_event_out.txt
-test/tests/certs_standalone/letsencrypt_user_data
+test/integration/docker_api/expected-std-out.txt
+test/integration/container_restart/docker_event_out.txt
+test/integration/certs_standalone/letsencrypt_user_data

@@ -15,7 +15,7 @@ IFS=',' read -r -a domains <<< "$TEST_DOMAINS"
 # Listen for Docker restart events
 docker events \
   --filter event=restart \
-  --format 'Container {{.Actor.Attributes.name}} restarted' > "${GITHUB_WORKSPACE}/test/tests/container_restart/docker_event_out.txt" &
+  --format 'Container {{.Actor.Attributes.name}} restarted' > "${GITHUB_WORKSPACE}/test/integration/container_restart/docker_event_out.txt" &
 docker_events_pid=$!
 
 # Cleanup function with EXIT trap
@@ -23,7 +23,7 @@ function cleanup {
   # Kill the Docker events listener
   kill $docker_events_pid && wait $docker_events_pid 2>/dev/null
   # Remove temporary files
-  rm -f "${GITHUB_WORKSPACE}/test/tests/container_restart/docker_event_out.txt"
+  rm -f "${GITHUB_WORKSPACE}/test/integration/container_restart/docker_event_out.txt"
   # Remove any remaining Nginx container(s) silently.
   for domain in "${domains[@]}"; do
     docker rm --force "$domain" &> /dev/null
@@ -42,7 +42,7 @@ for domain in "${domains[@]}"; do
   # Check if container restarted
   timeout="$(date +%s)"
   timeout="$((timeout + 60))"
-  until grep "$domain" "${GITHUB_WORKSPACE}"/test/tests/container_restart/docker_event_out.txt; do
+  until grep "$domain" "${GITHUB_WORKSPACE}"/test/integration/container_restart/docker_event_out.txt; do
     if [[ "$(date +%s)" -gt "$timeout" ]]; then
       echo "Container $domain didn't restart in under one minute."
       break

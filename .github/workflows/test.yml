@@ -71,6 +71,15 @@ jobs:
           name: docker-gen.tar
           path: docker-gen.tar
 
+  unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+        - uses: actions/checkout@v2
+        - name: Install Required Dependencies
+          run: make install-unit-test-deps
+        - name: Run Unit Tests
+          run: make unit-test
+
   docker-specs-tests:
     needs: companion-build
     runs-on: ubuntu-latest
