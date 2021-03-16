@@ -150,6 +150,10 @@ for domain in "${domains[@]:0:2}" '*.example.com' 'test.*'; do
   fi
 done
 
+# Should not be used by anything, but potentially matches an enumerate_wildcard_locations file glob.
+docker exec "$NGINX_CONTAINER_NAME" touch /etc/nginx/vhost.d/le3.pizza
+docker exec "$le_container_name" touch le3.pizza
+
 # Trying to add location configuration to non existing le3.wtf should only configure default
 docker exec "$le_container_name" bash -c "source /app/functions.sh; add_location_configuration ${domains[2]}"
 
@@ -161,8 +165,7 @@ if docker exec "$le_container_name" [ -e "$config_path" ]; then
 fi
 
 config_path="$vhost_path/default"
-docker exec "$le_container_name" bash -c 'source /app/functions.sh; add_location_configuration'
 if ! check_location "$le_container_name" "$config_path" ; then
-  echo "Unexpected location configuration on $config_path after call to remove_all_location_configurations ${domains[2]}:"
+  echo "Unexpected location configuration on $config_path after call to add_location_configuration ${domains[2]}:"
   docker exec "$le_container_name" cat "$config_path"
 fi
