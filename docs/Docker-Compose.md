@@ -110,6 +110,8 @@ volumes:
 
 ### Other (external) examples
 
+**Warning:** some of those examples might be outdated and not working properly with version >= `2.0` of this project.
+
 If you want other examples how to use this container with Docker Compose, look at:
 
 * [Nicolas Duchon's Examples](https://github.com/buchdag/letsencrypt-nginx-proxy-companion-compose) - with automated testing
