@@ -10,8 +10,9 @@ For example
 $ docker run --detach \
     --name nginx-proxy-letsencrypt \
     --volumes-from nginx-proxy \
-    --volume /path/to/certs:/etc/nginx/certs:rw \
     --volume /var/run/docker.sock:/var/run/docker.sock:ro \
+    --volume certs:/etc/nginx/certs:rw \
+    --volume acme:/etc/acme.sh \
     --env "ACME_CA_URI=https://acme-staging-v02.api.letsencrypt.org/directory" \
     jrcs/letsencrypt-nginx-proxy-companion
 ```

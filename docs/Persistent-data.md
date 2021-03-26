@@ -1,31 +1,8 @@
 ## Persistent data
 
-### Anonymous volumes
-
-When you follow instructions from Basic usage or Advanced usage, Docker will automatically create **anonymous volumes** (volumes with a random name) for every `--volume` / `-v` argument passed:
-
-```shell
-$ docker run -d \
-    --name nginx-proxy \
-    -p 80:80 \
-    -p 443:443 \
-    -v /etc/nginx/certs \
-    -v /etc/nginx/vhost.d \
-    -v /usr/share/nginx/html \
-    -v /var/run/docker.sock:/tmp/docker.sock:ro \
-    jwilder/nginx-proxy
-
-$ docker volume ls
-DRIVER              VOLUME NAME
-local               287be3abd610e5566500d719ceb8b952952f12c9324ef02d05785d4ee9737ae9
-local               6530b1b40cf89efb71aa7fd19bddec927fa2bcae59b04b9c1c850af72ffe0123
-local               f260f71fefadcdfc311d285d69151f2312915174d3fb1fab89949ec5ec871a54
-local               f2cd94ca48904dc9cfc840ce4b265a04831c580d525253d7a0e5aac4d1dca340
-```
-
 ### Named volumes (recommended)
 
-Using **named volumes** instead make managing volumes easier:
+When you follow instructions from Basic usage or Advanced usage, Docker will automatically create **named volumes** for every `--volume` / `-v` argument passed. Named volume will make it easy for you to mount the same persisted data even if you delete then re-create the container:
 
 ```shell
 $ docker run -d \
@@ -43,6 +20,28 @@ DRIVER              VOLUME NAME
 local               certs
 local               vhost
 local               html
+```
+
+### Anonymous volumes (not recommended)
+
+If you don't prefix your volumes with a name, Docker will instead create **anonymous volumes** (volumes with a random name). Those volume persist after the container is deleted but aren't automatically re-mounted when you re-create the container. Their usage is **not recommended** as they don't provide any advantages over named volumes and make keeping tracks of what volume store which data way harder.
+
+```shell
+$ docker run -d \
+    --name nginx-proxy \
+    -p 80:80 \
+    -p 443:443 \
+    -v /etc/nginx/certs \
+    -v /etc/nginx/vhost.d \
+    -v /usr/share/nginx/html \
+    -v /var/run/docker.sock:/tmp/docker.sock:ro \
+    jwilder/nginx-proxy
+
+$ docker volume ls
+DRIVER              VOLUME NAME
+local               287be3abd610e5566500d719ceb8b952952f12c9324ef02d05785d4ee9737ae9
+local               6530b1b40cf89efb71aa7fd19bddec927fa2bcae59b04b9c1c850af72ffe0123
+local               f260f71fefadcdfc311d285d69151f2312915174d3fb1fab89949ec5ec871a54
 ```
 
 ### Host volumes
