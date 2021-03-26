@@ -28,10 +28,10 @@ $ docker run --detach \
     --publish 80:80 \
     --publish 443:443 \
     --name nginx \
-    --volume /etc/nginx/conf.d  \
-    --volume /etc/nginx/vhost.d \
-    --volume /usr/share/nginx/html \
-    --volume /etc/nginx/certs \
+    --volume conf:/etc/nginx/conf.d  \
+    --volume vhost:/etc/nginx/vhost.d \
+    --volume html:/usr/share/nginx/html \
+    --volume certs:/etc/nginx/certs \
     nginx
 ```
 
@@ -61,7 +61,7 @@ $ docker run --detach \
     --name nginx-proxy-letsencrypt \
     --volumes-from nginx-proxy \
     --volume /var/run/docker.sock:/var/run/docker.sock:ro \
-    --volume /etc/acme.sh \
+    --volume acme:/etc/acme.sh \
     --env "NGINX_DOCKER_GEN_CONTAINER=nginx-proxy-gen" \
     --env "DEFAULT_EMAIL=mail@yourdomain.tld" \
     jrcs/letsencrypt-nginx-proxy-companion
