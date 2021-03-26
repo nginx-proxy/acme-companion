@@ -19,7 +19,7 @@ RUN apk add --no-cache --virtual .build-deps \
     && rm -rf /go/src \
     && apk del .build-deps
 
-FROM alpine:3.13.2
+FROM alpine:3.13.3
 
 LABEL maintainer="Nicolas Duchon <nicolas.duchon@gmail.com> (@buchdag)"
 
