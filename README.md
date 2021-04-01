@@ -114,4 +114,4 @@ Repeat [Step 3](#step-3---proxied-containers) for any other container you want t
 
 ## Additional documentation
 
-Please check the [docs section](https://github.com/nginx-proxy/docker-letsencrypt-nginx-proxy-companion/tree/master/docs) or the [project's wiki](https://github.com/nginx-proxy/docker-letsencrypt-nginx-proxy-companion/wiki).
+Please check the [docs section](https://github.com/nginx-proxy/docker-letsencrypt-nginx-proxy-companion/tree/master/docs).
