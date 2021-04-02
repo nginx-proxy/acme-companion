@@ -1,6 +1,7 @@
 name: DockerHub
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - master
@@ -27,12 +28,15 @@ jobs:
         
       - name: Get Docker tags
         id: docker_meta
-        uses: crazy-max/ghaction-docker-meta@v1
+        uses: crazy-max/ghaction-docker-meta@v2
         with:
-          images: jrcs/letsencrypt-nginx-proxy-companion
-          tag-semver: |
-            {{version}}
-            {{major}}.{{minor}}
+          images: |
+            nginxproxy/acme-companion
+            jrcs/letsencrypt-nginx-proxy-companion
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest,enable=${{ endsWith(github.ref, github.event.repository.default_branch) }}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
@@ -56,9 +60,7 @@ jobs:
           build-args: GIT_DESCRIBE=${{ env.GIT_DESCRIBE }} 
           platforms: linux/amd64,linux/arm64,linux/arm/v7
           push: true
-          tags: |
-            ${{ github.ref != 'refs/heads/master' && steps.docker_meta.outputs.tags || '' }}
-            ${{ github.ref == 'refs/heads/master' && 'jrcs/letsencrypt-nginx-proxy-companion:latest' || '' }}
+          tags: ${{ steps.docker_meta.outputs.tags }}
           labels: ${{ steps.docker_meta.outputs.labels }}
 
       - name: Image digest
