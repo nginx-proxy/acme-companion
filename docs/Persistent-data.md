@@ -13,7 +13,7 @@ $ docker run -d \
     -v vhost:/etc/nginx/vhost.d \
     -v html:/usr/share/nginx/html \
     -v /var/run/docker.sock:/tmp/docker.sock:ro \
-    jwilder/nginx-proxy
+    nginxproxy/nginx-proxy
 
 $ docker volume ls
 DRIVER              VOLUME NAME
@@ -35,7 +35,7 @@ $ docker run -d \
     -v /etc/nginx/vhost.d \
     -v /usr/share/nginx/html \
     -v /var/run/docker.sock:/tmp/docker.sock:ro \
-    jwilder/nginx-proxy
+    nginxproxy/nginx-proxy
 
 $ docker volume ls
 DRIVER              VOLUME NAME

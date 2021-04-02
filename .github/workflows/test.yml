@@ -51,14 +51,14 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v2
       - name: Build patched nginx-proxy Image
-        run: docker build -t "jwilder/nginx-proxy:latest" ./test/setup/nginx-proxy
+        run: docker build -t "nginxproxy/nginx-proxy:latest" ./test/setup/nginx-proxy
       - name: Build patched docker-gen Image
         run: docker build -t "jwilder/docker-gen:latest" ./test/setup/docker-gen
       - name: List Docker Images
         run: docker images
       - name: Export Images Artifacts
         run: |
-          docker save jwilder/nginx-proxy:latest > nginx-proxy.tar
+          docker save nginxproxy/nginx-proxy:latest > nginx-proxy.tar
           docker save jwilder/docker-gen:latest > docker-gen.tar
       - name: Upload nginx-proxy Image Artifact
         uses: actions/upload-artifact@v2

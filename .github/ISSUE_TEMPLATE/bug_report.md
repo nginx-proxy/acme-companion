@@ -28,7 +28,7 @@ Info: running letsencrypt-nginx-proxy-companion version v2.0.0
 
 If this first log line isn't present you are using a v1 image: please provide the tagged version you are using. If you are not using a tagged version latest, please try again with a tagged release before opening an issue (the last v1 tagged release is v1.13.1).
 
-nginx-proxy-companion configuration
+nginx-proxy configuration
 -----------------
 
 Please provide the configuration (either command line, compose file, or other) of your nginx-proxy stack and your proxied container(s).

@@ -12,7 +12,7 @@ $ docker run --detach \
     --volume conf:/etc/nginx/conf.d \
     --volume html:/usr/share/nginx/html \
     --volume /var/run/docker.sock:/tmp/docker.sock:ro \
-    jwilder/nginx-proxy
+    nginxproxy/nginx-proxy
 ```
 ```bash
 $ docker run --detach \

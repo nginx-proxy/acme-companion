@@ -32,6 +32,6 @@ ENV DOCKER_GEN_VERSION=0.7.4 \
 COPY --from=build-docker-gen /go/src/github.com/jwilder/docker-gen/docker-gen /usr/local/bin/
 
 # Get latest nginx.tmpl
-ADD https://raw.githubusercontent.com/jwilder/nginx-proxy/master/nginx.tmpl /etc/docker-gen/templates/
+ADD https://raw.githubusercontent.com/nginx-proxy/nginx-proxy/master/nginx.tmpl /etc/docker-gen/templates/
 
 ENTRYPOINT ["/usr/local/bin/docker-gen"]

@@ -37,13 +37,13 @@ case $SETUP in
   docker run --rm -d \
     --name "$nginx_vol" \
     -v /var/run/docker.sock:/tmp/docker.sock:ro \
-    jwilder/nginx-proxy > /dev/null
+    nginxproxy/nginx-proxy > /dev/null
 
   # Run a nginx-proxy container named nginx-env-var, without the nginx_proxy label
   docker run --rm -d \
     --name "$nginx_env" \
     -v /var/run/docker.sock:/tmp/docker.sock:ro \
-    jwilder/nginx-proxy > /dev/null
+    nginxproxy/nginx-proxy > /dev/null
 
   # This should target the nginx-proxy container obtained with
   # the --volume-from argument (nginx-volumes-from)
@@ -68,7 +68,7 @@ case $SETUP in
     --name "$nginx_lbl" \
     -v /var/run/docker.sock:/tmp/docker.sock:ro \
     --label com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy \
-    jwilder/nginx-proxy)"
+    nginxproxy/nginx-proxy)"
 
   # This should target the nginx-proxy container with the label (nginx-label)
   docker run --rm \

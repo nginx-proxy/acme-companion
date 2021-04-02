@@ -55,7 +55,7 @@ $ docker run --detach \
     --volume vhost:/etc/nginx/vhost.d \
     --volume html:/usr/share/nginx/html \
     --volume /var/run/docker.sock:/tmp/docker.sock:ro \
-    jwilder/nginx-proxy
+    nginxproxy/nginx-proxy
 ```
 
 Binding the host docker socket (`/var/run/docker.sock`) inside the container to `/tmp/docker.sock` is a requirement of **nginx-proxy**.
