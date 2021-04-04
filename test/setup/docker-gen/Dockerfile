@@ -24,7 +24,7 @@ FROM alpine:3.8
 
 LABEL maintainer="Nicolas Duchon <nicolas.duchon@gmail.com>"
 
-# DOCKER_GEN_VERSION environment variable is required by letsencrypt-nginx-proxy-companion
+# DOCKER_GEN_VERSION environment variable is required by acme-companion
 ENV DOCKER_GEN_VERSION=0.7.4 \
     DOCKER_HOST=unix:///tmp/docker.sock
 

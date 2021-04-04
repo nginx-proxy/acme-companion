@@ -17,6 +17,6 @@ Unlike Let's Encrypt, Zero SSL requires the use of an email bound account. If yo
 - provide pre-generated [EAB credentials](https://tools.ietf.org/html/rfc8555#section-7.3.4) using the `ACME_EAB_KID` and `ACME_EAB_HMAC_KEY` environment variables.
 - provide your ZeroSSL API key using the `ZEROSSL_API_KEY` environment variable.
 
-These variables can be set on the proxied containers or directly on the **letsencrypt-nginx-proxy-companion** container.
+These variables can be set on the proxied containers or directly on the **acme-companion** container.
 
-If you don't have a ZeroSSL account, you can let **letsencrypt-nginx-proxy-companion** create a Zero SSL account with the adress provided in the `ACME_EMAIL` or `DEFAULT_EMAIL` environment variable. Note that the adresse that will be used must be a valid email adress that you actually own.
+If you don't have a ZeroSSL account, you can let **acme-companion** create a Zero SSL account with the adress provided in the `ACME_EMAIL` or `DEFAULT_EMAIL` environment variable. Note that the adresse that will be used must be a valid email adress that you actually own.

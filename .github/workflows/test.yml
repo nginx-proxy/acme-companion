@@ -13,7 +13,7 @@ on:
 
 env:
   DOCKER_GEN_CONTAINER_NAME: nginx-proxy-gen
-  IMAGE: jrcs/letsencrypt-nginx-proxy-companion
+  IMAGE: nginxproxy/acme-companion
   NGINX_CONTAINER_NAME: nginx-proxy
   TEST_DOMAINS: le1.wtf,le2.wtf,le3.wtf
 
