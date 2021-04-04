@@ -9,7 +9,7 @@ function get_base_domain {
 export -f get_base_domain
 
 
-# Run a letsencrypt-nginx-proxy-companion container
+# Run a acme-companion container
 function run_le_container {
   local image="${1:?}"
   local name="${2:?}"

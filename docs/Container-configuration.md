@@ -8,13 +8,13 @@ For example
 
 ```bash
 $ docker run --detach \
-    --name nginx-proxy-letsencrypt \
+    --name nginx-proxy-acme \
     --volumes-from nginx-proxy \
     --volume /var/run/docker.sock:/var/run/docker.sock:ro \
     --volume certs:/etc/nginx/certs:rw \
     --volume acme:/etc/acme.sh \
     --env "ACME_CA_URI=https://acme-staging-v02.api.letsencrypt.org/directory" \
-    jrcs/letsencrypt-nginx-proxy-companion
+    nginxproxy/acme-companion
 ```
 You can also create test certificates per container (see [Test certificates](./Let's-Encrypt-and-ACME.md#test-certificates))
 

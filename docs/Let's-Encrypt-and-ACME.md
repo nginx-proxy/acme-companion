@@ -60,7 +60,7 @@ The `ACME_OCSP` environment variable, when set to `true` on a proxied applicatio
 
 The `LETSENCRYPT_TEST` environment variable, when set to `true` on a proxied application container, will create a test certificates that don't have the [5 certs/week/domain limits](https://letsencrypt.org/docs/rate-limits/) and are signed by an untrusted intermediate (they won't be trusted by browsers).
 
-If you want to do this globally for all containers, set `ACME_CA_URI` on the **letsencrypt-nginx-proxy-companion** container as described in [Container configuration](./Container-configuration.md).
+If you want to do this globally for all containers, set `ACME_CA_URI` on the **acme-companion** container as described in [Container configuration](./Container-configuration.md).
 
 #### ACME CA URI
 
@@ -74,15 +74,15 @@ If the ACME CA provides multiple cert chain, you can use the `ACME_PREFERRED_CHA
 
 The `LETSENCRYPT_RESTART_CONTAINER` environment variable, when set to `true` on an application container, will restart this container whenever the corresponding cert (`LETSENCRYPT_HOST`) is renewed. This is useful when certificates are directly used inside a container for other purposes than HTTPS (e.g. an FTPS server), to make sure those containers always use an up to date certificate.
 
-### global (set on letsencrypt-nginx-proxy-companion container)
+### global (set on acme-companion container)
 
 #### Default contact address
 
-The `DEFAULT_EMAIL` variable must be a valid email and, when set on the **letsencrypt_nginx_proxy_companion** container, will be used as a fallback when no email address is provided using proxyed container's `LETSENCRYPT_EMAIL` environment variables. It is highly recommended to set this variable to a valid email address that you own.
+The `DEFAULT_EMAIL` variable must be a valid email and, when set on the **acme-companion** container, will be used as a fallback when no email address is provided using proxyed container's `LETSENCRYPT_EMAIL` environment variables. It is highly recommended to set this variable to a valid email address that you own.
 
 #### Private key re-utilization
 
-The `RENEW_PRIVATE_KEYS` environment variable, when set to `false` on the **letsencrypt-nginx-proxy-companion** container, will set `acme.sh` to reuse previously generated private key instead of generating a new one at renewal for all domains.
+The `RENEW_PRIVATE_KEYS` environment variable, when set to `false` on the **acme-companion** container, will set `acme.sh` to reuse previously generated private key instead of generating a new one at renewal for all domains.
 
 Reusing private keys can help if you intend to use [HPKP](https://developer.mozilla.org/en-US/docs/Web/HTTP/Public_Key_Pinning), but please note that HPKP has been deprecated by Google's Chrome and that it is therefore strongly discouraged to use it at all.
 

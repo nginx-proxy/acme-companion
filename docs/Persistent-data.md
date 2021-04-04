@@ -13,7 +13,7 @@ $ docker run -d \
     -v vhost:/etc/nginx/vhost.d \
     -v html:/usr/share/nginx/html \
     -v /var/run/docker.sock:/tmp/docker.sock:ro \
-    jwilder/nginx-proxy
+    nginxproxy/nginx-proxy
 
 $ docker volume ls
 DRIVER              VOLUME NAME
@@ -35,7 +35,7 @@ $ docker run -d \
     -v /etc/nginx/vhost.d \
     -v /usr/share/nginx/html \
     -v /var/run/docker.sock:/tmp/docker.sock:ro \
-    jwilder/nginx-proxy
+    nginxproxy/nginx-proxy
 
 $ docker volume ls
 DRIVER              VOLUME NAME
@@ -60,11 +60,11 @@ Example with named volumes:
 
 `-v certs:/etc/nginx/certs:ro` on the **nginx-proxy** or **nginx** + **docker-gen** container(s).
 
-`-v certs:/etc/nginx/certs:rw` on the **letsencrypt-nginx-proxy-companion** container.
+`-v certs:/etc/nginx/certs:rw` on the **acme-companion** container.
 
 ## Ownership & permissions of private and ACME account keys
 
-By default, the **letsencrypt-nginx-proxy-companion** container will enforce the following ownership and permissions scheme on the files it creates and manage:
+By default, the **acme-companion** container will enforce the following ownership and permissions scheme on the files it creates and manage:
 
 ```
 [drwxr-xr-x]  /etc/nginx/certs
@@ -87,7 +87,7 @@ By default, the **letsencrypt-nginx-proxy-companion** container will enforce the
 └── [lrwxrwxrwx root root]  domain.tld.key -> ./domain.tld/key.pem
 ```
 
-This behavior can be customized using the following environment variable on the **letsencrypt-nginx-proxy-companion** container:
+This behavior can be customized using the following environment variable on the **acme-companion** container:
 
 * `FILES_UID` - Set the user owning the files and folders managed by the container. The variable can be either a user name if this user exists inside the container or a user numeric ID. Default to `root` (user ID `0`).
 * `FILES_GID` - Set the group owning the files and folders managed by the container. The variable can be either a group name if this group exists inside the container or a group numeric ID. Default to the same value as `FILES_UID`.
@@ -117,4 +117,4 @@ For example, `FILES_UID=1000`, `FILES_PERMS=600` and `FOLDERS_PERMS=700` will re
 └── [lrwxrwxrwx 1000 1000]  domain.tld.key -> ./domain.tld/key.pem
 ```
 
-If you just want to make the most sensitive files (private keys and ACME account keys) root readable only, set the environment variable `FILES_PERMS` to `600` on your **letsencrypt-nginx-proxy-companion** container.
+If you just want to make the most sensitive files (private keys and ACME account keys) root readable only, set the environment variable `FILES_PERMS` to `600` on your **acme-companion** container.

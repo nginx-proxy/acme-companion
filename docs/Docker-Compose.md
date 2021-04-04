@@ -1,6 +1,6 @@
 ## Usage with Docker Compose
 
-As stated by its repository, [Docker Compose](https://github.com/docker/compose) is a tool for defining and running multi-container Docker applications using a single _Compose file_. This Wiki page is not meant to be a definitive reference on how to run **nginx-proxy** and **letsencrypt-nginx-proxy-companion** with Docker Compose, as the number of possible setups is quite extensive and they can't be all covered.
+As stated by its repository, [Docker Compose](https://github.com/docker/compose) is a tool for defining and running multi-container Docker applications using a single _Compose file_. This Wiki page is not meant to be a definitive reference on how to run **nginx-proxy** and **acme-companion** with Docker Compose, as the number of possible setups is quite extensive and they can't be all covered.
 
 ### Before your start
 
@@ -19,7 +19,7 @@ version: '2'
 
 services:
   nginx-proxy:
-    image: jwilder/nginx-proxy
+    image: nginxproxy/nginx-proxy
     container_name: nginx-proxy
     ports:
       - "80:80"
@@ -33,9 +33,9 @@ services:
       - /var/run/docker.sock:/tmp/docker.sock:ro
     network_mode: bridge
 
-  letsencrypt:
-    image: jrcs/letsencrypt-nginx-proxy-companion
-    container_name: nginx-proxy-le
+  acme-companion:
+    image: nginxproxy/acme-companion
+    container_name: nginx-proxy-acme
     volumes_from:
       - nginx-proxy
     volumes:
@@ -87,9 +87,9 @@ services:
       - "com.github.jrcs.letsencrypt_nginx_proxy_companion.docker_gen"
     network_mode: bridge
 
-  letsencrypt:
-    image: jrcs/letsencrypt-nginx-proxy-companion
-    container_name: nginx-proxy-le
+  acme-companion:
+    image: nginxproxy/acme-companion
+    container_name: nginx-proxy-acme
     volumes_from:
       - nginx-proxy
     volumes:

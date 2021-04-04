@@ -31,7 +31,7 @@ FROM nginx:1.19-alpine
 
 LABEL maintainer="Nicolas Duchon <nicolas.duchon@gmail.com>"
 
-# DOCKER_GEN_VERSION environment variable is required by letsencrypt-nginx-proxy-companion
+# DOCKER_GEN_VERSION environment variable is required by acme-companion
 ENV DOCKER_GEN_VERSION=0.7.4 \
     DOCKER_HOST=unix:///tmp/docker.sock
 
@@ -53,7 +53,7 @@ COPY --from=go-builder /go/src/github.com/jwilder/docker-gen/docker-gen /usr/loc
 
 # Install nginx-proxy
 RUN mkdir /src /app \
-    && curl -sSL https://github.com/jwilder/nginx-proxy/archive/master.tar.gz \
+    && curl -sSL https://github.com/nginx-proxy/nginx-proxy/archive/master.tar.gz \
     | tar -C /src -xz \
     && cp /src/nginx-proxy-master/Procfile /app/ \
     && cp /src/nginx-proxy-master/dhparam.pem.default /app/ \

@@ -24,7 +24,7 @@ FROM alpine:3.8
 
 LABEL maintainer="Nicolas Duchon <nicolas.duchon@gmail.com>"
 
-# DOCKER_GEN_VERSION environment variable is required by letsencrypt-nginx-proxy-companion
+# DOCKER_GEN_VERSION environment variable is required by acme-companion
 ENV DOCKER_GEN_VERSION=0.7.4 \
     DOCKER_HOST=unix:///tmp/docker.sock
 
@@ -32,6 +32,6 @@ ENV DOCKER_GEN_VERSION=0.7.4 \
 COPY --from=build-docker-gen /go/src/github.com/jwilder/docker-gen/docker-gen /usr/local/bin/
 
 # Get latest nginx.tmpl
-ADD https://raw.githubusercontent.com/jwilder/nginx-proxy/master/nginx.tmpl /etc/docker-gen/templates/
+ADD https://raw.githubusercontent.com/nginx-proxy/nginx-proxy/master/nginx.tmpl /etc/docker-gen/templates/
 
 ENTRYPOINT ["/usr/local/bin/docker-gen"]

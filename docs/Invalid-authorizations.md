@@ -1,6 +1,6 @@
 ## Troubleshooting failing authorizations
 
-The first two things to do in case of failing authorization are to run the **letsencrypt-nginx-proxy-companion** container with the environment variable `DEBUG=1` to enable the more detailed error messages, and to [request test certificates](./Let's-Encrypt-and-ACME.md#test-certificates) while troubleshooting the issue.
+The first two things to do in case of failing authorization are to run the **acme-companion** container with the environment variable `DEBUG=1` to enable the more detailed error messages, and to [request test certificates](./Let's-Encrypt-and-ACME.md#test-certificates) while troubleshooting the issue.
 
 Common causes of of failing authorizations:
 
@@ -42,7 +42,7 @@ If you are unsure of your host/hosts's docker IPv6 connectivity, drop the AAAA r
 
 Read https://letsencrypt.org/docs/caa/ and test with https://unboundtest.com/
 
-#### the **nginx-proxy**/**nginx**/**docker-gen**/**letsencrypt-nginx-proxy-companion** containers were misconfigured.
+#### the **nginx-proxy**/**nginx**/**docker-gen**/**acme-companion** containers were misconfigured.
 
 Review [basic usage](./Basic-usage.md) or [advanced usage](./Advanced-usage.md), plus the [nginx-proxy documentation](https://github.com/nginx-proxy/nginx-proxy).
 
@@ -52,9 +52,9 @@ Pay special attention to the fact that the volumes **MUST** be shared between th
 
 Both are required. Every domain on `LETSENCRYPT_HOST`**must** be on `VIRTUAL_HOST`too.
 
-#### you are using an outdated version of either **letsencrypt-nginx-proxy-companion** or the nginx.tmpl file (if running a 3 containers setup)
+#### you are using an outdated version of either **acme-companion** or the nginx.tmpl file (if running a 3 containers setup)
 
-Pull `jrcs/letsencrypt-nginx-proxy-companion:latest` again and get the latest [latest nginx.tmpl](https://raw.githubusercontent.com/nginx-proxy/nginx-proxy/master/nginx.tmpl).
+Pull `nginxproxy/acme-companion:latest` again and get the latest [latest nginx.tmpl](https://raw.githubusercontent.com/nginx-proxy/nginx-proxy/master/nginx.tmpl).
 
 
 ***

@@ -1,6 +1,6 @@
 ## Standalone certificates
 
-You can generate certificate that are not tied to containers environment variable by mounting a user configuration file inside the container at `/app/letsencrypt_user_data`. This feature also require sharing the `/etc/nginx/conf.d` folder between the **nginx-proxy** and **letsencrypt-nginx-proxy-companion** container (and the **docker-gen** container if you are running a [three container setup](./Advanced-usage.md)):
+You can generate certificate that are not tied to containers environment variable by mounting a user configuration file inside the container at `/app/letsencrypt_user_data`. This feature also require sharing the `/etc/nginx/conf.d` folder between the **nginx-proxy** and **acme-companion** container (and the **docker-gen** container if you are running a [three container setup](./Advanced-usage.md)):
 
 ```bash
 $ docker run --detach \
@@ -12,16 +12,16 @@ $ docker run --detach \
     --volume conf:/etc/nginx/conf.d \
     --volume html:/usr/share/nginx/html \
     --volume /var/run/docker.sock:/tmp/docker.sock:ro \
-    jwilder/nginx-proxy
+    nginxproxy/nginx-proxy
 ```
 ```bash
 $ docker run --detach \
-    --name nginx-proxy-letsencrypt \
+    --name nginx-proxy-acme \
     --volumes-from nginx-proxy \
     --volume /var/run/docker.sock:/var/run/docker.sock:ro \
     --volume acme:/etc/acme.sh \
     --volume /path/to/your/config_file:/app/letsencrypt_user_data:ro \
-    jrcs/letsencrypt-nginx-proxy-companion
+    nginxproxy/acme-companion
 ```
 
 The user configuration file is a collection of bash variables and array, and follows the syntax of the `/app/letsencrypt_service_data` file that get created by **docker-gen**.
@@ -70,4 +70,4 @@ Changes will either be picked up every hour when the service loop execute again,
 
 Please see the [**nginx-proxy** documentation](https://github.com/nginx-proxy/nginx-proxy#proxy-wide).
 
-No support will be provided on the **letsencrypt-nginx-proxy-companion** repo for proxying related issues or questions.
+No support will be provided on the **acme-companion** repo for proxying related issues or questions.

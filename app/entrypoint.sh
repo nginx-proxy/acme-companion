@@ -7,7 +7,7 @@ source /app/functions.sh
 
 function print_version {
     if [[ -n "${COMPANION_VERSION:-}" ]]; then
-        echo "Info: running letsencrypt-nginx-proxy-companion version ${COMPANION_VERSION}"
+        echo "Info: running acme-companion version ${COMPANION_VERSION}"
     fi
 }
 
