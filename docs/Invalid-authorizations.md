@@ -54,7 +54,7 @@ Both are required. Every domain on `LETSENCRYPT_HOST`**must** be on `VIRTUAL_HOS
 
 #### you are using an outdated version of either **acme-companion** or the nginx.tmpl file (if running a 3 containers setup)
 
-Pull `nginxproxy/acme-companion:latest` again and get the latest [latest nginx.tmpl](https://raw.githubusercontent.com/nginx-proxy/nginx-proxy/master/nginx.tmpl).
+Pull `nginxproxy/acme-companion:latest` again and get the latest [latest nginx.tmpl](https://raw.githubusercontent.com/nginx-proxy/nginx-proxy/main/nginx.tmpl).
 
 
 ***

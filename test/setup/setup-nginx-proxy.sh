@@ -34,7 +34,7 @@ case $SETUP in
     ;;
 
   3containers)
-    curl https://raw.githubusercontent.com/nginx-proxy/nginx-proxy/master/nginx.tmpl > "${GITHUB_WORKSPACE}/nginx.tmpl"
+    curl https://raw.githubusercontent.com/nginx-proxy/nginx-proxy/main/nginx.tmpl > "${GITHUB_WORKSPACE}/nginx.tmpl"
 
     docker run -d -p 80:80 -p 443:443 \
       --name "$NGINX_CONTAINER_NAME" \
