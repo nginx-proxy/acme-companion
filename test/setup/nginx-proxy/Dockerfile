@@ -53,14 +53,14 @@ COPY --from=go-builder /go/src/github.com/jwilder/docker-gen/docker-gen /usr/loc
 
 # Install nginx-proxy
 RUN mkdir /src /app \
-    && curl -sSL https://github.com/nginx-proxy/nginx-proxy/archive/master.tar.gz \
+    && curl -sSL https://github.com/nginx-proxy/nginx-proxy/archive/main.tar.gz \
     | tar -C /src -xz \
-    && cp /src/nginx-proxy-master/Procfile /app/ \
-    && cp /src/nginx-proxy-master/dhparam.pem.default /app/ \
-    && cp /src/nginx-proxy-master/docker-entrypoint.sh /app/ \
-    && cp /src/nginx-proxy-master/generate-dhparam.sh /app/ \
-    && cp /src/nginx-proxy-master/nginx.tmpl /app/ \
-    && cp /src/nginx-proxy-master/network_internal.conf /etc/nginx/ \
+    && cp /src/nginx-proxy-main/Procfile /app/ \
+    && cp /src/nginx-proxy-main/dhparam.pem.default /app/ \
+    && cp /src/nginx-proxy-main/docker-entrypoint.sh /app/ \
+    && cp /src/nginx-proxy-main/generate-dhparam.sh /app/ \
+    && cp /src/nginx-proxy-main/nginx.tmpl /app/ \
+    && cp /src/nginx-proxy-main/network_internal.conf /etc/nginx/ \
     && rm -rf /src
 
 WORKDIR /app

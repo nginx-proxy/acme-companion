@@ -6,10 +6,10 @@
 
 Please read and try [basic usage](./Basic-usage.md), and **validate that you have a working two containers setup** before using the three containers setup. In addition to the steps described there, running **nginx-proxy** as two separate containers with **acme-companion** requires the following:
 
-1) Download and mount the template file [nginx.tmpl](https://github.com/nginx-proxy/nginx-proxy/blob/master/nginx.tmpl) into the **docker-gen** container. You can get the nginx.tmpl file with a command like:
+1) Download and mount the template file [nginx.tmpl](https://github.com/nginx-proxy/nginx-proxy/blob/main/nginx.tmpl) into the **docker-gen** container. You can get the nginx.tmpl file with a command like:
 
 ```
-curl https://raw.githubusercontent.com/nginx-proxy/nginx-proxy/master/nginx.tmpl > /path/to/nginx.tmpl
+curl https://raw.githubusercontent.com/nginx-proxy/nginx-proxy/main/nginx.tmpl > /path/to/nginx.tmpl
 ```
 
 2) Use the `com.github.jrcs.letsencrypt_nginx_proxy_companion.docker_gen` label on the **docker-gen** container, or explicitly set the `NGINX_DOCKER_GEN_CONTAINER` environment variable on the **acme-companion** container to the name or id of the **docker-gen** container (we'll use the later method in the example).
