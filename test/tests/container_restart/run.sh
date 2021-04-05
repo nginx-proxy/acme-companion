@@ -41,7 +41,7 @@ for domain in "${domains[@]}"; do
 
   # Check if container restarted
   timeout="$(date +%s)"
-  timeout="$((timeout + 60))"
+  timeout="$((timeout + 120))"
   until grep "$domain" "${GITHUB_WORKSPACE}"/test/tests/container_restart/docker_event_out.txt; do
     if [[ "$(date +%s)" -gt "$timeout" ]]; then
       echo "Container $domain didn't restart in under one minute."

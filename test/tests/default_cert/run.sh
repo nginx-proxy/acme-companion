@@ -39,7 +39,7 @@ function default_cert_subject {
 user_cn="user-provided"
 
 timeout="$(date +%s)"
-timeout="$((timeout + 60))"
+timeout="$((timeout + 120))"
 until docker exec "$le_container_name" [[ -f /etc/nginx/certs/default.crt ]]; do
   if [[ "$(date +%s)" -gt "$timeout" ]]; then
     echo "Default cert wasn't created under one minute at container first launch."
@@ -60,7 +60,7 @@ for file in 'default.key' 'default.crt'; do
   docker exec "$le_container_name" /app/cleanup_test_artifacts --default-cert
   docker restart "$le_container_name" > /dev/null
   timeout="$(date +%s)"
-  timeout="$((timeout + 60))"
+  timeout="$((timeout + 120))"
   while [[ "$(default_cert_fingerprint)" == "$old_default_cert_fingerprint" ]]; do
     if [[ "$(date +%s)" -gt "$timeout" ]]; then
       echo "Default cert wasn't re-created under one minute after $file deletion."
@@ -79,9 +79,9 @@ docker exec "$le_container_name" openssl req -x509 \
   -keyout /etc/nginx/certs/default.key \
   -out /etc/nginx/certs/default.crt &> /dev/null
 old_default_cert_fingerprint="$(default_cert_fingerprint)"
-docker restart "$le_container_name" > /dev/null && sleep 5
+docker restart "$le_container_name" > /dev/null && sleep 10
 timeout="$(date +%s)"
-timeout="$((timeout + 55))"
+timeout="$((timeout + 110))"
 while [[ "$(default_cert_fingerprint)" == "$old_default_cert_fingerprint" ]]; do
   if [[ "$(date +%s)" -gt "$timeout" ]]; then
     echo "Default cert wasn't re-created under one minute when the certificate expire in less than three months."

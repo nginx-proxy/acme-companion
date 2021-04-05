@@ -123,7 +123,7 @@ function wait_for_standalone_conf {
   local name="${2:?}"
   local timeout
   timeout="$(date +%s)"
-  timeout="$((timeout + 60))"
+  timeout="$((timeout + 120))"
   local target
   until docker exec "$name" [ -f "/etc/nginx/conf.d/standalone-cert-$domain.conf" ]; do
     if [[ "$(date +%s)" -gt "$timeout" ]]; then
@@ -143,7 +143,7 @@ function wait_for_symlink {
   local expected_target="${3:-}"
   local timeout
   timeout="$(date +%s)"
-  timeout="$((timeout + 60))"
+  timeout="$((timeout + 120))"
   local target
   until docker exec "$name" [ -L "/etc/nginx/certs/$domain.crt" ]; do
     if [[ "$(date +%s)" -gt "$timeout" ]]; then
@@ -173,7 +173,7 @@ function wait_for_symlink_rm {
   local name="${2:?}"
   local timeout
   timeout="$(date +%s)"
-  timeout="$((timeout + 60))"
+  timeout="$((timeout + 120))"
   until docker exec "$name" [ ! -L "/etc/nginx/certs/$domain.crt" ]; do
     if [[ "$(date +%s)" -gt "$timeout" ]]; then
       echo "Certificate symlink for $domain was not removed under one minute, timing out."
@@ -281,7 +281,7 @@ function wait_for_conn {
 
   local timeout
   timeout="$(date +%s)"
-  timeout="$((timeout + 60))"
+  timeout="$((timeout + 120))"
   action="${action:---no-match}"
   string="${string:-letsencrypt-nginx-proxy-companion}"
 
