@@ -14,7 +14,7 @@ It handles the automated creation, renewal and use of SSL certificates for proxi
 * Automated creation/renewal of Let's Encrypt (or other ACME CAs) certificates using [**acme.sh**](https://github.com/acmesh-official/acme.sh).
 * Let's Encrypt / ACME domain validation through `http-01` challenge only.
 * Automated update and reload of nginx config on certificate creation/renewal.
-* Support creation of [Multi-Domain (SAN) Certificates](https://github.com/nginx-proxy/acme-companion/blob/master/docs/Let's-Encrypt-and-ACME.md#multi-domains-certificates).
+* Support creation of [Multi-Domain (SAN) Certificates](https://github.com/nginx-proxy/acme-companion/blob/main/docs/Let's-Encrypt-and-ACME.md#multi-domains-certificates).
 * Creation of a Strong Diffie-Hellman Group at startup.
 * Work with all versions of docker.
 
@@ -26,7 +26,7 @@ It handles the automated creation, renewal and use of SSL certificates for proxi
 * Your DNS provider must [answer correctly to CAA record requests](https://letsencrypt.org/docs/caa/).
 * If your (sub)domains have AAAA records set, the host must be publicly reachable over IPv6 on port `80` and `443`.
 
-![schema](https://github.com/nginx-proxy/acme-companion/blob/master/schema.png)
+![schema](https://github.com/nginx-proxy/acme-companion/blob/main/schema.png)
 
 ## Basic usage (with the nginx-proxy container)
 
@@ -114,4 +114,4 @@ Repeat [Step 3](#step-3---proxied-containers) for any other container you want t
 
 ## Additional documentation
 
-Please check the [docs section](https://github.com/nginx-proxy/acme-companion/tree/master/docs).
+Please check the [docs section](https://github.com/nginx-proxy/acme-companion/tree/main/docs).
