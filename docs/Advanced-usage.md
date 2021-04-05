@@ -27,7 +27,6 @@ $ docker run --detach \
     --name nginx-proxy \
     --publish 80:80 \
     --publish 443:443 \
-    --name nginx \
     --volume conf:/etc/nginx/conf.d  \
     --volume vhost:/etc/nginx/vhost.d \
     --volume html:/usr/share/nginx/html \
