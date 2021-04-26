@@ -1,22 +1,18 @@
 FROM golang:1.15.8-alpine AS go-builder
 
-ENV DOCKER_GEN_VERSION=0.7.4
+ENV DOCKER_GEN_VERSION=0.7.6
 
 # Build docker-gen
-RUN apk add --no-cache --virtual .build-deps \
-        curl \
-        gcc \
-        git \
-        make \
-        musl-dev \
-    && go get github.com/jwilder/docker-gen \
-    && cd /go/src/github.com/jwilder/docker-gen \
+RUN apk add --no-cache --virtual .build-deps git \
+    && git clone https://github.com/jwilder/docker-gen \
+    && cd /go/docker-gen \
     && git -c advice.detachedHead=false checkout $DOCKER_GEN_VERSION \
-    && make get-deps \
-    && make all \
+    && go mod download \
+    && CGO_ENABLED=0 go build -ldflags "-X main.buildVersion=${VERSION}" -o docker-gen ./cmd/docker-gen \
     && go clean -cache \
     && mv docker-gen /usr/local/bin/ \
-    && rm -rf /go/src \
+    && cd - \
+    && rm -rf /go/docker-gen \
     && apk del .build-deps
 
 FROM alpine:3.13.4
