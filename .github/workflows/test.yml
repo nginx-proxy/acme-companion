@@ -24,10 +24,6 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v2
-      - name: Patch the Dockerfile's docker-gen
-        run: |
-          sed -i 's#DOCKER_GEN_VERSION=.*$#DOCKER_GEN_VERSION=fix-current-container-id#g' Dockerfile
-          sed -i 's#go get github.com/jwilder/docker-gen#go get github.com/buchdag/docker-gen \&\& mv /go/src/github.com/buchdag /go/src/github.com/jwilder#g' Dockerfile
       - name: Build Image
         run: docker build -t "$IMAGE" .
       - name: Inspect Image
@@ -44,16 +40,16 @@ jobs:
           name: companion.tar
           path: companion.tar
 
-  nginx-proxy-build:
+  nginx-proxy-pull:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v2
-      - name: Build patched nginx-proxy Image
-        run: docker build -t "nginxproxy/nginx-proxy:latest" ./test/setup/nginx-proxy
-      - name: Build patched docker-gen Image
-        run: docker build -t "jwilder/docker-gen:latest" ./test/setup/docker-gen
+      - name: Pull nginx-proxy Image
+        run: docker pull nginxproxy/nginx-proxy:latest
+      - name: Pull docker-gen Image
+        run: docker pull jwilder/docker-gen:latest
       - name: List Docker Images
         run: docker images
       - name: Export Images Artifacts
@@ -95,7 +91,7 @@ jobs:
   integration-tests:
     needs: 
       - companion-build
-      - nginx-proxy-build
+      - nginx-proxy-pull
     strategy:
       fail-fast: false
       matrix:
@@ -145,29 +141,29 @@ jobs:
       - name: Setup Boulder
         if: ${{ matrix.acme-ca == 'boulder' }}
         run: test/setup/setup-boulder.sh
-      - name: Download nginx-proxy Patched Image
+      - name: Download nginx-proxy Image
         uses: actions/download-artifact@v2
         with:
           name: nginx-proxy.tar
-      - name: Download docker-gen Patched Image
+      - name: Download docker-gen Image
         uses: actions/download-artifact@v2
         with:
           name: docker-gen.tar
-      - name: Import nginx-proxy patched Images
+      - name: Import nginx-proxy Images
         run: |
           docker load < nginx-proxy.tar
           docker load < docker-gen.tar
-      - name: Setup NGINX Proxy
+      - name: Setup nginx-proxy
         env:
           SETUP: ${{ matrix.setup }}
           ACME_CA: ${{ matrix.acme-ca }}
         run: test/setup/setup-nginx-proxy.sh
-      # ADD BUILDED IMAGE
-      - name: Download Builded Image
+      # ADD BUILT IMAGE
+      - name: Download Built Image
         uses: actions/download-artifact@v2
         with:
           name: companion.tar
-      - name: Import Builded Image
+      - name: Import Built Image
         run: docker load < companion.tar
       # TEST
       - name: Integration Testing
