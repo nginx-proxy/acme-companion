@@ -4,7 +4,7 @@ As stated by its repository, [Docker Compose](https://github.com/docker/compose)
 
 ### Before your start
 
-Be sure to be familiar with both the [basic](./Basic-usage.md) and [avanced](./Advanced-usage.md) non compose setups, and Docker Compose usage.
+Be sure to be familiar with both the [basic](./Basic-usage.md) and [advanced](./Advanced-usage.md) non compose setups, and Docker Compose usage.
 
 Please read [getting container IDs](./Getting-containers-IDs.md) and be aware that the `--volumes-from method` is **only** available on compose file version 2.
 
