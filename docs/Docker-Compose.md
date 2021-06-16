@@ -75,7 +75,7 @@ services:
     network_mode: bridge
 
   docker-gen:
-    image: jwilder/docker-gen
+    image: nginxproxy/docker-gen
     container_name: nginx-proxy-gen
     command: -notify-sighup nginx-proxy -watch /etc/docker-gen/templates/nginx.tmpl /etc/nginx/conf.d/default.conf
     volumes_from:
