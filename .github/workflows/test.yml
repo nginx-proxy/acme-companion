@@ -49,13 +49,13 @@ jobs:
       - name: Pull nginx-proxy Image
         run: docker pull nginxproxy/nginx-proxy:latest
       - name: Pull docker-gen Image
-        run: docker pull jwilder/docker-gen:latest
+        run: docker pull nginxproxy/docker-gen:latest
       - name: List Docker Images
         run: docker images
       - name: Export Images Artifacts
         run: |
           docker save nginxproxy/nginx-proxy:latest > nginx-proxy.tar
-          docker save jwilder/docker-gen:latest > docker-gen.tar
+          docker save nginxproxy/docker-gen:latest > docker-gen.tar
       - name: Upload nginx-proxy Image Artifact
         uses: actions/upload-artifact@v2
         with:

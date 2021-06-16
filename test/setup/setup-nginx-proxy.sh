@@ -53,7 +53,7 @@ case $SETUP in
       -v /var/run/docker.sock:/tmp/docker.sock:ro \
       --label com.github.jrcs.letsencrypt_nginx_proxy_companion.test_suite \
       --network "$test_net" \
-      jwilder/docker-gen \
+      nginxproxy/docker-gen \
       -notify-sighup "$NGINX_CONTAINER_NAME" -watch /etc/docker-gen/templates/nginx.tmpl /etc/nginx/conf.d/default.conf
     ;;
 
