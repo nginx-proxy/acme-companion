@@ -4,7 +4,7 @@ ENV DOCKER_GEN_VERSION=0.7.6
 
 # Build docker-gen
 RUN apk add --no-cache --virtual .build-deps git \
-    && git clone https://github.com/jwilder/docker-gen \
+    && git clone https://github.com/nginx-proxy/docker-gen \
     && cd /go/docker-gen \
     && git -c advice.detachedHead=false checkout $DOCKER_GEN_VERSION \
     && go mod download \
