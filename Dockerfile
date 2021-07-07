@@ -15,7 +15,7 @@ RUN apk add --no-cache --virtual .build-deps git \
     && rm -rf /go/docker-gen \
     && apk del .build-deps
 
-FROM alpine:3.13.5
+FROM alpine:3.14.0
 
 LABEL maintainer="Nicolas Duchon <nicolas.duchon@gmail.com> (@buchdag)"
 
