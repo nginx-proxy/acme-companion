@@ -123,6 +123,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Install seccomp
+        run: sudo apt install seccomp
       - name: Checkout Code
         uses: actions/checkout@v2
       # PREPARE RUNNER ENV
