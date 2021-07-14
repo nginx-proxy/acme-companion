@@ -28,12 +28,21 @@ Info: running acme-companion version v2.0.0
 
 If this first log line isn't present you are using a v1 image: please provide the tagged version you are using. If you are not using a tagged version latest, please try again with a tagged release before opening an issue (the last v1 tagged release is v1.13.1).
 
-nginx-proxy configuration
+nginx-proxy's Docker configuration
 -----------------
 
 Please provide the configuration (either command line, compose file, or other) of your nginx-proxy stack and your proxied container(s).
 
 You can obfuscate information you want to keep private (and should obfuscate configuration secrets) such as domain(s) and/or email adress(es), but other than that please provide the full configurations and not the just snippets of the parts that seem relevants to you.
+
+rendered nginx configuration
+-----------------
+
+Please provide the rendered nginx configuration:
+
+```console
+docker exec name-of-the-nginx-container nginx -T
+```
 
 Containers logs
 -----------------
@@ -42,7 +51,7 @@ Please provide the logs of:
 - your acme-companion container
 - your nginx-proxy container (or nginx and docker-gen container in a three containers setup)
 
-```
+```console
 docker logs name-of-the-companion-container
 ```
 
