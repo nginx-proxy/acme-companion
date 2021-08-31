@@ -72,7 +72,7 @@ $ docker run --detach \
 
 ```shell
 $ docker run --detach \
-    --name your-proxyed-app
+    --name your-proxyed-app \
     --env "VIRTUAL_HOST=subdomain.yourdomain.tld" \
     --env "LETSENCRYPT_HOST=subdomain.yourdomain.tld" \
     nginx
