@@ -1,4 +1,4 @@
-FROM golang:1.16.7-alpine AS go-builder
+FROM golang:1.17.1-alpine AS go-builder
 
 ENV DOCKER_GEN_VERSION=0.7.6
 
