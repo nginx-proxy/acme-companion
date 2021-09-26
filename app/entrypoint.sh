@@ -47,7 +47,7 @@ function check_writable_directory {
 function check_dh_group {
     # Credits to Steve Kamerman for the background Diffie-Hellman creation logic.
     # https://github.com/nginx-proxy/nginx-proxy/pull/589
-    local DHPARAM_BITS="${DHPARAM_BITS:-2048}"
+    local DHPARAM_BITS="${DHPARAM_BITS:-4096}"
     re='^[0-9]*$'
     if ! [[ "$DHPARAM_BITS" =~ $re ]] ; then
        echo "Error: invalid Diffie-Hellman size of $DHPARAM_BITS !" >&2
@@ -87,7 +87,7 @@ function check_dh_group {
     # Generate a new dhparam in the background in a low priority and reload nginx when finished (grep removes the progress indicator).
     (
         (
-            nice -n +5 openssl dhparam -out "${DHPARAM_FILE}.new" "$DHPARAM_BITS" 2>&1 \
+            nice -n +5 openssl dhparam -dsaparam -out "${DHPARAM_FILE}.new" "$DHPARAM_BITS" 2>&1 \
             && mv "${DHPARAM_FILE}.new" "$DHPARAM_FILE" \
             && echo "Info: Diffie-Hellman group creation complete, reloading nginx." \
             && set_ownership_and_permissions "$DHPARAM_FILE" \
