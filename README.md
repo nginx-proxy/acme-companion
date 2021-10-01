@@ -19,8 +19,8 @@ It handles the automated creation, renewal and use of SSL certificates for proxi
 * Work with all versions of docker.
 
 ### Requirements:
-* Your host **must** be publicly reachable on **both** port `80` and `443`.
-* Check your firewall rules and **do not attempt to block port `80`** as that will prevent `http-01` challenges from completing.
+* Your host **must** be publicly reachable on **both** port [`80`](https://letsencrypt.org/docs/allow-port-80/) and [`443`](https://github.com/nginx-proxy/acme-companion/discussions/873#discussioncomment-1410225).
+* Check your firewall rules and [**do not attempt to block port `80`**](https://letsencrypt.org/docs/allow-port-80/) as that will prevent `http-01` challenges from completing.
 * For the same reason, you can't use nginx-proxy's [`HTTPS_METHOD=nohttp`](https://github.com/nginx-proxy/nginx-proxy#how-ssl-support-works).
 * The (sub)domains you want to issue certificates for must correctly resolve to the host.
 * Your DNS provider must [answer correctly to CAA record requests](https://letsencrypt.org/docs/caa/).
