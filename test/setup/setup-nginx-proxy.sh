@@ -23,7 +23,6 @@ case $SETUP in
   2containers)
     docker run -d -p 80:80 -p 443:443 \
       --name "$NGINX_CONTAINER_NAME" \
-      --env "DHPARAM_BITS=256" \
       -v /etc/nginx/vhost.d \
       -v /etc/nginx/conf.d \
       -v /usr/share/nginx/html \
