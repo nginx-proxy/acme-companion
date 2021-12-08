@@ -1,6 +1,6 @@
 FROM golang:1.16.7-alpine AS go-builder
 
-ENV DOCKER_GEN_VERSION=0.7.6
+ENV DOCKER_GEN_VERSION=0.8.0
 
 # Build docker-gen
 RUN apk add --no-cache --virtual .build-deps git \
