@@ -43,7 +43,11 @@ function ascending_wildcard_locations {
     until [[ "$domain" =~ $regex ]]; do
       first_label="${domain%%.*}"
       domain="${domain/${first_label}./}"
-      echo "*.${domain}"
+      if [[ -z "$domain" ]]; then
+        return
+      else
+        echo "*.${domain}"
+      fi
     done
 }
 
@@ -59,7 +63,11 @@ function descending_wildcard_locations {
     until [[ "$domain" =~ $regex ]]; do
       last_label="${domain##*.}"
       domain="${domain/.${last_label}/}"
-      echo "${domain}.*"
+      if [[ -z "$domain" ]]; then
+        return
+      else
+        echo "${domain}.*"
+      fi
     done
 }
 
