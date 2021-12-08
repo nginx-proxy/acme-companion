@@ -34,6 +34,8 @@ function run_le_container {
     return 1
   fi
 
+  docker cp "${GITHUB_WORKSPACE}/test/setup/dhparam.pem" "$NGINX_CONTAINER_NAME:/etc/nginx/certs/dhparam.pem"
+
   if docker run -d \
     --name "$name" \
     --volumes-from "$NGINX_CONTAINER_NAME" \
@@ -42,7 +44,6 @@ function run_le_container {
     "${cli_args_arr[@]}" \
     --env "DOCKER_GEN_WAIT=500ms:2s" \
     --env "TEST_MODE=true" \
-    --env "DHPARAM_BITS=256" \
     --env "DEBUG=1" \
     --label com.github.jrcs.letsencrypt_nginx_proxy_companion.test_suite \
     "$image" > /dev/null; \
