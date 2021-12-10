@@ -45,56 +45,41 @@ function check_writable_directory {
 }
 
 function check_dh_group {
-    # Credits to Steve Kamerman for the background Diffie-Hellman creation logic.
-    # https://github.com/nginx-proxy/nginx-proxy/pull/589
-    local DHPARAM_BITS="${DHPARAM_BITS:-2048}"
-    re='^[0-9]*$'
-    if ! [[ "$DHPARAM_BITS" =~ $re ]] ; then
-       echo "Error: invalid Diffie-Hellman size of $DHPARAM_BITS !" >&2
-       exit 1
-    fi
+	# DH params will be supplied for acme-companion here:
+	local DHPARAM_FILE='/etc/nginx/certs/dhparam.pem'
 
-    # If a dhparam file is not available, use the pre-generated one and generate a new one in the background.
-    local PREGEN_DHPARAM_FILE="/app/dhparam.pem.default"
-    local DHPARAM_FILE="/etc/nginx/certs/dhparam.pem"
-    local GEN_LOCKFILE="/tmp/le_companion_dhparam_generating.lock"
+	# Should be 2048, 3072, or 4096 (default):
+	local DHPARAM_BITS="${DHPARAM_BITS:=4096}"
 
-    # The hash of the pregenerated dhparam file is used to check if the pregen dhparam is already in use
-    local PREGEN_HASH; PREGEN_HASH=$(sha256sum "$PREGEN_DHPARAM_FILE" | cut -d ' ' -f1)
-    if [[ -f "$DHPARAM_FILE" ]]; then
-        local CURRENT_HASH; CURRENT_HASH=$(sha256sum "$DHPARAM_FILE" | cut -d ' ' -f1)
-        if [[ "$PREGEN_HASH" != "$CURRENT_HASH" ]]; then
-            # There is already a dhparam, and it's not the default
-            set_ownership_and_permissions "$DHPARAM_FILE"
-            echo "Info: Custom Diffie-Hellman group found, generation skipped."
-            return 0
-          fi
+	# DH params may be provided by the user (rarely necessary)
+	if [[ -f ${DHPARAM_FILE} ]]; then
+        set_ownership_and_permissions "$DHPARAM_FILE"
+        local DHPARAM_HASH; DHPARAM_HASH=$(sha256sum "$DHPARAM_FILE" | cut -d ' ' -f1)
+        for f in /app/dhparam/ffdhe*.pem; do
+            local FFDHE_HASH; FFDHE_HASH=$(sha256sum "$f" | cut -d ' ' -f1)
+            if [[ "$DHPARAM_HASH" == "$FFDHE_HASH" ]]; then
+                echo "Info: RFC7919 Diffie-Hellman group found, generation skipped."
+                return 0
+            fi
+        done
+		echo "Info: A custom dhparam.pem file was provided. Best practice is to use standardized RFC7919 DHE groups instead."
+		return 0
+	elif parse_true "${DHPARAM_SKIP:=false}"; then
+		echo "Info: Skipping Diffie-Hellman parameters setup."
+		return 0
+	elif [[ ! ${DHPARAM_BITS} =~ ^(2048|3072|4096)$ ]]; then
+		echo "Error: Unsupported DHPARAM_BITS size: ${DHPARAM_BITS}. Use: 2048, 3072, or 4096 (default)." >&2
+		exit 1
+	fi
 
-        if [[ -f "$GEN_LOCKFILE" ]]; then
-            # Generation is already in progress
-            return 0
-        fi
-    fi
+	echo "Info: Setting up ${DHPARAM_BITS} bits RFC7919 DH Parameters..."
 
-    echo "Info: Creating Diffie-Hellman group in the background."
-    echo "A pre-generated Diffie-Hellman group will be used for now while the new one is being created."
+	# Use an existing pre-generated DH group from RFC7919 (https://datatracker.ietf.org/doc/html/rfc7919#appendix-A):
+	local RFC7919_DHPARAM_FILE="/app/dhparam/ffdhe${DHPARAM_BITS}.pem"
 
-    # Put the default dhparam file in place so we can start immediately
-    cp "$PREGEN_DHPARAM_FILE" "$DHPARAM_FILE"
+	# Provide the DH params file to nginx:
+	cp "$RFC7919_DHPARAM_FILE" "$DHPARAM_FILE"
     set_ownership_and_permissions "$DHPARAM_FILE"
-    touch "$GEN_LOCKFILE"
-
-    # Generate a new dhparam in the background in a low priority and reload nginx when finished (grep removes the progress indicator).
-    (
-        (
-            nice -n +5 openssl dhparam -out "${DHPARAM_FILE}.new" "$DHPARAM_BITS" 2>&1 \
-            && mv "${DHPARAM_FILE}.new" "$DHPARAM_FILE" \
-            && echo "Info: Diffie-Hellman group creation complete, reloading nginx." \
-            && set_ownership_and_permissions "$DHPARAM_FILE" \
-            && reload_nginx
-        ) | grep -vE '^[\.+]+'
-        rm "$GEN_LOCKFILE"
-    ) & disown
 }
 
 function check_default_cert_key {
