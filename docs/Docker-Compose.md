@@ -28,7 +28,6 @@ services:
       - conf:/etc/nginx/conf.d
       - vhost:/etc/nginx/vhost.d
       - html:/usr/share/nginx/html
-      - dhparam:/etc/nginx/dhparam
       - certs:/etc/nginx/certs:ro
       - /var/run/docker.sock:/tmp/docker.sock:ro
     network_mode: bridge
@@ -48,12 +47,9 @@ volumes:
   conf:
   vhost:
   html:
-  dhparam:
   certs:
   acme:
 ```
-
-**Note:** **nginx-proxy** Dockerfile [create a volume for `/etc/nginx/dhparam`](https://github.com/nginx-proxy/nginx-proxy/blob/e80fc0b304bcbcf703d86392394c1a5adb823e3c/Dockerfile#L34), so this compose file include it as a named volume instead of letting it be created anyway as an anonymous volume.
 
 ### Three containers example
 
