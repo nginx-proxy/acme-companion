@@ -51,34 +51,56 @@ function check_dh_group {
 	# Should be 2048, 3072, or 4096 (default):
 	local DHPARAM_BITS="${DHPARAM_BITS:=4096}"
 
+    # Skip generation if DHPARAM_SKIP is set to true
+    if parse_true "${DHPARAM_SKIP:=false}"; then
+		echo "Info: Skipping Diffie-Hellman group setup."
+		return 0
+    fi
+
+    # Let's check DHPARAM_BITS is set to a supported value
+    if [[ ! ${DHPARAM_BITS} =~ ^(2048|3072|4096)$ ]]; then
+        echo "Error: Unsupported DHPARAM_BITS size: ${DHPARAM_BITS}. Supported values are 2048, 3072, or 4096 (default)." >&2
+        exit 1
+    fi
+
+    # Use an existing pre-generated DH group from RFC7919 (https://datatracker.ietf.org/doc/html/rfc7919#appendix-A):
+    local RFC7919_DHPARAM_FILE="/app/dhparam/ffdhe${DHPARAM_BITS}.pem"
+    local EXPECTED_DHPARAM_HASH; EXPECTED_DHPARAM_HASH=$(sha256sum "$RFC7919_DHPARAM_FILE" | cut -d ' ' -f1)
+
 	# DH params may be provided by the user (rarely necessary)
 	if [[ -f ${DHPARAM_FILE} ]]; then
-        set_ownership_and_permissions "$DHPARAM_FILE"
+        local USER_PROVIDED_DH
+
+        # Check if the DH params file is user provided or comes from acme-companion
         local DHPARAM_HASH; DHPARAM_HASH=$(sha256sum "$DHPARAM_FILE" | cut -d ' ' -f1)
+        
         for f in /app/dhparam/ffdhe*.pem; do
             local FFDHE_HASH; FFDHE_HASH=$(sha256sum "$f" | cut -d ' ' -f1)
             if [[ "$DHPARAM_HASH" == "$FFDHE_HASH" ]]; then
-                echo "Info: RFC7919 Diffie-Hellman group found, generation skipped."
-                return 0
+                # This is an acme-companion created DH params file
+                local USER_PROVIDED_DH='false'
+
+                # Check if /etc/nginx/certs/dhparam.pem matches the expected pre-generated DH group
+                if [[ "$DHPARAM_HASH" == "$EXPECTED_DHPARAM_HASH" ]]; then
+                    set_ownership_and_permissions "$DHPARAM_FILE"
+                    echo "Info: ${DHPARAM_BITS} bits RFC7919 Diffie-Hellman group found, generation skipped."
+                    return 0
+                fi
             fi
         done
-		echo "Info: A custom dhparam.pem file was provided. Best practice is to use standardized RFC7919 DHE groups instead."
-		return 0
-	elif parse_true "${DHPARAM_SKIP:=false}"; then
-		echo "Info: Skipping Diffie-Hellman parameters setup."
-		return 0
-	elif [[ ! ${DHPARAM_BITS} =~ ^(2048|3072|4096)$ ]]; then
-		echo "Error: Unsupported DHPARAM_BITS size: ${DHPARAM_BITS}. Use: 2048, 3072, or 4096 (default)." >&2
-		exit 1
+
+        if parse_true ${USER_PROVIDED_DH:=true}; then
+            # This is a user provided DH params file
+            set_ownership_and_permissions "$DHPARAM_FILE"
+            echo "Info: A custom dhparam.pem file was provided. Best practice is to use standardized RFC7919 Diffie-Hellman groups instead."
+            return 0
+        fi
 	fi
 
-	echo "Info: Setting up ${DHPARAM_BITS} bits RFC7919 DH Parameters..."
-
-	# Use an existing pre-generated DH group from RFC7919 (https://datatracker.ietf.org/doc/html/rfc7919#appendix-A):
-	local RFC7919_DHPARAM_FILE="/app/dhparam/ffdhe${DHPARAM_BITS}.pem"
-
-	# Provide the DH params file to nginx:
-	cp "$RFC7919_DHPARAM_FILE" "$DHPARAM_FILE"
+    # The RFC7919 DH params file either need to be created or replaced
+	echo "Info: Setting up ${DHPARAM_BITS} bits RFC7919 Diffie-Hellman group..."
+	cp "$RFC7919_DHPARAM_FILE" "${DHPARAM_FILE}.tmp"
+    mv "${DHPARAM_FILE}.tmp" "${DHPARAM_FILE}"
     set_ownership_and_permissions "$DHPARAM_FILE"
 }
 
