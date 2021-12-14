@@ -3,11 +3,13 @@ LETSENCRYPT_CONTAINERS=(
         {{ if trim $hosts }}
             {{ range $container := $containers }}
                 {{ if parseBool (coalesce $container.Env.LETSENCRYPT_SINGLE_DOMAIN_CERTS "false") }}
+                    {{/* Explicit per-domain splitting of the certificate */}}
                     {{ range $host := split $hosts "," }}
                         {{ $host := trim $host }}
                         {{- "\t"}}'{{ printf "%.12s" $container.ID }}_{{ sha1 $host }}'
                     {{ end }}
                 {{ else }}
+                    {{/* Default: multi-domain (SAN) certificate */}}
                     {{- "\t"}}'{{ printf "%.12s" $container.ID }}'
                 {{ end }}
             {{ end }}
@@ -18,25 +20,38 @@ LETSENCRYPT_CONTAINERS=(
 {{ range $hosts, $containers := groupBy $ "Env.LETSENCRYPT_HOST" }}
     {{ $hosts := trimSuffix "," $hosts }}
     {{ range $container := $containers }}
+        {{/* Trim spaces and set empty values on per-container environment variables */}}
+        {{ $KEYSIZE := trim (coalesce $container.Env.LETSENCRYPT_KEYSIZE "") }}
+        {{ $STAGING := trim (coalesce $container.Env.LETSENCRYPT_TEST "") }}
+        {{ $EMAIL := trim (coalesce $container.Env.LETSENCRYPT_EMAIL "") }}
+        {{ $CA_URI := trim (coalesce $container.Env.ACME_CA_URI "") }}
+        {{ $PREFERRED_CHAIN := trim (coalesce $container.Env.ACME_PREFERRED_CHAIN "") }}
+        {{ $OCSP := trim (coalesce $container.Env.ACME_OCSP "") }}
+        {{ $EAB_KID := trim (coalesce $container.Env.ACME_EAB_KID "") }}
+        {{ $EAB_HMAC_KEY := trim (coalesce $container.Env.ACME_EAB_HMAC_KEY "") }}
+        {{ $ZEROSSL_API_KEY := trim (coalesce $container.Env.ZEROSSL_API_KEY "") }}
+        {{ $RESTART_CONTAINER := trim (coalesce $container.Env.LETSENCRYPT_RESTART_CONTAINER "") }}
         {{ $cid := printf "%.12s" $container.ID }}
         {{ if parseBool (coalesce $container.Env.LETSENCRYPT_SINGLE_DOMAIN_CERTS "false") }}
+            {{/* Explicit per-domain splitting of the certificate */}}
             {{ range $host := split $hosts "," }}
                 {{ $host := trim $host }}
                 {{ $host := trimSuffix "." $host }}
                 {{ $hostHash := sha1 $host }}
                 {{- "\n" }}LETSENCRYPT_{{ $cid }}_{{ $hostHash }}_HOST=('{{ $host }}')
-                {{- "\n" }}LETSENCRYPT_{{ $cid }}_{{ $hostHash }}_KEYSIZE="{{ $container.Env.LETSENCRYPT_KEYSIZE }}"
-                {{- "\n" }}LETSENCRYPT_{{ $cid }}_{{ $hostHash }}_TEST="{{ $container.Env.LETSENCRYPT_TEST }}"
-                {{- "\n" }}LETSENCRYPT_{{ $cid }}_{{ $hostHash }}_EMAIL="{{ $container.Env.LETSENCRYPT_EMAIL }}"
-                {{- "\n" }}ACME_{{ $cid }}_{{ $hostHash }}_CA_URI="{{ $container.Env.ACME_CA_URI }}"
-                {{- "\n" }}ACME_{{ $cid }}_{{ $hostHash }}_PREFERRED_CHAIN="{{ $container.Env.ACME_PREFERRED_CHAIN }}"
-                {{- "\n" }}ACME_{{ $cid }}_{{ $hostHash }}_OCSP="{{ $container.Env.ACME_OCSP }}"
-                {{- "\n" }}ACME_{{ $cid }}_{{ $hostHash }}_EAB_KID="{{ $container.Env.ACME_EAB_KID }}"
-                {{- "\n" }}ACME_{{ $cid }}_{{ $hostHash }}_EAB_HMAC_KEY="{{ $container.Env.ACME_EAB_HMAC_KEY }}"
-                {{- "\n" }}ZEROSSL_{{ $cid }}_{{ $hostHash }}_API_KEY="{{ $container.Env.ZEROSSL_API_KEY }}"
-                {{- "\n" }}LETSENCRYPT_{{ $cid }}_{{ $hostHash }}_RESTART_CONTAINER="{{ $container.Env.LETSENCRYPT_RESTART_CONTAINER }}"
+                {{- "\n" }}LETSENCRYPT_{{ $cid }}_{{ $hostHash }}_KEYSIZE="{{ $KEYSIZE }}"
+                {{- "\n" }}LETSENCRYPT_{{ $cid }}_{{ $hostHash }}_TEST="{{ $STAGING }}"
+                {{- "\n" }}LETSENCRYPT_{{ $cid }}_{{ $hostHash }}_EMAIL="{{ $EMAIL }}"
+                {{- "\n" }}ACME_{{ $cid }}_{{ $hostHash }}_CA_URI="{{ $CA_URI }}"
+                {{- "\n" }}ACME_{{ $cid }}_{{ $hostHash }}_PREFERRED_CHAIN="{{ $PREFERRED_CHAIN }}"
+                {{- "\n" }}ACME_{{ $cid }}_{{ $hostHash }}_OCSP="{{ $OCSP }}"
+                {{- "\n" }}ACME_{{ $cid }}_{{ $hostHash }}_EAB_KID="{{ $EAB_KID }}"
+                {{- "\n" }}ACME_{{ $cid }}_{{ $hostHash }}_EAB_HMAC_KEY="{{ $EAB_HMAC_KEY }}"
+                {{- "\n" }}ZEROSSL_{{ $cid }}_{{ $hostHash }}_API_KEY="{{ $ZEROSSL_API_KEY }}"
+                {{- "\n" }}LETSENCRYPT_{{ $cid }}_{{ $hostHash }}_RESTART_CONTAINER="{{ $RESTART_CONTAINER }}"
             {{ end }}
         {{ else }}
+            {{/* Default: multi-domain (SAN) certificate */}}
             {{- "\n" }}LETSENCRYPT_{{ $cid }}_HOST=( 
                     {{- range $host := split $hosts "," }}
                         {{- $host := trim $host }}
@@ -44,16 +59,16 @@ LETSENCRYPT_CONTAINERS=(
                         '{{ $host }}'{{ " " }} 
                     {{- end -}}
             )
-            {{- "\n" }}LETSENCRYPT_{{ $cid }}_KEYSIZE="{{ $container.Env.LETSENCRYPT_KEYSIZE }}"
-            {{- "\n" }}LETSENCRYPT_{{ $cid }}_TEST="{{ $container.Env.LETSENCRYPT_TEST }}"
-            {{- "\n" }}LETSENCRYPT_{{ $cid }}_EMAIL="{{ $container.Env.LETSENCRYPT_EMAIL }}"
-            {{- "\n" }}ACME_{{ $cid }}_CA_URI="{{ $container.Env.ACME_CA_URI }}"
-            {{- "\n" }}ACME_{{ $cid }}_PREFERRED_CHAIN="{{ $container.Env.ACME_PREFERRED_CHAIN }}"
-            {{- "\n" }}ACME_{{ $cid }}_OCSP="{{ $container.Env.ACME_OCSP }}"
-            {{- "\n" }}ACME_{{ $cid }}_EAB_KID="{{ $container.Env.ACME_EAB_KID }}"
-            {{- "\n" }}ACME_{{ $cid }}_EAB_HMAC_KEY="{{ $container.Env.ACME_EAB_HMAC_KEY }}"
-            {{- "\n" }}ZEROSSL_{{ $cid }}_API_KEY="{{ $container.Env.ZEROSSL_API_KEY }}"
-            {{- "\n" }}LETSENCRYPT_{{ $cid }}_RESTART_CONTAINER="{{ $container.Env.LETSENCRYPT_RESTART_CONTAINER }}"
+            {{- "\n" }}LETSENCRYPT_{{ $cid }}_KEYSIZE="{{ $KEYSIZE }}"
+            {{- "\n" }}LETSENCRYPT_{{ $cid }}_TEST="{{ $STAGING }}"
+            {{- "\n" }}LETSENCRYPT_{{ $cid }}_EMAIL="{{ $EMAIL }}"
+            {{- "\n" }}ACME_{{ $cid }}_CA_URI="{{ $CA_URI }}"
+            {{- "\n" }}ACME_{{ $cid }}_PREFERRED_CHAIN="{{ $PREFERRED_CHAIN }}"
+            {{- "\n" }}ACME_{{ $cid }}_OCSP="{{ $OCSP }}"
+            {{- "\n" }}ACME_{{ $cid }}_EAB_KID="{{ $EAB_KID }}"
+            {{- "\n" }}ACME_{{ $cid }}_EAB_HMAC_KEY="{{ $EAB_HMAC_KEY }}"
+            {{- "\n" }}ZEROSSL_{{ $cid }}_API_KEY="{{ $ZEROSSL_API_KEY }}"
+            {{- "\n" }}LETSENCRYPT_{{ $cid }}_RESTART_CONTAINER="{{ $RESTART_CONTAINER }}"
         {{ end }}
     {{ end }}
 {{ end }}
