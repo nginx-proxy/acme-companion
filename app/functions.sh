@@ -10,6 +10,20 @@ if [[ "$DEBUG" == true ]]; then
   DEBUG=1 && export DEBUG
 fi
 
+function parse_true() {
+	case "$1" in
+
+		true | True | TRUE | 1)
+		return 0
+		;;
+
+		*)
+		return 1
+		;;
+
+	esac
+}
+
 [[ -z "${VHOST_DIR:-}" ]] && \
  declare -r VHOST_DIR=/etc/nginx/vhost.d
 [[ -z "${START_HEADER:-}" ]] && \
