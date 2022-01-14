@@ -43,6 +43,7 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
             type=raw,value=latest,enable=${{ endsWith(github.ref, github.event.repository.default_branch) }}
           labels: |
+            org.opencontainers.image.authors=Nicolas Duchon <nicolas.duchon@gmail.com> (@buchdag), Yves Blusseau
             org.opencontainers.image.version=${{ env.GIT_DESCRIBE }}
 
       - name: Set up QEMU

@@ -17,8 +17,6 @@ RUN apk add --no-cache --virtual .build-deps git \
 
 FROM alpine:3.15.0
 
-LABEL maintainer="Nicolas Duchon <nicolas.duchon@gmail.com> (@buchdag)"
-
 ARG GIT_DESCRIBE
 ARG ACMESH_VERSION=2.9.0
 
@@ -28,12 +26,12 @@ ENV COMPANION_VERSION=$GIT_DESCRIBE \
 
 # Install packages required by the image
 RUN apk add --no-cache --virtual .bin-deps \
-        bash \
-        coreutils \
-        curl \
-        jq \
-        openssl \
-        socat
+    bash \
+    coreutils \
+    curl \
+    jq \
+    openssl \
+    socat
 
 # Install docker-gen from build stage
 COPY --from=go-builder /usr/local/bin/docker-gen /usr/local/bin/
