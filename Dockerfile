@@ -1,19 +1,4 @@
-FROM golang:1.17.6-alpine AS go-builder
-
-ENV DOCKER_GEN_VERSION=0.8.0
-
-# Build docker-gen
-RUN apk add --no-cache --virtual .build-deps git \
-    && git clone https://github.com/nginx-proxy/docker-gen \
-    && cd /go/docker-gen \
-    && git -c advice.detachedHead=false checkout $DOCKER_GEN_VERSION \
-    && go mod download \
-    && CGO_ENABLED=0 go build -ldflags "-X main.buildVersion=${VERSION}" -o docker-gen ./cmd/docker-gen \
-    && go clean -cache \
-    && mv docker-gen /usr/local/bin/ \
-    && cd - \
-    && rm -rf /go/docker-gen \
-    && apk del .build-deps
+FROM nginxproxy/docker-gen:0.8.0 AS docker-gen
 
 FROM alpine:3.15.0
 
@@ -33,8 +18,8 @@ RUN apk add --no-cache --virtual .bin-deps \
     openssl \
     socat
 
-# Install docker-gen from build stage
-COPY --from=go-builder /usr/local/bin/docker-gen /usr/local/bin/
+# Install docker-gen from the nginxproxy/docker-gen image
+COPY --from=docker-gen /usr/local/bin/docker-gen /usr/local/bin/
 
 # Install acme.sh
 COPY /install_acme.sh /app/install_acme.sh

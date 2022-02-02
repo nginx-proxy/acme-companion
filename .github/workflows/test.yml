@@ -41,39 +41,12 @@ jobs:
           name: companion.tar
           path: companion.tar
 
-  nginx-proxy-pull:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v2
-      - name: Pull nginx-proxy Image
-        run: docker pull nginxproxy/nginx-proxy:latest
-      - name: Pull docker-gen Image
-        run: docker pull nginxproxy/docker-gen:latest
-      - name: List Docker Images
-        run: docker images
-      - name: Export Images Artifacts
-        run: |
-          docker save nginxproxy/nginx-proxy:latest > nginx-proxy.tar
-          docker save nginxproxy/docker-gen:latest > docker-gen.tar
-      - name: Upload nginx-proxy Image Artifact
-        uses: actions/upload-artifact@v2
-        with:
-          name: nginx-proxy.tar
-          path: nginx-proxy.tar
-      - name: Upload docker-gen Image Artifact
-        uses: actions/upload-artifact@v2
-        with:
-          name: docker-gen.tar
-          path: docker-gen.tar
-
   docker-specs-tests:
     needs: companion-build
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Code
+      - name: Checkout Docker official images tests
         uses: actions/checkout@v2
         with:
           repository: docker-library/official-images
@@ -92,7 +65,6 @@ jobs:
   integration-tests:
     needs: 
       - companion-build
-      - nginx-proxy-pull
     strategy:
       fail-fast: false
       matrix:
@@ -141,18 +113,6 @@ jobs:
       - name: Setup Boulder
         if: ${{ matrix.acme-ca == 'boulder' }}
         run: test/setup/setup-boulder.sh
-      - name: Download nginx-proxy Image
-        uses: actions/download-artifact@v2
-        with:
-          name: nginx-proxy.tar
-      - name: Download docker-gen Image
-        uses: actions/download-artifact@v2
-        with:
-          name: docker-gen.tar
-      - name: Import nginx-proxy Images
-        run: |
-          docker load < nginx-proxy.tar
-          docker load < docker-gen.tar
       - name: Setup nginx-proxy
         env:
           SETUP: ${{ matrix.setup }}
