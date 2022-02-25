@@ -29,3 +29,7 @@ You can also create test certificates per container (see [Test certificates](./L
 * `CA_BUNDLE` - This is a test only variable [for use with Pebble](https://github.com/letsencrypt/pebble#avoiding-client-https-errors). It changes the trusted root CA used by `acme.sh`, from the default Alpine trust store to the CA bundle file located at the provided path (inside the container). Do **not** use it in production unless you are running your own ACME CA.
 
 * `CERTS_UPDATE_INTERVAL` - 3600 seconds by default, this defines how often the container will check if the certificates require update.
+
+* `ACME_PRE_HOOK` - The provided command will be run before every certificate issuance. The action is limited to the commands available inside the **acme-companion** container. For example `--env "ACME_PRE_HOOK=echo 'start'"`. For more information see [Pre- and Post-Hook](./Hooks.md)
+
+* `ACME_POST_HOOK` - The provided command will be run after every certificate issuance. The action is limited to the commands available inside the **acme-companion** container. For example `--env "ACME_POST_HOOK=echo 'end'"`. For more information see [Pre- and Post-Hook](./Hooks.md)
