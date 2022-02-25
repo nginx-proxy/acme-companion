@@ -220,6 +220,14 @@ function update_cert {
         --fullchain-file "${certificate_dir}/fullchain.pem" \
     )
 
+    # acme.sh pre and post hooks
+    if [[ -n "$ACME_PRE_HOOK" ]]; then
+	    params_issue_arr+=(--pre-hook "$ACME_PRE_HOOK")
+    fi
+    if [[ -n "$ACME_POST_HOOK" ]]; then
+	    params_issue_arr+=(--post-hook "$ACME_POST_HOOK")
+    fi
+
     [[ ! -d "$config_home" ]] && mkdir -p "$config_home"
     params_base_arr+=(--config-home "$config_home")
     local account_file="${config_home}/ca/${ca_dir}/account.json"
