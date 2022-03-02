@@ -31,6 +31,8 @@ LETSENCRYPT_CONTAINERS=(
         {{ $EAB_HMAC_KEY := trim (coalesce $container.Env.ACME_EAB_HMAC_KEY "") }}
         {{ $ZEROSSL_API_KEY := trim (coalesce $container.Env.ZEROSSL_API_KEY "") }}
         {{ $RESTART_CONTAINER := trim (coalesce $container.Env.LETSENCRYPT_RESTART_CONTAINER "") }}
+        {{ $PRE_HOOK := trim (coalesce $container.Env.ACME_PRE_HOOK "") }}
+        {{ $POST_HOOK := trim (coalesce $container.Env.ACME_POST_HOOK "") }}
         {{ $cid := printf "%.12s" $container.ID }}
         {{ if parseBool (coalesce $container.Env.LETSENCRYPT_SINGLE_DOMAIN_CERTS "false") }}
             {{/* Explicit per-domain splitting of the certificate */}}
@@ -49,6 +51,8 @@ LETSENCRYPT_CONTAINERS=(
                 {{- "\n" }}ACME_{{ $cid }}_{{ $hostHash }}_EAB_HMAC_KEY="{{ $EAB_HMAC_KEY }}"
                 {{- "\n" }}ZEROSSL_{{ $cid }}_{{ $hostHash }}_API_KEY="{{ $ZEROSSL_API_KEY }}"
                 {{- "\n" }}LETSENCRYPT_{{ $cid }}_{{ $hostHash }}_RESTART_CONTAINER="{{ $RESTART_CONTAINER }}"
+                {{- "\n" }}ACME_{{ $cid }}_{{ $hostHash }}_PRE_HOOK="{{ $PRE_HOOK }}"
+                {{- "\n" }}ACME_{{ $cid }}_{{ $hostHash }}_POST_HOOK="{{ $POST_HOOK }}"
             {{ end }}
         {{ else }}
             {{/* Default: multi-domain (SAN) certificate */}}
@@ -69,6 +73,8 @@ LETSENCRYPT_CONTAINERS=(
             {{- "\n" }}ACME_{{ $cid }}_EAB_HMAC_KEY="{{ $EAB_HMAC_KEY }}"
             {{- "\n" }}ZEROSSL_{{ $cid }}_API_KEY="{{ $ZEROSSL_API_KEY }}"
             {{- "\n" }}LETSENCRYPT_{{ $cid }}_RESTART_CONTAINER="{{ $RESTART_CONTAINER }}"
+            {{- "\n" }}ACME_{{ $cid }}_PRE_HOOK="{{ $PRE_HOOK }}"
+            {{- "\n" }}ACME_{{ $cid }}_POST_HOOK="{{ $POST_HOOK }}"
         {{ end }}
     {{ end }}
 {{ end }}

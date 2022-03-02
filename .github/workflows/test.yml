@@ -83,6 +83,7 @@ jobs:
             permissions_default,
             permissions_custom,
             symlinks,
+            acme_hooks,
           ]
         setup: [2containers, 3containers]
         acme-ca: [pebble]

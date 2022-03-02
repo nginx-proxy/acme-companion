@@ -75,6 +75,11 @@ If the ACME CA provides multiple cert chain, you can use the `ACME_PREFERRED_CHA
 
 The `LETSENCRYPT_RESTART_CONTAINER` environment variable, when set to `true` on an application container, will restart this container whenever the corresponding cert (`LETSENCRYPT_HOST`) is renewed. This is useful when certificates are directly used inside a container for other purposes than HTTPS (e.g. an FTPS server), to make sure those containers always use an up to date certificate.
 
+#### Pre-Hook and Post-Hook
+
+The `ACME_PRE_HOOK` and `ACME_POST_HOOK` let you use the [`acme.sh` Pre- and Post-Hooks feature](https://github.com/acmesh-official/acme.sh/wiki/Using-pre-hook-post-hook-renew-hook-reloadcmd) to run commands respectively before and after the container's certificate has been issued. For more information see [Pre- and Post-Hook](./Hooks.md)
+
+
 ### global (set on acme-companion container)
 
 #### Default contact address

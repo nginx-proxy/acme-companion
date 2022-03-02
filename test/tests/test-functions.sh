@@ -13,10 +13,30 @@ export -f get_base_domain
 function run_le_container {
   local image="${1:?}"
   local name="${2:?}"
-  local cli_args_str="${3:-}"
+  shift 2
   local -a cli_args_arr
-  for arg in $cli_args_str; do
-    cli_args_arr+=("$arg")
+  
+  while [[ $# -gt 0 ]]; do
+  local flag="$1"
+
+    case $flag in
+      -c|--cli-args) #only one value per flag. Multiple args = use flag multiple times 
+      local cli_args_arr_tmp
+      IFS=' ' read -r -a cli_args_arr_tmp <<< "${2:?}"
+      cli_args_arr+=("${cli_args_arr_tmp[0]}") #Head
+      cli_args_arr+=("${cli_args_arr_tmp[*]:1}") #Tail
+      shift 2
+      ;;
+
+      *) #Legacy Option
+      local cli_args_str="${1:?}"
+      for arg in $cli_args_str; do
+        cli_args_arr+=("$arg")
+      done
+      shift
+      ;;
+    esac
+
   done
 
   if [[ "$SETUP" == '3containers' ]]; then
@@ -30,6 +50,7 @@ function run_le_container {
     cli_args_arr+=(--env "ACME_CA_URI=https://pebble:14000/dir")
     cli_args_arr+=(--env "CA_BUNDLE=/pebble.minica.pem")
     cli_args_arr+=(--network acme_net)
+    cli_args_arr+=(--volume "${GITHUB_WORKSPACE}/pebble.minica.pem:/pebble.minica.pem")
   else
     return 1
   fi
@@ -38,7 +59,6 @@ function run_le_container {
     --name "$name" \
     --volumes-from "$NGINX_CONTAINER_NAME" \
     --volume /var/run/docker.sock:/var/run/docker.sock:ro \
-    --volume "${GITHUB_WORKSPACE}/pebble.minica.pem:/pebble.minica.pem" \
     "${cli_args_arr[@]}" \
     --env "DOCKER_GEN_WAIT=500ms:2s" \
     --env "TEST_MODE=true" \
@@ -75,10 +95,10 @@ function run_nginx_container {
       ;;
 
       -c|--cli-args)
-      local cli_args_str="${2:?}"
-      for arg in $cli_args_str; do
-        cli_args_arr+=("$arg")
-      done
+      local cli_args_arr_tmp
+      IFS=' ' read -r -a cli_args_arr_tmp <<< "${2:?}"
+      cli_args_arr+=("${cli_args_arr_tmp[0]}") #Head
+      cli_args_arr+=("${cli_args_arr_tmp[*]:1}") #Tail
       shift 2
       ;;
 
