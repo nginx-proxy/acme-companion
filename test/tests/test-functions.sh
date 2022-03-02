@@ -24,8 +24,7 @@ function run_le_container {
       local cli_args_arr_tmp
       IFS=' ' read -r -a cli_args_arr_tmp <<< "${2:?}"
       cli_args_arr+=("${cli_args_arr_tmp[0]}") #Head
-      #shellcheck disable=SC2116
-      cli_args_arr+=("$(echo "${cli_args_arr_tmp[@]:1}")") #Tail
+      cli_args_arr+=("${cli_args_arr_tmp[*]:1}") #Tail
       shift 2
       ;;
 
