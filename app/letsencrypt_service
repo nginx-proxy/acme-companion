@@ -221,11 +221,15 @@ function update_cert {
     )
 
     # acme.sh pre and post hooks
-    if [[ -n "$ACME_PRE_HOOK" ]]; then
-	    params_issue_arr+=(--pre-hook "$ACME_PRE_HOOK")
+    local -n acme_pre_hook="ACME_${cid}_PRE_HOOK"
+    acme_pre_hook=${acme_pre_hook:-$ACME_PRE_HOOK}
+    if [[ -n "${acme_pre_hook// }" ]]; then
+	    params_issue_arr+=(--pre-hook "$acme_pre_hook")
     fi
-    if [[ -n "$ACME_POST_HOOK" ]]; then
-	    params_issue_arr+=(--post-hook "$ACME_POST_HOOK")
+    local -n acme_post_hook="ACME_${cid}_POST_HOOK"
+    acme_post_hook=${acme_post_hook:-$ACME_POST_HOOK}
+    if [[ -n "${acme_post_hook// }" ]]; then
+	    params_issue_arr+=(--post-hook "$acme_post_hook")
     fi
 
     [[ ! -d "$config_home" ]] && mkdir -p "$config_home"
