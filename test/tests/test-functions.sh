@@ -95,10 +95,10 @@ function run_nginx_container {
       ;;
 
       -c|--cli-args)
-      local cli_args_str="${2:?}"
-      for arg in $cli_args_str; do
-        cli_args_arr+=("$arg")
-      done
+      local cli_args_arr_tmp
+      IFS=' ' read -r -a cli_args_arr_tmp <<< "${2:?}"
+      cli_args_arr+=("${cli_args_arr_tmp[0]}") #Head
+      cli_args_arr+=("${cli_args_arr_tmp[*]:1}") #Tail
       shift 2
       ;;
 
