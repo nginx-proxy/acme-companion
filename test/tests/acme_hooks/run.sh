@@ -5,7 +5,7 @@
 default_pre_hook_file="/tmp/default_prehook"
 default_pre_hook_command="touch $default_pre_hook_file"
 default_post_hook_file="/tmp/default_posthook"
-default_post_hook_ommand="touch $default_post_hook_file"
+default_post_hook_command="touch $default_post_hook_file"
 
 percontainer_pre_hook_file="/tmp/percontainer_prehook"
 percontainer_pre_hook_command="touch $percontainer_pre_hook_file"
@@ -19,7 +19,7 @@ else
 fi
 run_le_container "${1:?}" "$le_container_name" \
   --cli-args "--env ACME_PRE_HOOK=$default_pre_hook_command" \
-  --cli-args "--env ACME_POST_HOOK=$default_post_hook_ommand"
+  --cli-args "--env ACME_POST_HOOK=$default_post_hook_command"
 
 # Create the $domains array from comma separated domains in TEST_DOMAINS.
 IFS=',' read -r -a domains <<< "$TEST_DOMAINS"
@@ -65,7 +65,7 @@ elif docker exec "$le_container_name" [[ ! -f "/etc/acme.sh/$container_email/${d
 fi
 
 default_pre_hook_command_base64="${acme_pre_hook_key}${acme_base64_start}$(echo -n "$default_pre_hook_command" | base64)${acme_base64_end}"
-default_post_hook_command_base64="${acme_post_hook_key}${acme_base64_start}$(echo -n "$default_post_hook_ommand" | base64)${acme_base64_end}"
+default_post_hook_command_base64="${acme_post_hook_key}${acme_base64_start}$(echo -n "$default_post_hook_command" | base64)${acme_base64_end}"
 
 default_acme_pre_hook="$(docker exec "$le_container_name" grep "$acme_pre_hook_key" "/etc/acme.sh/$container_email/${domains[0]}/${domains[0]}.conf")"
 default_acme_post_hook="$(docker exec "$le_container_name" grep "$acme_post_hook_key" "/etc/acme.sh/$container_email/${domains[0]}/${domains[0]}.conf")"
