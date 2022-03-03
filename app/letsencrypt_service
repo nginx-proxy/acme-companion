@@ -224,21 +224,46 @@ function update_cert {
     params_base_arr+=(--config-home "$config_home")
     local account_file="${config_home}/ca/${ca_dir}/account.json"
 
-    # Zero SSL External Account Binding (EAB)
-    if [[ "$acme_ca_uri" == "https://acme.zerossl.com/v2/DV90" ]]; then
-        local -n eab_kid="ACME_${cid}_EAB_KID"
-        local -n eab_hmac_key="ACME_${cid}_EAB_HMAC_KEY"
-        local -n zerossl_api_key="ZEROSSL_${cid}_API_KEY"
-        if [[ -z "$zerossl_api_key" ]]; then
-            # Try using the default API key
-            zerossl_api_key="$ZEROSSL_API_KEY"
+    # External Account Binding (EAB)
+    local -n eab_kid="ACME_${cid}_EAB_KID"
+    local -n eab_hmac_key="ACME_${cid}_EAB_HMAC_KEY"
+    if [[ ! -f "$account_file" ]]; then
+        if [[ -n "${eab_kid}" && -n "${eab_hmac_key}" ]]; then
+            # Register the ACME account with the per container EAB credentials.
+            params_register_arr+=(--eab-kid "$eab_kid" --eab-hmac-key "$eab_hmac_key")
+        elif [[ -n "${ACME_EAB_KID// }" && -n "${ACME_EAB_HMAC_KEY// }" ]]; then
+            # We don't have per-container EAB kid and hmac key or Zero SSL API key.
+            # Register the ACME account with the default EAB credentials.
+            params_register_arr+=(--eab-kid "$ACME_EAB_KID" --eab-hmac-key "$ACME_EAB_HMAC_KEY")
+        elif [[ -n "${accountemail// }" ]]; then
+            # We don't have per container nor default EAB credentials, register a new account.
+            params_register_arr+=(--accountemail "$accountemail")
         fi
-        if [[ ! -f "$account_file" ]]; then
-            if [[ -n "${eab_kid}" && -n "${eab_hmac_key}" ]]; then
-                # Register the ACME account with the per container EAB credentials.
-                params_register_arr+=(--eab-kid "$eab_kid" --eab-hmac-key "$eab_hmac_key")
-            elif [[ -n "${zerossl_api_key}" ]]; then
-                # We have a Zero SSL API key but no per-container EAB kid and hmac key.
+    fi
+
+    # Zero SSL
+    if [[ "$acme_ca_uri" == "https://acme.zerossl.com/v2/DV90" ]]; then
+        # Test if we already have:
+        #   - an account file
+        #   - the --accountemail account registration parameter
+        #   - the --eab-kid and --eab-hmac-key account registration parameters
+        local account_ok='false'
+        if [[ -f "$account_file" ]]; then
+            account_ok='true'
+        elif in_array '--accountemail' 'params_register_arr'; then
+            account_ok='true'
+        elif in_array '--eab-kid' 'params_register_arr' && in_array '--eab-hmac-key' 'params_register_arr'; then
+            account_ok='true'
+        fi
+
+        if [[ $account_ok == 'false' ]]; then
+            local -n zerossl_api_key="ZEROSSL_${cid}_API_KEY"
+            if [[ -z "$zerossl_api_key" ]]; then
+                # Try using the default API key
+                zerossl_api_key="${ZEROSSL_API_KEY:-}"
+            fi
+
+            if [[ -n "${zerossl_api_key// }" ]]; then
                 # Generate a set of ACME EAB credentials using the ZeroSSL API.
                 local zerossl_api_response
                 if zerossl_api_response="$(curl -s -X POST "https://api.zerossl.com/acme/eab-credentials?access_key=${zerossl_api_key}")"; then
@@ -255,13 +280,6 @@ function update_cert {
                     # curl failed.
                     echo "Warning: curl failed to make an HTTP POST request to https://api.zerossl.com/acme/eab-credentials."
                 fi
-            elif [[ -n "${ACME_EAB_KID// }" && -n "${ACME_EAB_HMAC_KEY// }" ]]; then
-                # We don't have per-container EAB kid and hmac key or Zero SSL API key.
-                # Register the ACME account with the default EAB credentials.
-                params_register_arr+=(--eab-kid "$ACME_EAB_KID" --eab-hmac-key "$ACME_EAB_HMAC_KEY")
-            elif [[ -n "${accountemail// }" ]]; then
-                # We don't have per container nor default EAB credentials, register a new account with ZeroSSL.
-                params_register_arr+=(--accountemail "$accountemail")
             else
                 # We don't have a Zero SSL ACME account, EAB credentials, a ZeroSSL API key or an account email :
                 # skip certificate account registration and certificate issuance. 
@@ -269,9 +287,6 @@ function update_cert {
                 return 1
             fi        
         fi
-    elif [[ -n "${accountemail// }" ]]; then
-        # We're not using Zero SSL, register the ACME account using the provided email.
-        params_register_arr+=(--accountemail "$accountemail")
     fi
     
     # Account registration and update if required

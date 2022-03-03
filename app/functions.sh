@@ -24,6 +24,15 @@ function parse_true() {
 	esac
 }
 
+function in_array() {
+    local needle="$1" item
+    local -n arrref="$2"
+    for item in "${arrref[@]}"; do
+        [[ "$item" == "$needle" ]] && return 0
+    done
+    return 1
+}
+
 [[ -z "${VHOST_DIR:-}" ]] && \
  declare -r VHOST_DIR=/etc/nginx/vhost.d
 [[ -z "${START_HEADER:-}" ]] && \
