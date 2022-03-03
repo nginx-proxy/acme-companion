@@ -97,7 +97,16 @@ jobs:
           ]
         setup: [2containers, 3containers]
         acme-ca: [pebble]
+        pebble-config: [pebble-config.json]
         include:
+          - test-name: acme_eab
+            setup: 2containers
+            acme-ca: pebble
+            pebble-config: pebble-config-eab.json
+          - test-name: acme_eab
+            setup: 3containers
+            acme-ca: pebble 
+            pebble-config: pebble-config-eab.json
           - test-name: ocsp_must_staple
             setup: 2containers
             acme-ca: boulder
@@ -122,6 +131,8 @@ jobs:
 
       - name: Setup Pebble
         if: ${{ matrix.acme-ca == 'pebble' }}
+        env:
+          PEBBLE_CONFIG: ${{ matrix.pebble-config }}
         run: test/setup/pebble/setup-pebble.sh
 
       - name: Setup Boulder
@@ -148,6 +159,7 @@ jobs:
         env:
           SETUP: ${{ matrix.setup }}
           ACME_CA: ${{ matrix.acme-ca }}
+          PEBBLE_CONFIG: ${{ matrix.pebble-config }}
         run: test/run.sh -t ${{ matrix.test-name }} "$IMAGE"
 
       - name: Display containers logs
