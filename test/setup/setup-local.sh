@@ -109,7 +109,7 @@ EOF
     if [[ "$ACME_CA" == 'boulder' ]]; then
       "${GITHUB_WORKSPACE}/test/setup/setup-boulder.sh"
     elif [[ "$ACME_CA" == 'pebble' ]]; then
-      "${GITHUB_WORKSPACE}/test/setup/setup-pebble.sh"
+      "${GITHUB_WORKSPACE}/test/setup/pebble/setup-pebble.sh"
     else
       echo "ACME_CA is not set, aborting."
       exit 1
@@ -127,14 +127,15 @@ EOF
     done
 
     if [[ "$ACME_CA" == 'boulder' ]]; then
-      # Stop and remove boulder
+      # Stop and remove Boulder
       docker stop boulder
       docker-compose --project-name 'boulder' \
         --file "${GITHUB_WORKSPACE}/go/src/github.com/letsencrypt/boulder/docker-compose.yml" \
         down --volumes
       docker rm boulder
     elif [[ "$ACME_CA" == 'pebble' ]]; then
-      docker network rm acme_net
+      # Stop and remove Pebble
+      docker-compose --file "${GITHUB_WORKSPACE}/test/setup/pebble/docker-compose.yml" down
       [[ -f "${GITHUB_WORKSPACE}/pebble.minica.pem" ]] && rm "${GITHUB_WORKSPACE}/pebble.minica.pem"
     fi
 
