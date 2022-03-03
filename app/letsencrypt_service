@@ -220,18 +220,6 @@ function update_cert {
         --fullchain-file "${certificate_dir}/fullchain.pem" \
     )
 
-    # acme.sh pre and post hooks
-    local -n acme_pre_hook="ACME_${cid}_PRE_HOOK"
-    acme_pre_hook=${acme_pre_hook:-$ACME_PRE_HOOK}
-    if [[ -n "${acme_pre_hook// }" ]]; then
-	    params_issue_arr+=(--pre-hook "$acme_pre_hook")
-    fi
-    local -n acme_post_hook="ACME_${cid}_POST_HOOK"
-    acme_post_hook=${acme_post_hook:-$ACME_POST_HOOK}
-    if [[ -n "${acme_post_hook// }" ]]; then
-	    params_issue_arr+=(--post-hook "$acme_post_hook")
-    fi
-
     [[ ! -d "$config_home" ]] && mkdir -p "$config_home"
     params_base_arr+=(--config-home "$config_home")
     local account_file="${config_home}/ca/${ca_dir}/account.json"
@@ -302,6 +290,25 @@ function update_cert {
     if [[ ! -f "$account_file" ]]; then
         echo "Error: no ACME account was found or registered for $accountemail and $acme_ca_uri, certificate creation aborted."
         return 1
+    fi
+
+    # acme.sh pre and post hooks
+    local -n acme_pre_hook="ACME_${cid}_PRE_HOOK"
+    if [[ -n "${acme_pre_hook}" ]]; then
+        # Use per-container pre hook
+	    params_issue_arr+=(--pre-hook "$acme_pre_hook")
+    elif [[ -n ${ACME_PRE_HOOK// } ]]; then
+        # Use default pre hook
+        params_issue_arr+=(--pre-hook "$ACME_PRE_HOOK")
+    fi
+
+    local -n acme_post_hook="ACME_${cid}_POST_HOOK"
+    if [[ -n "${acme_post_hook}" ]]; then
+        # Use per-container post hook
+	    params_issue_arr+=(--post-hook "$acme_post_hook")
+    elif [[ -n ${ACME_POST_HOOK// } ]]; then
+        # Use default post hook
+        params_issue_arr+=(--post-hook "$ACME_POST_HOOK")
     fi
 
     local -n acme_preferred_chain="ACME_${cid}_PREFERRED_CHAIN"
