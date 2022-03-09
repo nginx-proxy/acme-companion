@@ -28,7 +28,7 @@ RUN chmod +rx /app/install_acme.sh \
     && /app/install_acme.sh \
     && rm -f /app/install_acme.sh
 
-COPY /app/ /app/
+COPY app LICENSE /app/
 
 WORKDIR /app
 
