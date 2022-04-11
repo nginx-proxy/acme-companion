@@ -21,8 +21,6 @@ services:
   nginx-proxy:
     image: nginxproxy/nginx-proxy
     container_name: nginx-proxy
-    environment:
-      - DEFAULT_EMAIL=mail@yourdomain.tld
     ports:
       - "80:80"
       - "443:443"
@@ -37,6 +35,8 @@ services:
   acme-companion:
     image: nginxproxy/acme-companion
     container_name: nginx-proxy-acme
+    environment:
+      - DEFAULT_EMAIL=mail@yourdomain.tld
     volumes_from:
       - nginx-proxy
     volumes:
@@ -62,8 +62,6 @@ services:
   nginx-proxy:
     image: nginx:alpine
     container_name: nginx-proxy
-    environment:
-      - DEFAULT_EMAIL=mail@yourdomain.tld
     ports:
       - "80:80"
       - "443:443"
@@ -90,6 +88,8 @@ services:
   acme-companion:
     image: nginxproxy/acme-companion
     container_name: nginx-proxy-acme
+    environment:
+      - DEFAULT_EMAIL=mail@yourdomain.tld
     volumes_from:
       - nginx-proxy
     volumes:
