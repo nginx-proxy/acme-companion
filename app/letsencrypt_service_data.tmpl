@@ -1,7 +1,21 @@
+{{ $CurrentContainer := where $ "ID" .Docker.CurrentContainerID | first }}
+
+{{ $activeContainers := whereExist $ "Env.LETSENCRYPT_HOST" }}
+{{ if trim (default "" $CurrentContainer.Env.NETWORK_SCOPE) }}
+    {{ $filteredContainers := list }}
+    {{ range $activeContainers }}
+        {{ if gt (where .Networks "Name" (trim $CurrentContainer.Env.NETWORK_SCOPE) | len) 0 }}
+            {{ $filteredContainers = append $filteredContainers . }}
+        {{ end }}
+    {{ end }}
+    {{ $activeContainers = $filteredContainers }}
+{{ end }}
+
 LETSENCRYPT_CONTAINERS=(
-    {{ range $hosts, $containers := groupBy $ "Env.LETSENCRYPT_HOST" }}
+    {{ range $hosts, $containers := groupBy $activeContainers "Env.LETSENCRYPT_HOST" }}
         {{ if trim $hosts }}
             {{ range $container := $containers }}
+                {{ $cid := printf "%.12s" $container.ID }}
                 {{ if parseBool (coalesce $container.Env.LETSENCRYPT_SINGLE_DOMAIN_CERTS "false") }}
                     {{/* Explicit per-domain splitting of the certificate */}}
                     {{ range $host := split $hosts "," }}
@@ -17,7 +31,7 @@ LETSENCRYPT_CONTAINERS=(
     {{ end }}
 )
 
-{{ range $hosts, $containers := groupBy $ "Env.LETSENCRYPT_HOST" }}
+{{ range $hosts, $containers := groupBy $activeContainers "Env.LETSENCRYPT_HOST" }}
     {{ $hosts := trimSuffix "," $hosts }}
     {{ range $container := $containers }}
         {{/* Trim spaces and set empty values on per-container environment variables */}}

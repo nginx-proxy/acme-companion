@@ -1,0 +1,8 @@
+Started test web server for le1.wtf in the network 0
+Started test web server for le2.wtf in the network 1
+Started test web server for le3.wtf in the network 2
+le1.wtf is in the primary network, cert should be generated
+le2.wtf is not in the primary network, cert should not be generated
+Domain le2.wtf was not included in the service_data.
+le3.wtf is not in the primary network, cert should not be generated
+Domain le3.wtf was not included in the service_data.

@@ -84,6 +84,7 @@ jobs:
             permissions_custom,
             symlinks,
             acme_hooks,
+            networks_segregation
           ]
         setup: [2containers, 3containers]
         acme-ca: [pebble]

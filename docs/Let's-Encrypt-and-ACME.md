@@ -101,3 +101,13 @@ Reusing private keys can help if you intend to use [HPKP](https://developer.mozi
     1. The container will use the special purpose `staging` configuration directory.
     1. The directory URI is forced to The Let's Encrypt v2 staging one (`ACME_CA_URI` is ignored)
     2. The account email address is forced empty (`DEFAULT_EMAIL` and `LETSENCRYPT_EMAIL` are ignored)
+
+#### Running multiple **nginx-proxy** and **acme-companion** containers on a same Docker machine
+
+The `NETWORK_SCOPE` variable must be set in order to run multiple **acme-companion** containers on a same Docker machine. The value should be a name of network, that 
+connects **nginx-proxy** with the proxied containers.
+
+When a server has multiple IP addresses, you might run multiple **nginx-proxy** + **acme-companion** instances on it, each for a different set of proxied
+containers. By default, **acme-companion** discovers all running containers and tries to generate SSL certificates for them, meaning multiple **acme-companion** 
+instances will try to generate the same set of certificates. In order to limit **acme-companion** discovery scope to a smaller set of containers, set the
+`NETWORK_SCOPE` environment variable.
