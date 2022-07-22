@@ -8,6 +8,7 @@ ACME_CA_URI="${ACME_CA_URI:-"https://acme-v02.api.letsencrypt.org/directory"}"
 ACME_CA_TEST_URI="https://acme-staging-v02.api.letsencrypt.org/directory"
 DEFAULT_KEY_SIZE="${DEFAULT_KEY_SIZE:-4096}"
 RENEW_PRIVATE_KEYS="$(lc "${RENEW_PRIVATE_KEYS:-true}")"
+DEFAULT_RENEW="${DEFAULT_RENEW:-60}"
 
 # Backward compatibility environment variable
 REUSE_PRIVATE_KEYS="$(lc "${REUSE_PRIVATE_KEYS:-false}")"
@@ -181,7 +182,7 @@ function update_cert {
     else
         # If we did not get any email at all, use the default (empty mail) config
         config_home="/etc/acme.sh/default"
-    fi 
+    fi
 
     local -n acme_ca_uri="ACME_${cid}_CA_URI"
     if [[ -z "$acme_ca_uri" ]]; then
@@ -276,16 +277,16 @@ function update_cert {
                 params_register_arr+=(--accountemail "$accountemail")
             else
                 # We don't have a Zero SSL ACME account, EAB credentials, a ZeroSSL API key or an account email :
-                # skip certificate account registration and certificate issuance. 
+                # skip certificate account registration and certificate issuance.
                 echo "Error: usage of ZeroSSL require an email bound account. No EAB credentials, ZeroSSL API key or email were provided for this certificate, creation aborted."
                 return 1
-            fi        
+            fi
         fi
     elif [[ -n "${accountemail// }" ]]; then
         # We're not using Zero SSL, register the ACME account using the provided email.
         params_register_arr+=(--accountemail "$accountemail")
     fi
-    
+
     # Account registration and update if required
     if [[ ! -f "$account_file" ]]; then
         params_register_arr=("${params_base_arr[@]}" "${params_register_arr[@]}")
@@ -310,7 +311,7 @@ function update_cert {
         params_issue_arr+=(--preferred-chain "$acme_preferred_chain")
     fi
     if [[ "$RENEW_PRIVATE_KEYS" != 'false' && "$REUSE_PRIVATE_KEYS" != 'true' ]]; then
-        params_issue_arr+=(--always-force-new-domain-key)      
+        params_issue_arr+=(--always-force-new-domain-key)
     fi
     [[ "${2:-}" == "--force-renew" ]] && params_issue_arr+=(--force)
 
@@ -324,6 +325,9 @@ function update_cert {
         # Add location configuration for the domain
         add_location_configuration "$domain" || reload_nginx
     done
+
+    # Allow to override day to renew cert
+    params_issue_arr+=(--days "$DEFAULT_RENEW")
 
     params_issue_arr=("${params_base_arr[@]}" "${params_issue_arr[@]}")
     [[ "$DEBUG" == 1 ]] && echo "Calling acme.sh --issue with the following parameters : ${params_issue_arr[*]}"
