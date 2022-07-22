@@ -17,6 +17,7 @@ globalTests+=(
 	permissions_custom
 	symlinks
 	acme_hooks
+	certs_default_renew
 )
 
 # The ocsp_must_staple test does not work with Pebble
