@@ -282,8 +282,21 @@ function update_cert {
             fi        
         fi
     elif [[ -n "${accountemail// }" ]]; then
-        # We're not using Zero SSL, register the ACME account using the provided email.
-        params_register_arr+=(--accountemail "$accountemail")
+        # We're not using Zero SSL, first check for per-container EAB kid and hmac key.
+        local -n eab_kid="ACME_${cid}_EAB_KID"
+        local -n eab_hmac_key="ACME_${cid}_EAB_HMAC_KEY"
+        if [[ -n "${eab_kid}" && -n "${eab_hmac_key}" ]]; then
+            # Register the ACME account with the per container EAB credentials.
+            params_register_arr+=(--eab-kid "$eab_kid" --eab-hmac-key "$eab_hmac_key")
+
+        elif [[ -n "${ACME_EAB_KID// }" && -n "${ACME_EAB_HMAC_KEY// }" ]]; then
+            # We don't have per-container EAB kid and hmac key.
+            # Register the ACME account with the default EAB credentials.
+            params_register_arr+=(--eab-kid "$ACME_EAB_KID" --eab-hmac-key "$ACME_EAB_HMAC_KEY")
+        else
+            # We don't have EAB and HMAC keys, register the ACME account using the provided email.
+            params_register_arr+=(--accountemail "$accountemail")
+        fi
     fi
     
     # Account registration and update if required
