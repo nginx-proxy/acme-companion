@@ -23,7 +23,7 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Build Image
         run: docker build -t "$IMAGE" .
@@ -52,7 +52,7 @@ jobs:
 
     steps:
       - name: Checkout Docker official images tests
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           repository: docker-library/official-images
           path: official-images
@@ -108,7 +108,7 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       # PREPARE RUNNER ENV
       - name: Add Test Domains in /etc/hosts

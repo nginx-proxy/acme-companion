@@ -128,9 +128,11 @@ EOF
 
     if [[ "$ACME_CA" == 'boulder' ]]; then
       # Stop and remove boulder
+      docker stop boulder
       docker-compose --project-name 'boulder' \
         --file "${GITHUB_WORKSPACE}/go/src/github.com/letsencrypt/boulder/docker-compose.yml" \
         down --volumes
+      docker rm boulder
     elif [[ "$ACME_CA" == 'pebble' ]]; then
       docker network rm acme_net
       [[ -f "${GITHUB_WORKSPACE}/pebble.minica.pem" ]] && rm "${GITHUB_WORKSPACE}/pebble.minica.pem"
