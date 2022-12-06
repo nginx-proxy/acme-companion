@@ -44,7 +44,7 @@ function get_environment {
         break
         ;;
         *)
-        :
+        exit 1
         ;;
       esac
     done
@@ -55,9 +55,10 @@ function get_environment {
     while true; do
       echo "Which ACME CA do you want to use or remove ?"
       echo ""
-      echo "    1) Boulder https://github.com/letsencrypt/boulder"
-      echo "    2) Pebble  https://github.com/letsencrypt/pebble"
-      read -re -p "Select an option [1-2]: " option
+      echo "    1) Boulder                        https://github.com/letsencrypt/boulder"
+      echo "    2) Pebble with base configuration https://github.com/letsencrypt/pebble"
+      echo "    3) Pebble with EAB configuration  https://github.com/letsencrypt/pebble"
+      read -re -p "Select an option [1-3]: " option
       case $option in
         1)
         acme_ca="boulder"
@@ -65,15 +66,22 @@ function get_environment {
         ;;
         2)
         acme_ca="pebble"
+        pebble_config="pebble-config.json"
+        break
+        ;;
+        3)
+        acme_ca="pebble"
+        pebble_config="pebble-config-eab.json"
         break
         ;;
         *)
-        :
+        exit 1
         ;;
       esac
     done
   fi
   export ACME_CA="${ACME_CA:-$acme_ca}"
+  export PEBBLE_CONFIG="${PEBBLE_CONFIG:-$pebble_config}"
 }
 
 case $1 in
@@ -88,6 +96,7 @@ export DOCKER_GEN_CONTAINER_NAME="$DOCKER_GEN_CONTAINER_NAME"
 export TEST_DOMAINS="$TEST_DOMAINS"
 export SETUP="$SETUP"
 export ACME_CA="$ACME_CA"
+export PEBBLE_CONFIG="$PEBBLE_CONFIG"
 EOF
 
     # Add the required custom entries to /etc/hosts
@@ -109,7 +118,7 @@ EOF
     if [[ "$ACME_CA" == 'boulder' ]]; then
       "${GITHUB_WORKSPACE}/test/setup/setup-boulder.sh"
     elif [[ "$ACME_CA" == 'pebble' ]]; then
-      "${GITHUB_WORKSPACE}/test/setup/setup-pebble.sh"
+      "${GITHUB_WORKSPACE}/test/setup/pebble/setup-pebble.sh"
     else
       echo "ACME_CA is not set, aborting."
       exit 1
@@ -127,14 +136,15 @@ EOF
     done
 
     if [[ "$ACME_CA" == 'boulder' ]]; then
-      # Stop and remove boulder
+      # Stop and remove Boulder
       docker stop boulder
       docker-compose --project-name 'boulder' \
         --file "${GITHUB_WORKSPACE}/go/src/github.com/letsencrypt/boulder/docker-compose.yml" \
         down --volumes
       docker rm boulder
     elif [[ "$ACME_CA" == 'pebble' ]]; then
-      docker network rm acme_net
+      # Stop and remove Pebble
+      docker-compose --file "${GITHUB_WORKSPACE}/test/setup/pebble/docker-compose.yml" down
       [[ -f "${GITHUB_WORKSPACE}/pebble.minica.pem" ]] && rm "${GITHUB_WORKSPACE}/pebble.minica.pem"
     fi
 
