@@ -6,5 +6,7 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
+    commit-message:
+      prefix: "build"
     labels:
       - "type/build"
