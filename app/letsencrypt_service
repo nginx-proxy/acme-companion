@@ -374,7 +374,7 @@ function update_cert {
             local file_path="${certificate_dir}/${file}"
             [[ -e "$file_path" ]] && set_ownership_and_permissions "$file_path"
         done
-        local acme_private_key="$(find /etc/acme.sh -name "*.key" -path "*${hosts_array[0]}*")
+        local acme_private_key="$(find /etc/acme.sh -name "*.key" -path "*${hosts_array[0]}*")"
         [[ -e "$acme_private_key" ]] && set_ownership_and_permissions "$acme_private_key"
         # Queue nginx reload if a certificate was issued or renewed
         [[ $acmesh_return -eq 0 ]] \
