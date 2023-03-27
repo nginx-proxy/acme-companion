@@ -50,25 +50,26 @@ symlinks=( \
   [3]="/etc/nginx/certs/${domains[0]}.dhparam.pem" \
   )
 
-  # Test symlinks paths
-  for symlink in  "${symlinks[@]}"; do
-    ownership="$(docker exec "$le_container_name" stat -c %u:%g "$symlink")"
-    if [[ "$ownership" != 0:0 ]]; then
-      echo "Expected 0:0 on ${symlink}, found ${ownership}."
-    fi
-  done
+# Test symlinks paths
+for symlink in  "${symlinks[@]}"; do
+  ownership="$(docker exec "$le_container_name" stat -c %u:%g "$symlink")"
+  if [[ "$ownership" != 0:0 ]]; then
+    echo "Expected 0:0 on ${symlink}, found ${ownership}."
+  fi
+done
 
 # Array of private file paths to test
 private_files=( \
   [0]="/etc/nginx/certs/default.key" \
   [1]="/etc/nginx/certs/${domains[0]}/key.pem" \
+  [2]="/etc/acme.sh/default/${domains[0]}/${domains[0]}.key" \
   )
 
 # Test private file paths
 for file in  "${private_files[@]}"; do
   ownership_and_permissions="$(docker exec "$le_container_name" stat -c %u:%g:%a "$file")"
-  if [[ "$ownership_and_permissions" != 0:0:644 ]]; then
-    echo "Expected 0:0:644 on ${file}, found ${ownership_and_permissions}."
+  if [[ "$ownership_and_permissions" != 0:0:600 ]]; then
+    echo "Expected 0:0:600 on ${file}, found ${ownership_and_permissions}."
   fi
 done
 
