@@ -4,7 +4,7 @@
 
 files_uid=1000
 files_gid=1001
-files_perms=640
+files_perms=644
 folders_perms=750
 
 if [[ -z $GITHUB_ACTIONS ]]; then
@@ -56,13 +56,13 @@ symlinks=( \
   [3]="/etc/nginx/certs/${domains[0]}.dhparam.pem" \
   )
 
-  # Test symlinks paths
-  for symlink in  "${symlinks[@]}"; do
-    ownership="$(docker exec "$le_container_name" stat -c %u:%g "$symlink")"
-    if [[ "$ownership" != ${files_uid}:${files_gid} ]]; then
-      echo "Expected ${files_uid}:${files_gid} on ${symlink}, found ${ownership}."
-    fi
-  done
+# Test symlinks paths
+for symlink in  "${symlinks[@]}"; do
+  ownership="$(docker exec "$le_container_name" stat -c %u:%g "$symlink")"
+  if [[ "$ownership" != ${files_uid}:${files_gid} ]]; then
+    echo "Expected ${files_uid}:${files_gid} on ${symlink}, found ${ownership}."
+  fi
+done
 
 # Array of private file paths to test
 private_files=( \
