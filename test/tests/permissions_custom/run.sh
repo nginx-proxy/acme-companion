@@ -68,6 +68,7 @@ done
 private_files=( \
   [0]="/etc/nginx/certs/default.key" \
   [1]="/etc/nginx/certs/${domains[0]}/key.pem" \
+  [2]="/etc/acme.sh/default/${domains[0]}/${domains[0]}.key" \
   )
 
 # Test private file paths
