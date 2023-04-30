@@ -1,4 +1,4 @@
-name: DockerHub
+name: Build and publish Docker images
 
 on:
   workflow_dispatch:
@@ -13,13 +13,14 @@ on:
       - "v*.*.*"
     paths:
       - ".dockerignore"
-      - ".github/workflows/dockerhub.yml"
+      - ".github/workflows/build-publish.yml"
       - "app/*"
       - "Dockerfile"
       - "install_acme.sh"
 
 jobs:
   multiarch-build:
+    name: Build and publish image
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
