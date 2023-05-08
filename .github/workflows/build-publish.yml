@@ -1,4 +1,4 @@
-name: DockerHub
+name: Build and publish Docker image
 
 on:
   workflow_dispatch:
@@ -13,13 +13,14 @@ on:
       - "v*.*.*"
     paths:
       - ".dockerignore"
-      - ".github/workflows/dockerhub.yml"
+      - ".github/workflows/build-publish.yml"
       - "app/*"
       - "Dockerfile"
       - "install_acme.sh"
 
 jobs:
   multiarch-build:
+    name: Build and publish Docker image
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -28,7 +29,8 @@ jobs:
           fetch-depth: 0
 
       - name: Retrieve version
-        run: echo "GIT_DESCRIBE=$(git describe --tags)" >> $GITHUB_ENV
+        id: acme-companion_version
+        run: echo "VERSION=$(git describe --tags)" >> "$GITHUB_OUTPUT"
 
       - name: Get Docker tags
         id: docker_meta
@@ -44,7 +46,7 @@ jobs:
             type=raw,value=latest,enable={{is_default_branch}}
           labels: |
             org.opencontainers.image.authors=Nicolas Duchon <nicolas.duchon@gmail.com> (@buchdag), Yves Blusseau
-            org.opencontainers.image.version=${{ env.GIT_DESCRIBE }}
+            org.opencontainers.image.version=${{ steps.acme-companion_version.outputs.VERSION }}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
@@ -70,11 +72,13 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           context: .
-          build-args: GIT_DESCRIBE=${{ env.GIT_DESCRIBE }}
+          build-args: GIT_DESCRIBE=${{ steps.acme-companion_version.outputs.VERSION }}
           platforms: linux/amd64,linux/arm64,linux/arm/v7
           push: true
           tags: ${{ steps.docker_meta.outputs.tags }}
           labels: ${{ steps.docker_meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
