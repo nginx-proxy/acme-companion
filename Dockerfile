@@ -1,4 +1,4 @@
-FROM nginxproxy/docker-gen:0.10.5 AS docker-gen
+FROM nginxproxy/docker-gen:0.10.6 AS docker-gen
 
 FROM alpine:3.17.3
 
