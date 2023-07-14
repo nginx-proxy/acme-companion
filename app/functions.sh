@@ -24,6 +24,15 @@ function parse_true() {
 	esac
 }
 
+function in_array() {
+    local needle="$1" item
+    local -n arrref="$2"
+    for item in "${arrref[@]}"; do
+        [[ "$item" == "$needle" ]] && return 0
+    done
+    return 1
+}
+
 [[ -z "${VHOST_DIR:-}" ]] && \
  declare -r VHOST_DIR=/etc/nginx/vhost.d
 [[ -z "${START_HEADER:-}" ]] && \
@@ -335,10 +344,10 @@ function reload_nginx {
 
 function set_ownership_and_permissions {
   local path="${1:?}"
-  # The default ownership is root:root, with 755 permissions for folders and 644 for files.
+  # The default ownership is root:root, with 755 permissions for folders and 600 for private files.
   local user="${FILES_UID:-root}"
   local group="${FILES_GID:-$user}"
-  local f_perms="${FILES_PERMS:-644}"
+  local f_perms="${FILES_PERMS:-600}"
   local d_perms="${FOLDERS_PERMS:-755}"
 
   if [[ ! "$f_perms" =~ ^[0-7]{3,4}$ ]]; then
@@ -397,7 +406,7 @@ function set_ownership_and_permissions {
     # If the path is a file, check and modify permissions if required.
     elif [[ -f "$path" ]]; then
       # Use different permissions for private files (private keys and ACME account files) ...
-      if [[ "$path" =~ ^.*(default\.key|key\.pem|\.json)$ ]]; then
+      if [[ "$path" =~ ^.*(key\.pem|\.key)$ ]]; then
         if [[ "$(stat -c %a "$path")" != "$f_perms" ]]; then
           [[ "$DEBUG" == 1 ]] && echo "Debug: setting $path permissions to $f_perms."
           chmod "$f_perms" "$path"

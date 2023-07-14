@@ -68,19 +68,14 @@ By default, the **acme-companion** container will enforce the following ownershi
 
 ```
 [drwxr-xr-x]  /etc/nginx/certs
-├── [drwxr-xr-x root root]  accounts
-│   └── [drwxr-xr-x root root]  acme-v02.api.letsencrypt.org
-│       └── [drwxr-xr-x root root]  directory
-│           └── [-rw-r--r-- root root]  default.json
 ├── [-rw-r--r-- root root]  dhparam.pem
 ├── [-rw-r--r-- root root]  default.crt
-├── [-rw-r--r-- root root]  default.key
+├── [-rw------- root root]  default.key
 ├── [drwxr-xr-x root root]  domain.tld
-│   ├── [lrwxrwxrwx root root]  account_key.json -> ../accounts/acme-v02.api.letsencrypt.org/directory/default.json
 │   ├── [-rw-r--r-- root root]  cert.pem
 │   ├── [-rw-r--r-- root root]  chain.pem
 │   ├── [-rw-r--r-- root root]  fullchain.pem
-│   └── [-rw-r--r-- root root]  key.pem
+│   └── [-rw------- root root]  key.pem
 ├── [lrwxrwxrwx root root]  domain.tld.chain.pem -> ./domain.tld/chain.pem
 ├── [lrwxrwxrwx root root]  domain.tld.crt -> ./domain.tld/fullchain.pem
 ├── [lrwxrwxrwx root root]  domain.tld.dhparam.pem -> ./dhparam.pem
@@ -91,30 +86,23 @@ This behavior can be customized using the following environment variable on the 
 
 * `FILES_UID` - Set the user owning the files and folders managed by the container. The variable can be either a user name if this user exists inside the container or a user numeric ID. Default to `root` (user ID `0`).
 * `FILES_GID` - Set the group owning the files and folders managed by the container. The variable can be either a group name if this group exists inside the container or a group numeric ID. Default to the same value as `FILES_UID`.
-* `FILES_PERMS` - Set the permissions of the private keys and ACME account keys. The variable must be a valid octal permission setting and defaults to `644`.
+* `FILES_PERMS` - Set the permissions of the private keys. The variable must be a valid octal permission setting and defaults to `600`.
 * `FOLDERS_PERMS` - Set the permissions of the folders managed by the container. The variable must be a valid octal permission setting and defaults to `755`.
 
-For example, `FILES_UID=1000`, `FILES_PERMS=600` and `FOLDERS_PERMS=700` will result in the following:
+For example, `FILES_UID=1000`, `FILES_PERMS=644` and `FOLDERS_PERMS=700` will result in the following:
 
 ```
 [drwxr-xr-x]  /etc/nginx/certs
-├── [drwx------ 1000 1000]  accounts
-│   └── [drwx------ 1000 1000]  acme-v02.api.letsencrypt.org
-│       └── [drwx------ 1000 1000]  directory
-│           └── [-rw------- 1000 1000]  default.json
 ├── [-rw-r--r-- 1000 1000]  dhparam.pem
 ├── [-rw-r--r-- 1000 1000]  default.crt
-├── [-rw------- 1000 1000]  default.key
+├── [-rw-r--r-- 1000 1000]  default.key
 ├── [drwx------ 1000 1000]  domain.tld
-│   ├── [lrwxrwxrwx 1000 1000]  account_key.json -> ../accounts/acme-v02.api.letsencrypt.org/directory/default.json
 │   ├── [-rw-r--r-- 1000 1000]  cert.pem
 │   ├── [-rw-r--r-- 1000 1000]  chain.pem
 │   ├── [-rw-r--r-- 1000 1000]  fullchain.pem
-│   └── [-rw------- 1000 1000]  key.pem
+│   └── [-rw-r--r-- 1000 1000]  key.pem
 ├── [lrwxrwxrwx 1000 1000]  domain.tld.chain.pem -> ./domain.tld/chain.pem
 ├── [lrwxrwxrwx 1000 1000]  domain.tld.crt -> ./domain.tld/fullchain.pem
 ├── [lrwxrwxrwx 1000 1000]  domain.tld.dhparam.pem -> ./dhparam.pem
 └── [lrwxrwxrwx 1000 1000]  domain.tld.key -> ./domain.tld/key.pem
 ```
-
-If you just want to make the most sensitive files (private keys and ACME account keys) root readable only, set the environment variable `FILES_PERMS` to `600` on your **acme-companion** container.

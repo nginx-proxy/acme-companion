@@ -3,14 +3,15 @@ name: Tests
 on:
   workflow_dispatch:
   push:
+    branches:
+      - main
     paths-ignore:
-    - 'docs/**'
-    - '*.md'
+      - "docs/**"
+      - "*.md"
   pull_request:
     paths-ignore:
-    - 'docs/**'
-    - '*.md'
-
+      - "docs/**"
+      - "*.md"
 
 env:
   DOCKER_GEN_CONTAINER_NAME: nginx-proxy-gen
@@ -24,19 +25,25 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
+
       - name: Build Image
         run: docker build -t "$IMAGE" .
+
       - name: Inspect Image
         run: docker inspect "$IMAGE"
+
       - name: Get acme.sh Version
         run: docker run --rm "$IMAGE" acme.sh --version
+
       - name: List Docker Images
         run: docker images
+
       - name: Export Image Artifact
         run: docker save $IMAGE > companion.tar
+
       - name: Upload Image Artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: companion.tar
           path: companion.tar
@@ -47,23 +54,28 @@ jobs:
 
     steps:
       - name: Checkout Docker official images tests
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           repository: docker-library/official-images
           path: official-images
+
       - name: Download Builded Image
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: companion.tar
+
       - name: Import Builded Image
         run: docker load < companion.tar
+
       - name: Docker Specifications Testing
         run: official-images/test/run.sh "$IMAGE"
-      - if: ${{ failure() }}
+
+      - name: Display containers logs
+        if: ${{ failure() }}
         run: test/github_actions/containers-logs.sh
 
   integration-tests:
-    needs: 
+    needs:
       - companion-build
     strategy:
       fail-fast: false
@@ -87,7 +99,16 @@ jobs:
           ]
         setup: [2containers, 3containers]
         acme-ca: [pebble]
+        pebble-config: [pebble-config.json]
         include:
+          - test-name: acme_eab
+            setup: 2containers
+            acme-ca: pebble
+            pebble-config: pebble-config-eab.json
+          - test-name: acme_eab
+            setup: 3containers
+            acme-ca: pebble 
+            pebble-config: pebble-config-eab.json
           - test-name: ocsp_must_staple
             setup: 2containers
             acme-ca: boulder
@@ -98,7 +119,8 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
+
       # PREPARE RUNNER ENV
       - name: Add Test Domains in /etc/hosts
         run: |
@@ -108,31 +130,42 @@ jobs:
           do
               echo "127.0.0.1 $domain" | sudo tee -a /etc/hosts
           done
+
       - name: Setup Pebble
         if: ${{ matrix.acme-ca == 'pebble' }}
-        run: test/setup/setup-pebble.sh
+        env:
+          PEBBLE_CONFIG: ${{ matrix.pebble-config }}
+        run: test/setup/pebble/setup-pebble.sh
+
       - name: Setup Boulder
         if: ${{ matrix.acme-ca == 'boulder' }}
         run: test/setup/setup-boulder.sh
+
       - name: Setup nginx-proxy
         env:
           SETUP: ${{ matrix.setup }}
           ACME_CA: ${{ matrix.acme-ca }}
         run: test/setup/setup-nginx-proxy.sh
+
       # ADD BUILT IMAGE
       - name: Download Built Image
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: companion.tar
+
       - name: Import Built Image
         run: docker load < companion.tar
+
       # TEST
       - name: Integration Testing
         env:
           SETUP: ${{ matrix.setup }}
           ACME_CA: ${{ matrix.acme-ca }}
+          PEBBLE_CONFIG: ${{ matrix.pebble-config }}
         run: test/run.sh -t ${{ matrix.test-name }} "$IMAGE"
-      - if: ${{ failure() }}
+
+      - name: Display containers logs
+        if: ${{ failure() }}
         env:
           SETUP: ${{ matrix.setup }}
           ACME_CA: ${{ matrix.acme-ca }}

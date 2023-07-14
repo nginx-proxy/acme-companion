@@ -27,9 +27,9 @@ trap cleanup EXIT
 
 declare -A key_types
 key_types=( \
-  ['2048']='RSA Public-Key: (2048 bit)' \
-  ['3072']='RSA Public-Key: (3072 bit)' \
-  ['4096']='RSA Public-Key: (4096 bit)' \
+  ['2048']='Public-Key: (2048 bit)' \
+  ['3072']='Public-Key: (3072 bit)' \
+  ['4096']='Public-Key: (4096 bit)' \
   ['ec-256']='prime256v1' \
   ['ec-384']='secp384r1' \
 )
