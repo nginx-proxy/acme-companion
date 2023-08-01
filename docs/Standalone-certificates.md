@@ -30,7 +30,7 @@ The user configuration file is a collection of bash variables and array, and fol
 
 `LETSENCRYPT_STANDALONE_CERTS` : a bash array containing identifier(s) for you standalone certificate(s). Each element in the array has to be unique. Those identifiers are internal to the container process and won't ever be visible to the outside world or appear on your certificate.
 
-`LETSENCRYPT_uniqueidentifier_HOST` : a bash array containing domain(s) that will be covered by the certificate corresponding to `uniqueidentifier`. 
+`LETSENCRYPT_uniqueidentifier_HOST` : a bash array containing domain(s) that will be covered by the certificate corresponding to `uniqueidentifier`.
 
 Each identifier in `LETSENCRYPT_STANDALONE_CERTS` must have its own corresponding `LETSENCRYPT_uniqueidentifier_HOST` array, where the string `uniqueidentifier` has to equal to that identifier. 
 
