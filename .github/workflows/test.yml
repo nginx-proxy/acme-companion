@@ -83,6 +83,7 @@ jobs:
         test-name:
           [
             docker_api,
+            docker_api_legacy,
             location_config,
             certs_single,
             certs_san,

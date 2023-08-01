@@ -63,7 +63,7 @@ function run_le_container {
     --env "DOCKER_GEN_WAIT=500ms:2s" \
     --env "TEST_MODE=true" \
     --env "DEBUG=1" \
-    --label com.github.jrcs.letsencrypt_nginx_proxy_companion.test_suite \
+    --label com.github.nginx-proxy.acme-companion.test-suite \
     "$image" > /dev/null; \
   then
     [[ "${DRY_RUN:-}" == 1 ]] && echo "Started letsencrypt container for test ${name%%_2*}"
@@ -122,7 +122,7 @@ function run_nginx_container {
     --name "${container_name:-$virtual_host}" \
     -e "VIRTUAL_HOST=$virtual_host" \
     -e "LETSENCRYPT_HOST=$le_host" \
-    --label com.github.jrcs.letsencrypt_nginx_proxy_companion.test_suite \
+    --label com.github.nginx-proxy.acme-companion.test-suite \
     "${cli_args_arr[@]}" \
     nginx:alpine > /dev/null ; \
   then

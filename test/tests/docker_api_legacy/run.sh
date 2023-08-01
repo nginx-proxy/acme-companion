@@ -1,12 +1,12 @@
 #!/bin/bash
 
-## Test for the Docker API.
+## Test for the Docker API with legacy labels.
 
-nginx_vol='nginx-volumes-from'
-nginx_env='nginx-env-var'
-nginx_lbl='nginx-label'
-docker_gen='docker-gen-no-label'
-docker_gen_lbl='docker-gen-label'
+nginx_vol='nginx-volumes-from-legacy'
+nginx_env='nginx-env-var-legacy'
+nginx_lbl='nginx-label-legacy'
+docker_gen='docker-gen-no-label-legacy'
+docker_gen_lbl='docker-gen-label-legacy'
 
 case $SETUP in
 
@@ -67,7 +67,7 @@ case $SETUP in
   labeled_nginx_cid="$(docker run --rm -d \
     --name "$nginx_lbl" \
     -v /var/run/docker.sock:/tmp/docker.sock:ro \
-    --label com.github.nginx-proxy.nginx \
+    --label com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy \
     nginxproxy/nginx-proxy)"
 
   # This should target the nginx-proxy container with the label (nginx-label)
@@ -78,7 +78,7 @@ case $SETUP in
     "$1" \
     bash -c "$commands" 2>&1
 
-  cat > "${GITHUB_WORKSPACE}/test/tests/docker_api/expected-std-out.txt" <<EOF
+  cat > "${GITHUB_WORKSPACE}/test/tests/docker_api_legacy/expected-std-out.txt" <<EOF
 Container $nginx_vol received exec_start: sh -c /app/docker-entrypoint.sh /usr/local/bin/docker-gen /app/nginx.tmpl /etc/nginx/conf.d/default.conf; /usr/sbin/nginx -s reload
 $nginx_vol
 Container $nginx_env received exec_start: sh -c /app/docker-entrypoint.sh /usr/local/bin/docker-gen /app/nginx.tmpl /etc/nginx/conf.d/default.conf; /usr/sbin/nginx -s reload
@@ -156,7 +156,7 @@ EOF
   # Spawn a nginx container named nginx-label, with the nginx_proxy label.
   labeled_nginx1_cid="$(docker run --rm -d \
     --name "$nginx_lbl" \
-    --label com.github.nginx-proxy.nginx \
+    --label com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy \
     nginx:alpine)"
 
   # This should target the nginx container whose id or name was obtained with
@@ -176,7 +176,7 @@ EOF
   # Spawn a "fake docker-gen" container named docker-gen-label, with the docker_gen label.
   labeled_docker_gen_cid="$(docker run --rm -d \
     --name "$docker_gen_lbl" \
-    --label com.github.nginx-proxy.docker-gen \
+    --label com.github.jrcs.letsencrypt_nginx_proxy_companion.docker_gen \
     nginx:alpine)"
 
   # This should target the nginx container whose id or name was obtained with
@@ -205,7 +205,7 @@ EOF
   # Spawn a nginx container named nginx-label, with the nginx_proxy label.
   labeled_nginx2_cid="$(docker run --rm -d \
     --name "$nginx_lbl" \
-    --label com.github.nginx-proxy.nginx \
+    --label com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy \
     nginx:alpine)"
 
   # This should target the nginx container whose id or name was obtained with
@@ -220,7 +220,7 @@ EOF
     "$1" \
     bash -c "$commands" 2>&1
 
-    cat > "${GITHUB_WORKSPACE}/test/tests/docker_api/expected-std-out.txt" <<EOF
+    cat > "${GITHUB_WORKSPACE}/test/tests/docker_api_legacy/expected-std-out.txt" <<EOF
 Container $docker_gen received signal 1
 Container $nginx_vol received signal 1
 $docker_gen

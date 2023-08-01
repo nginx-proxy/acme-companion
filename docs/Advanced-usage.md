@@ -10,7 +10,7 @@ Please read and try [basic usage](./Basic-usage.md), and **validate that you hav
 curl https://raw.githubusercontent.com/nginx-proxy/nginx-proxy/main/nginx.tmpl > /path/to/nginx.tmpl
 ```
 
-2) Use the `com.github.jrcs.letsencrypt_nginx_proxy_companion.docker_gen` label on the **docker-gen** container, or explicitly set the `NGINX_DOCKER_GEN_CONTAINER` environment variable on the **acme-companion** container to the name or id of the **docker-gen** container (we'll use the later method in the example).
+2) Use the `com.github.nginx-proxy.docker-gen` label on the **docker-gen** container, or explicitly set the `NGINX_DOCKER_GEN_CONTAINER` environment variable on the **acme-companion** container to the name or id of the **docker-gen** container (we'll use the later method in the example).
 
 3) Declare `/etc/nginx/conf.d` as a volume on the nginx container so that it can be shared with the **docker-gen** container.
 
