@@ -4,7 +4,7 @@ For **acme-companion** to work properly, it needs to know the ID of the **nginx*
 
 There are three methods to inform the **acme-companion** container of the **nginx**/**nginx-proxy** container ID:
 
-* `label` method: add the label `com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy` to the **nginx**/**nginx-proxy** container.
+* `label` method: add the label `com.github.nginx-proxy.nginx` to the **nginx**/**nginx-proxy** container.
 
 * `environment variable` method: assign a fixed name to the **nginx**/**nginx-proxy** container with `container_name:` and set the environment variable `NGINX_PROXY_CONTAINER` to this name on the **acme-companion** container.
 
@@ -12,7 +12,7 @@ There are three methods to inform the **acme-companion** container of the **ngin
 
 And two methods to inform the **acme-companion** container of the **docker-gen** container ID:
 
-* `label` method: add the label `com.github.jrcs.letsencrypt_nginx_proxy_companion.docker_gen` to the **docker-gen** container.
+* `label` method: add the label `com.github.nginx-proxy.docker-gen` to the **docker-gen** container.
 
 * `environment variable` method: assign a fixed name to the **docker-gen** container with `container_name:` and set the environment variable `NGINX_DOCKER_GEN_CONTAINER` to this name on the **acme-companion** container.
 
@@ -26,12 +26,12 @@ The advantage the `label` methods have over the `environment variable` (and `vol
 ```
 $ docker run --detach \
     [...]
-    --label com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy \
+    --label com.github.nginx-proxy.nginx \
     nginx
 
 $ docker run --detach \
     [...]
-    --label com.github.jrcs.letsencrypt_nginx_proxy_companion.docker_gen \
+    --label com.github.nginx-proxy.docker-gen \
     nginxproxy/docker-gen
 
 $ docker run --detach \
@@ -67,7 +67,7 @@ $ docker run --detach \
 
 $ docker run --detach \
     [...]
-    --label com.github.jrcs.letsencrypt_nginx_proxy_companion.docker_gen \
+    --label com.github.nginx-proxy.docker-gen \
     nginxproxy/docker-gen
 
 $ docker run --detach \

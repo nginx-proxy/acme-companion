@@ -28,7 +28,7 @@ case $SETUP in
       -v /etc/nginx/vhost.d \
       -v /usr/share/nginx/html \
       -v /var/run/docker.sock:/tmp/docker.sock:ro \
-      --label com.github.jrcs.letsencrypt_nginx_proxy_companion.test_suite \
+      --label com.github.nginx-proxy.acme-companion.test-suite \
       --network "$test_net" \
       nginxproxy/nginx-proxy
     ;;
@@ -42,7 +42,7 @@ case $SETUP in
       -v /etc/nginx/conf.d \
       -v /etc/nginx/vhost.d \
       -v /usr/share/nginx/html \
-      --label com.github.jrcs.letsencrypt_nginx_proxy_companion.test_suite \
+      --label com.github.nginx-proxy.acme-companion.test-suite \
       --network "$test_net" \
       nginx:alpine
 
@@ -51,7 +51,7 @@ case $SETUP in
       --volumes-from "$NGINX_CONTAINER_NAME" \
       -v "${GITHUB_WORKSPACE}/nginx.tmpl:/etc/docker-gen/templates/nginx.tmpl:ro" \
       -v /var/run/docker.sock:/tmp/docker.sock:ro \
-      --label com.github.jrcs.letsencrypt_nginx_proxy_companion.test_suite \
+      --label com.github.nginx-proxy.acme-companion.test-suite \
       --network "$test_net" \
       nginxproxy/docker-gen \
       -notify-sighup "$NGINX_CONTAINER_NAME" -watch /etc/docker-gen/templates/nginx.tmpl /etc/nginx/conf.d/default.conf

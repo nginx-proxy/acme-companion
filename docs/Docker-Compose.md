@@ -82,7 +82,7 @@ services:
       - /path/to/nginx.tmpl:/etc/docker-gen/templates/nginx.tmpl:ro
       - /var/run/docker.sock:/tmp/docker.sock:ro
     labels:
-      - "com.github.jrcs.letsencrypt_nginx_proxy_companion.docker_gen"
+      - "com.github.nginx-proxy.docker-gen"
     network_mode: bridge
 
   acme-companion:
