@@ -1,6 +1,6 @@
 FROM nginxproxy/docker-gen:0.10.6 AS docker-gen
 
-FROM alpine:3.18.3
+FROM alpine:3.18.4
 
 ARG GIT_DESCRIBE
 ARG ACMESH_VERSION=2.9.0
