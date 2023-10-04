@@ -17,11 +17,13 @@ It handles the automated creation, renewal and use of SSL certificates for proxi
 * Support creation of [Multi-Domain (SAN) Certificates](https://github.com/nginx-proxy/acme-companion/blob/main/docs/Let's-Encrypt-and-ACME.md#multi-domains-certificates).
 * Creation of a strong [RFC7919 Diffie-Hellman Group](https://datatracker.ietf.org/doc/html/rfc7919#appendix-A) at startup.
 * Work with all versions of docker.
+* Support DNS challenges (the list of supported providers is available here: https://github.com/acmesh-official/acme.sh/tree/master/dnsapi)
 
 ### Requirements:
 * Your host **must** be publicly reachable on **both** port [`80`](https://letsencrypt.org/docs/allow-port-80/) and [`443`](https://github.com/nginx-proxy/acme-companion/discussions/873#discussioncomment-1410225).
 * Check your firewall rules and [**do not attempt to block port `80`**](https://letsencrypt.org/docs/allow-port-80/) as that will prevent `http-01` challenges from completing.
 * For the same reason, you can't use nginx-proxy's [`HTTPS_METHOD=nohttp`](https://github.com/nginx-proxy/nginx-proxy#how-ssl-support-works).
+* If for any reason, either the port `80` or `443` are not publicly reachable (firewall, ...), please use dns challenge (see below).
 * The (sub)domains you want to issue certificates for must correctly resolve to the host.
 * Your DNS provider must [answer correctly to CAA record requests](https://letsencrypt.org/docs/caa/).
 * If your (sub)domains have AAAA records set, the host must be publicly reachable over IPv6 on port `80` and `443`.
@@ -111,6 +113,38 @@ $ docker run --detach \
 ```
 
 Repeat [Step 3](#step-3---proxied-containers) for any other container you want to proxy.
+
+## DNS challenge
+If you want to use the DNS challenge, you have to add the following environment variable to your proxied container as following :
+
+For our example, we want to setup the DNS challenge using the provider OVH.
+
+### Check if your provider is supported by acme.sh
+Go to https://github.com/acmesh-official/acme.sh/tree/master/dnsapi and search for your provider.
+In our example, we are searching for `ovh` and we see that this provider is supported (`dns_ovh.sh` file).
+Then, we use the name of that file without the extension as the value for the `LETSENCRYPT_DNS_CHALLENGE_API` environment variable for our proxied container, i.e. : `LETSENCRYPT_DNS_CHALLENGE_API=dns_ovh`
+
+### Add additional credentials for your provider
+Refer to the content of the file your found in the previous step (`dns_ovh.sh` in our example) and note the variable(s) required by the provider.
+
+In our example, our provider needs at least the following credentials : `OVH_AK`, `OVH_AS`, `OVH_CK`, `OVH_END_POINT` as stated in the `dns_ovh.sh` file.
+Then, we add the following environment variable to our proxied container `LETSENCRYPT_DNS_CHALLENGE_ENV=OVH_AK, OVH_AS, OVH_CK, OVH_END_POINT` which is the list of variable (seperated by `,`) related to our provider that should be passed to `acme.sh`.
+
+Finally, we define all of these environment variables inside our proxied container as following :
+
+```shell
+$ docker run --detach \
+    --name your-proxied-app \
+    --env "VIRTUAL_HOST=subdomain.yourdomain.tld" \
+    --env "LETSENCRYPT_HOST=subdomain.yourdomain.tld" \
+    --env "LETSENCRYPT_DNS_CHALLENGE_API=dns_ovh" \
+    --env "LETSENCRYPT_DNS_CHALLENGE_ENV=OVH_AK, OVH_AS, OVH_CK, OVH_END_POINT" \
+    --env "OVH_AK=appKey" \
+    --env "OVH_AS=appSecret" \
+    --env "OVH_CK=consumerKey" \
+    --env "OVH_END_POINT=consumerKey" \
+    nginx
+```
 
 ## Additional documentation
 

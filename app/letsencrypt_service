@@ -151,6 +151,21 @@ function update_cert {
     local -a params_issue_arr
     params_issue_arr+=(--webroot /usr/share/nginx/html)
 
+    # DNS challenge
+    local -n dns_challenge_api="LETSENCRYPT_${cid}_DNS_CHALLENGE_API"
+    local -n dns_challenge_env="LETSENCRYPT_${cid}_DNS_CHALLENGE_ENV"
+    if [[ -z "$dns_challenge_api" ]]; then
+      :
+    else
+      echo "DNS challenge using API: $dns_challenge_api"
+      params_base_arr+=(--dns "$dns_challenge_api")
+      # Loop over defined variable for DNS challenge
+      for var_name in ${dns_challenge_env//,/ } ; do
+        local -n var_value="LETSENCRYPT_${cid}_DNS_CHALLENGE_VAR_${var_name}"
+        declare -x $var_name=$var_value
+      done
+    fi
+
     local -n cert_keysize="LETSENCRYPT_${cid}_KEYSIZE"
     if [[ -z "$cert_keysize" ]] || \
         [[ ! "$cert_keysize" =~ ^(2048|3072|4096|ec-256|ec-384)$ ]]; then
@@ -353,6 +368,16 @@ function update_cert {
     acme.sh --issue "${params_issue_arr[@]}"
 
     local acmesh_return=$?
+
+    # DNS challenge : clean environment variables
+    if [[ -z "$dns_challenge_api" ]]; then
+      :
+    else
+      # Loop over defined variable for DNS challenge
+      for var_name in ${dns_challenge_env//,/ } ; do
+        unset $var_name
+      done
+    fi
 
     # 0 = success, 2 = RENEW_SKIP
     if [[ $acmesh_return == 0 || $acmesh_return == 2 ]]; then
