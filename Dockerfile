@@ -3,7 +3,7 @@ FROM nginxproxy/docker-gen:0.10.6 AS docker-gen
 FROM alpine:3.18.3
 
 ARG GIT_DESCRIBE
-ARG ACMESH_VERSION=2.9.0
+ARG ACMESH_VERSION=3.0.7
 
 ENV COMPANION_VERSION=$GIT_DESCRIBE \
     DOCKER_HOST=unix:///var/run/docker.sock \
