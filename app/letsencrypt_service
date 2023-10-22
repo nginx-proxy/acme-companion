@@ -222,7 +222,14 @@ function update_cert {
 
     [[ ! -d "$config_home" ]] && mkdir -p "$config_home"
     params_base_arr+=(--config-home "$config_home")
-    local account_file="${config_home}/ca/${ca_dir}/account.json"
+    local account_file="${config_home}/ca/${ca_dir}/directory/account.json"
+    local account_dir="${account_file%/*}"
+
+    # Account path moved to sub directory 'directory' with acme.sh 3.0.0
+    local old_account_file="${config_home}/ca/${ca_dir}/account.json"
+    if [[ -f "$old_account_file" ]] && [[ ! -e "$account_dir" ]]; then
+        ln -s . "$account_dir"
+    fi
 
     # External Account Binding (EAB)
     local -n eab_kid="ACME_${cid}_EAB_KID"
