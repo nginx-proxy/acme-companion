@@ -1,7 +1,9 @@
-*.bar.baz.example.com
-*.baz.example.com
+*.bar.baz.com.example.com
+*.baz.com.example.com
+*.com.example.com
 *.example.com
-foo.bar.baz.example.*
+foo.bar.baz.com.example.*
+foo.bar.baz.com.*
 foo.bar.baz.*
 foo.bar.*
 foo.*
