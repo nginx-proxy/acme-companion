@@ -1,4 +1,4 @@
-![Tests](https://github.com/nginx-proxy/acme-companion/workflows/Tests/badge.svg)
+[![Tests](https://github.com/nginx-proxy/acme-companion/actions/workflows/test.yml/badge.svg)](https://github.com/nginx-proxy/acme-companion/actions/workflows/test.yml)
 [![GitHub release](https://img.shields.io/github/release/nginx-proxy/acme-companion.svg)](https://github.com/nginx-proxy/acme-companion/releases)
 [![Docker Image Size](https://img.shields.io/docker/image-size/nginxproxy/acme-companion?sort=semver)](https://hub.docker.com/r/nginxproxy/acme-companion "Click to view the image on Docker Hub")
 [![Docker stars](https://img.shields.io/docker/stars/nginxproxy/acme-companion.svg)](https://hub.docker.com/r/nginxproxy/acme-companion "Click to view the image on Docker Hub")
