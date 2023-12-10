@@ -62,11 +62,12 @@ function ascending_wildcard_locations {
     # - *.example.com
     local domain="${1:?}"
     local first_label
-    regex="^[[:alnum:]_\-]+(\.[[:alpha:]]+)?$"
-    until [[ "$domain" =~ $regex ]]; do
+    tld_regex="^[[:alpha:]]+$"
+    regex="^[^.]+\..+$"
+    while [[ "$domain" =~ $regex ]]; do
       first_label="${domain%%.*}"
-      domain="${domain/${first_label}./}"
-      if [[ -z "$domain" ]]; then
+      domain="${domain/#"${first_label}."/}"
+      if [[ "$domain" == "*" || "$domain" =~ $tld_regex ]]; then
         return
       else
         echo "*.${domain}"
@@ -82,11 +83,11 @@ function descending_wildcard_locations {
     # - foo.*
     local domain="${1:?}"
     local last_label
-    regex="^[[:alnum:]_\-]+$"
-    until [[ "$domain" =~ $regex ]]; do
+    regex="^.+\.[^.]+$"
+    while [[ "$domain" =~ $regex ]]; do
       last_label="${domain##*.}"
-      domain="${domain/.${last_label}/}"
-      if [[ -z "$domain" ]]; then
+      domain="${domain/%".${last_label}"/}"
+      if [[ "$domain" == "*" ]]; then
         return
       else
         echo "${domain}.*"
