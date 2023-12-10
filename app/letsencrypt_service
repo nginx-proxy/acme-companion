@@ -149,7 +149,7 @@ function update_cert {
 
     # CLI parameters array used for --issue
     local -a params_issue_arr
-    params_issue_arr+=(--webroot /usr/share/nginx/html)
+    [[ -z "${CF_Token}" ]] && params_issue_arr+=(--webroot /usr/share/nginx/html) || params_issue_arr+=(--dns dns_cf)
 
     local -n cert_keysize="LETSENCRYPT_${cid}_KEYSIZE"
     if [[ -z "$cert_keysize" ]] || \
