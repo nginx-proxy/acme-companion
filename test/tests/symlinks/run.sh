@@ -47,6 +47,11 @@ docker exec "$le_container_name" cp /etc/nginx/certs/le1.wtf/key.pem /etc/nginx/
 docker exec "$le_container_name" bash -c 'cd /etc/nginx/certs; ln -s ./le4.wtf/fullchain.pem ./le4.wtf.crt'
 docker exec "$le_container_name" bash -c 'cd /etc/nginx/certs; ln -s ./le4.wtf/key.pem ./le4.wtf.key'
 
+# symlink default certificate to le1.wtf certificate
+docker exec "$le_container_name" rm -f /etc/nginx/certs/default.crt /etc/nginx/certs/default.key
+docker exec "$le_container_name" bash -c 'cd /etc/nginx/certs; ln -s ./le1.wtf/fullchain.pem ./default.crt'
+docker exec "$le_container_name" bash -c 'cd /etc/nginx/certs; ln -s ./le1.wtf/key.pem ./default.key'
+
 # Stop the nginx containers for ${domains[0]} and ${domains[1]} silently,
 # then check if the corresponding symlinks are removed.
 docker stop "symlink-le1-le2" > /dev/null
@@ -108,3 +113,7 @@ docker stop "symlink-lim-le2" > /dev/null
 # Check if the custom certificate is still there
 docker exec "$le_container_name" [ -f /etc/nginx/certs/le4.wtf.crt ] \
   || echo "Custom certificate for le4.wtf was removed."
+
+# Check if the default certificate is still there
+docker exec "$le_container_name" [ -f /etc/nginx/certs/default.crt ] \
+  || echo "Default certificate was removed."

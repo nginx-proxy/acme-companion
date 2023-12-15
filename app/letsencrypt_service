@@ -56,12 +56,13 @@ function cleanup_links {
     local -a SYMLINKED_DOMAINS
     local -a DISABLED_DOMAINS
 
-    # Create an array containing domains for which a
-    # symlinked private key exists in /etc/nginx/certs.
+    # Create an array containing domains for which a symlinked certificate
+    # exists in /etc/nginx/certs (excluding default cert).
     for symlinked_domain in /etc/nginx/certs/*.crt; do
         [[ -L "$symlinked_domain" ]] || continue
         symlinked_domain="${symlinked_domain##*/}"
         symlinked_domain="${symlinked_domain%*.crt}"
+        [[ "$symlinked_domain" != "default" ]] || continue
         SYMLINKED_DOMAINS+=("$symlinked_domain")
     done
     [[ "$DEBUG" == 1 ]] && echo "Symlinked domains: ${SYMLINKED_DOMAINS[*]}"
