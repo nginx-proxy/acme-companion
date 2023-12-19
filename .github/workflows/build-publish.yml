@@ -74,7 +74,9 @@ jobs:
           context: .
           build-args: GIT_DESCRIBE=${{ steps.acme-companion_version.outputs.VERSION }}
           platforms: linux/amd64,linux/arm64,linux/arm/v7
+          sbom: true
           push: true
+          provenance: mode=max
           tags: ${{ steps.docker_meta.outputs.tags }}
           labels: ${{ steps.docker_meta.outputs.labels }}
           cache-from: type=gha
