@@ -1,17 +1,16 @@
 LETSENCRYPT_CONTAINERS=(
-    {{ range $hosts, $containers := groupBy $ "Env.LETSENCRYPT_HOST" }}
-        {{ if trim $hosts }}
-            {{ range $container := $containers }}
-                {{ if parseBool (coalesce $container.Env.LETSENCRYPT_SINGLE_DOMAIN_CERTS "false") }}
-                    {{/* Explicit per-domain splitting of the certificate */}}
-                    {{ range $host := split $hosts "," }}
-                        {{ $host := trim $host }}
-                        {{- "\t"}}'{{ printf "%.12s" $container.ID }}_{{ sha1 $host }}'
-                    {{ end }}
-                {{ else }}
-                    {{/* Default: multi-domain (SAN) certificate */}}
-                    {{- "\t"}}'{{ printf "%.12s" $container.ID }}'
+    {{ $orderedContainers := sortObjectsByKeysDesc $ "Created" }}
+    {{ range $_, $container := whereExist $orderedContainers "Env.LETSENCRYPT_HOST" }}
+        {{ if trim $container.Env.LETSENCRYPT_HOST }}
+            {{ if parseBool (coalesce $container.Env.LETSENCRYPT_SINGLE_DOMAIN_CERTS "false") }}
+                {{/* Explicit per-domain splitting of the certificate */}}
+                {{ range $host := split $container.Env.LETSENCRYPT_HOST "," }}
+                    {{ $host := trim $host }}
+                    '{{ printf "%.12s" $container.ID }}_{{ sha1 $host }}'
                 {{ end }}
+            {{ else }}
+                {{/* Default: multi-domain (SAN) certificate */}}
+                {{- "\t"}}'{{ printf "%.12s" $container.ID }}'
             {{ end }}
         {{ end }}
     {{ end }}
