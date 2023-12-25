@@ -8,8 +8,6 @@
 
 It handles the automated creation, renewal and use of SSL certificates for proxied Docker containers through the ACME protocol.
 
-**Required read if you use the `latest` version** : the `v2.0.0` release of this project mark the switch of the ACME client used by the Docker image from [**simp.le**](https://github.com/zenhack/simp_le) to [**acme.sh**](https://github.com/acmesh-official/acme.sh). This switch result in some backward incompatible changes, so please read [this issue](https://github.com/nginx-proxy/acme-companion/issues/510) and the updated docs for more details before updating your image. The single most important change is that the container now requires a volume mounted to `/etc/acme.sh` in order to persist ACME account keys and SSL certificates. The last tagged version that uses **simp_le** is `v1.13.1`.
-
 ### Features:
 * Automated creation/renewal of Let's Encrypt (or other ACME CAs) certificates using [**acme.sh**](https://github.com/acmesh-official/acme.sh).
 * Let's Encrypt / ACME domain validation through `http-01` challenge only.
