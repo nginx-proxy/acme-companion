@@ -198,9 +198,12 @@ function update_cert {
 
     # Set relevant --server parameter and ca folder name
     params_base_arr+=(--server "$acme_ca_uri")
-    local ca_dir="${acme_ca_uri##*://}" \
-        && ca_dir="${ca_dir%%/*}" \
-        && ca_dir="${ca_dir%%:*}"
+
+    # Reproduce acme.sh logic to determine the ca account folder path
+    local ca_host_dir
+    ca_host_dir="$(echo "$acme_ca_uri" | cut -d : -f 2 | tr -s / | cut -d / -f 2)"
+    local ca_path_dir
+    ca_path_dir="$(echo "$acme_ca_uri" | cut -d : -f 2- | tr -s / | cut -d / -f 3-)"
 
     local certificate_dir
     # If we're going to use one of LE stating endpoints ...
@@ -223,7 +226,7 @@ function update_cert {
 
     [[ ! -d "$config_home" ]] && mkdir -p "$config_home"
     params_base_arr+=(--config-home "$config_home")
-    local account_file="${config_home}/ca/${ca_dir}/account.json"
+    local account_file="${config_home}/ca/${ca_host_dir}/${ca_path_dir}/account.json"
 
     # External Account Binding (EAB)
     local -n eab_kid="ACME_${cid}_EAB_KID"
