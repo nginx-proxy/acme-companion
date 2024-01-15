@@ -46,7 +46,7 @@ run_nginx_container --hosts "${domains[1]}"  \
 wait_for_symlink "${domains[0]}" "$le_container_name"
 
 # Test if the expected file is there.
-config_path="/etc/acme.sh/default/ca/$ACME_CA"
+config_path="/etc/acme.sh/default/ca/$ACME_CA/dir"
 json_file="${config_path}/account.json"
 conf_file="${config_path}/ca.conf"
 if docker exec "$le_container_name" [[ ! -f "$json_file" ]]; then
@@ -59,7 +59,7 @@ fi
 wait_for_symlink "${domains[1]}" "$le_container_name"
 
 # Test if the expected file is there.
-config_path="/etc/acme.sh/${container_email}/ca/$ACME_CA"
+config_path="/etc/acme.sh/${container_email}/ca/$ACME_CA/dir"
 json_file="${config_path}/account.json"
 conf_file="${config_path}/ca.conf"
 if docker exec "$le_container_name" [[ ! -f "$json_file" ]]; then
