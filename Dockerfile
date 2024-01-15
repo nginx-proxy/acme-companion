@@ -12,11 +12,18 @@ ENV COMPANION_VERSION=$GIT_DESCRIBE \
 # Install packages required by the image
 RUN apk add --no-cache --virtual .bin-deps \
     bash \
+    bind-tools \
     coreutils \
     curl \
     jq \
+    libidn \
+    oath-toolkit-oathtool \
+    openssh-client \
     openssl \
-    socat
+    sed \
+    socat \
+    tar \
+    tzdata
 
 # Install docker-gen from the nginxproxy/docker-gen image
 COPY --from=docker-gen /usr/local/bin/docker-gen /usr/local/bin/
