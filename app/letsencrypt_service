@@ -133,6 +133,7 @@ function update_cert {
     # Base CLI parameters array, used for both --register-account and --issue
     local -a params_base_arr
     params_base_arr+=(--log /dev/null)
+    params_base_arr+=(--useragent "nginx-proxy/acme-companion/$COMPANION_VERSION (acme.sh/$ACMESH_VERSION)")
     [[ "$DEBUG" == 1 ]] && params_base_arr+=(--debug 2)
 
     # Alternative trusted root CA path, used for test with Pebble
