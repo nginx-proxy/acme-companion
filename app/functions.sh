@@ -204,6 +204,10 @@ function get_self_cid {
     if [[ ( ${#self_cid} != 64 ) && ( -f /proc/self/cgroup ) ]]; then
         self_cid="$(grep -Eo -m 1 '[[:alnum:]]{64}' /proc/self/cgroup)"
     fi
+    # cgroups v2
+    if [[ ( ${#self_cid} != 64 ) && ( -f /proc/self/mountinfo ) ]]; then
+        self_cid="$(grep '/userdata/hostname' /proc/self/mountinfo | grep -Eo '[[:alnum:]]{64}')"
+    fi
     if [[ ( ${#self_cid} != 64 ) ]]; then
         self_cid="$(docker_api "/containers/$(hostname)/json" | jq -r '.Id')"
     fi
