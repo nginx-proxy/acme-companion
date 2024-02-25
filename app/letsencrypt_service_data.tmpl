@@ -24,6 +24,8 @@ LETSENCRYPT_CONTAINERS=(
         {{ $KEYSIZE := trim (coalesce $container.Env.LETSENCRYPT_KEYSIZE "") }}
         {{ $STAGING := trim (coalesce $container.Env.LETSENCRYPT_TEST "") }}
         {{ $EMAIL := trim (coalesce $container.Env.LETSENCRYPT_EMAIL "") }}
+        {{ $DNS_CHALLENGE_API := trim (coalesce $container.Env.LETSENCRYPT_DNS_CHALLENGE_API "") }}
+        {{ $DNS_CHALLENGE_ENV := trim (coalesce $container.Env.LETSENCRYPT_DNS_CHALLENGE_ENV "") }}
         {{ $CA_URI := trim (coalesce $container.Env.ACME_CA_URI "") }}
         {{ $PREFERRED_CHAIN := trim (coalesce $container.Env.ACME_PREFERRED_CHAIN "") }}
         {{ $OCSP := trim (coalesce $container.Env.ACME_OCSP "") }}
@@ -44,6 +46,14 @@ LETSENCRYPT_CONTAINERS=(
                 {{- "\n" }}LETSENCRYPT_{{ $cid }}_{{ $hostHash }}_KEYSIZE="{{ $KEYSIZE }}"
                 {{- "\n" }}LETSENCRYPT_{{ $cid }}_{{ $hostHash }}_TEST="{{ $STAGING }}"
                 {{- "\n" }}LETSENCRYPT_{{ $cid }}_{{ $hostHash }}_EMAIL="{{ $EMAIL }}"
+                {{- "\n" }}LETSENCRYPT_{{ $cid }}_{{ $hostHash }}_DNS_CHALLENGE_API="{{ $DNS_CHALLENGE_API }}"
+                {{- "\n" }}LETSENCRYPT_{{ $cid }}_{{ $hostHash }}_DNS_CHALLENGE_ENV="{{ $DNS_CHALLENGE_ENV }}"
+                {{/* Forwarding env variables for DNS API challenge */}}
+                {{ range $varName := split $DNS_CHALLENGE_ENV "," }}
+                    {{ $varName := trim $varName }}
+                    {{ $varValue := trim (coalesce (index $container.Env $varName) "") }}
+                    {{- "\n" }}LETSENCRYPT_{{ $cid }}_{{ $hostHash }}_DNS_CHALLENGE_VAR_{{ $varName }}="{{ $varValue }}"
+                {{ end }}
                 {{- "\n" }}ACME_{{ $cid }}_{{ $hostHash }}_CA_URI="{{ $CA_URI }}"
                 {{- "\n" }}ACME_{{ $cid }}_{{ $hostHash }}_PREFERRED_CHAIN="{{ $PREFERRED_CHAIN }}"
                 {{- "\n" }}ACME_{{ $cid }}_{{ $hostHash }}_OCSP="{{ $OCSP }}"
@@ -66,6 +76,14 @@ LETSENCRYPT_CONTAINERS=(
             {{- "\n" }}LETSENCRYPT_{{ $cid }}_KEYSIZE="{{ $KEYSIZE }}"
             {{- "\n" }}LETSENCRYPT_{{ $cid }}_TEST="{{ $STAGING }}"
             {{- "\n" }}LETSENCRYPT_{{ $cid }}_EMAIL="{{ $EMAIL }}"
+            {{- "\n" }}LETSENCRYPT_{{ $cid }}_DNS_CHALLENGE_API="{{ $DNS_CHALLENGE_API }}"
+            {{- "\n" }}LETSENCRYPT_{{ $cid }}_DNS_CHALLENGE_ENV="{{ $DNS_CHALLENGE_ENV }}"
+            {{/* Forwarding env variables for DNS API challenge */}}
+            {{ range $varName := split $DNS_CHALLENGE_ENV "," }}
+                {{ $varName := trim $varName }}
+                {{ $varValue := trim (coalesce (index $container.Env $varName) "") }}
+                {{- "\n" }}LETSENCRYPT_{{ $cid }}_DNS_CHALLENGE_VAR_{{ $varName }}="{{ $varValue }}"
+            {{ end }}
             {{- "\n" }}ACME_{{ $cid }}_CA_URI="{{ $CA_URI }}"
             {{- "\n" }}ACME_{{ $cid }}_PREFERRED_CHAIN="{{ $PREFERRED_CHAIN }}"
             {{- "\n" }}ACME_{{ $cid }}_OCSP="{{ $OCSP }}"
