@@ -18,6 +18,7 @@ globalTests+=(
 	permissions_custom
 	symlinks
 	acme_hooks
+	certs_default_renew
 )
 
 # The acme_eab test requires Pebble with a specific configuration

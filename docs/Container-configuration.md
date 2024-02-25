@@ -33,3 +33,5 @@ You can also create test certificates per container (see [Test certificates](./L
 * `ACME_PRE_HOOK` - The provided command will be run before every certificate issuance. The action is limited to the commands available inside the **acme-companion** container. For example `--env "ACME_PRE_HOOK=echo 'start'"`. For more information see [Pre- and Post-Hook](./Hooks.md)
 
 * `ACME_POST_HOOK` - The provided command will be run after every certificate issuance. The action is limited to the commands available inside the **acme-companion** container. For example `--env "ACME_POST_HOOK=echo 'end'"`. For more information see [Pre- and Post-Hook](./Hooks.md)
+
+* `DEFAULT_RENEW` - 60 days by default, this defines the day to renew cert, cert from some CA like Buypass has 180 days lifetime, so you might want to renew it at day 170 instead of day 60, see [BuyPass.com CA](https://github.com/acmesh-official/acme.sh/wiki/BuyPass.com-CA) for more detail.
