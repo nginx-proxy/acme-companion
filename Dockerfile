@@ -1,50 +1,42 @@
-FROM golang:1.14-alpine AS go-builder
+FROM nginxproxy/docker-gen:0.12.0 AS docker-gen
 
-ENV DOCKER_GEN_VERSION=0.7.4
+FROM alpine:3.19.1
 
-# Install build dependencies for docker-gen
-RUN apk add --update \
-        curl \
-        gcc \
-        git \
-        make \
-        musl-dev
+ARG GIT_DESCRIBE="unknown"
+ARG ACMESH_VERSION=3.0.7
 
-# Build docker-gen
-RUN go get github.com/jwilder/docker-gen \
-    && cd /go/src/github.com/jwilder/docker-gen \
-    && git checkout $DOCKER_GEN_VERSION \
-    && make get-deps \
-    && make all
-
-FROM alpine:3.11
-
-LABEL maintainer="Yves Blusseau <90z7oey02@sneakemail.com> (@blusseau)"
-
-ENV DEBUG=false \
-    DOCKER_HOST=unix:///var/run/docker.sock
+ENV ACMESH_VERSION=${ACMESH_VERSION} \
+    COMPANION_VERSION=${GIT_DESCRIBE} \
+    DOCKER_HOST=unix:///var/run/docker.sock \
+    PATH=${PATH}:/app
 
 # Install packages required by the image
-RUN apk add --update \
-        bash \
-        ca-certificates \
-        coreutils \
-        curl \
-        jq \
-        openssl \
-    && rm /var/cache/apk/*
+RUN apk add --no-cache --virtual .bin-deps \
+    bash \
+    bind-tools \
+    coreutils \
+    curl \
+    jq \
+    libidn \
+    oath-toolkit-oathtool \
+    openssh-client \
+    openssl \
+    sed \
+    socat \
+    tar \
+    tzdata
 
-# Install docker-gen from build stage
-COPY --from=go-builder /go/src/github.com/jwilder/docker-gen/docker-gen /usr/local/bin/
+# Install docker-gen from the nginxproxy/docker-gen image
+COPY --from=docker-gen /usr/local/bin/docker-gen /usr/local/bin/
 
-# Install simp_le
-COPY /install_simp_le.sh /app/install_simp_le.sh
-RUN chmod +rx /app/install_simp_le.sh \
+# Install acme.sh
+COPY /install_acme.sh /app/install_acme.sh
+RUN chmod +rx /app/install_acme.sh \
     && sync \
-    && /app/install_simp_le.sh \
-    && rm -f /app/install_simp_le.sh
+    && /app/install_acme.sh \
+    && rm -f /app/install_acme.sh
 
-COPY /app/ /app/
+COPY app LICENSE /app/
 
 WORKDIR /app
 

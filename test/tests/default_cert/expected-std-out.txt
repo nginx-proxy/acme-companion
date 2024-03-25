@@ -1,7 +1,1 @@
-Started letsencrypt container for test default_cert
-Connection to le1.wtf using https was successful.
-Connection to le2.wtf using https was successful.
-Connection to le3.wtf using https was successful.
-Connection to le1.wtf using https was successful.
-Connection to le2.wtf using https was successful.
-Connection to le3.wtf using https was successful.
+

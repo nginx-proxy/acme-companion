@@ -5,7 +5,33 @@ function lc {
 	echo "${@,,}"
 }
 
-DEBUG="$(lc "$DEBUG")"
+DEBUG="$(lc "${DEBUG:-}")"
+if [[ "$DEBUG" == true ]]; then
+  DEBUG=1 && export DEBUG
+fi
+
+function parse_true() {
+	case "$1" in
+
+		true | True | TRUE | 1)
+		return 0
+		;;
+
+		*)
+		return 1
+		;;
+
+	esac
+}
+
+function in_array() {
+    local needle="$1" item
+    local -n arrref="$2"
+    for item in "${arrref[@]}"; do
+        [[ "$item" == "$needle" ]] && return 0
+    done
+    return 1
+}
 
 [[ -z "${VHOST_DIR:-}" ]] && \
  declare -r VHOST_DIR=/etc/nginx/vhost.d
@@ -36,11 +62,16 @@ function ascending_wildcard_locations {
     # - *.example.com
     local domain="${1:?}"
     local first_label
-    regex="^[[:alnum:]_\-]+(\.[[:alpha:]]+)?$"
-    until [[ "$domain" =~ $regex ]]; do
+    tld_regex="^[[:alpha:]]+$"
+    regex="^[^.]+\..+$"
+    while [[ "$domain" =~ $regex ]]; do
       first_label="${domain%%.*}"
-      domain="${domain/${first_label}./}"
-      echo "*.${domain}"
+      domain="${domain/#"${first_label}."/}"
+      if [[ "$domain" == "*" || "$domain" =~ $tld_regex ]]; then
+        return
+      else
+        echo "*.${domain}"
+      fi
     done
 }
 
@@ -52,11 +83,15 @@ function descending_wildcard_locations {
     # - foo.*
     local domain="${1:?}"
     local last_label
-    regex="^[[:alnum:]_\-]+$"
-    until [[ "$domain" =~ $regex ]]; do
+    regex="^.+\.[^.]+$"
+    while [[ "$domain" =~ $regex ]]; do
       last_label="${domain##*.}"
-      domain="${domain/.${last_label}/}"
-      echo "${domain}.*"
+      domain="${domain/%".${last_label}"/}"
+      if [[ "$domain" == "*" ]]; then
+        return
+      else
+        echo "${domain}.*"
+      fi
     done
 }
 
@@ -76,13 +111,13 @@ function add_location_configuration {
     # If the domain does not have an exact matching location file, test the possible
     # wildcard locations files. Use default is no location file is present at all.
     if [[ ! -f "${VHOST_DIR}/${domain}" ]]; then
-      for wildcard_domain in $(enumerate_wildcard_locations "$domain"); do
+      while read -r wildcard_domain; do
         if [[ -f "${VHOST_DIR}/${wildcard_domain}" ]]; then
           domain="$wildcard_domain"
           break
         fi
         domain='default'
-      done
+      done <<< "$(enumerate_wildcard_locations "$domain")"
     fi
 
     if [[ -f "${VHOST_DIR}/${domain}" && -n $(sed -n "/$START_HEADER/,/$END_HEADER/p" "${VHOST_DIR}/${domain}") ]]; then
@@ -104,7 +139,7 @@ function add_location_configuration {
 
 function add_standalone_configuration {
     local domain="${1:?}"
-    if grep -q "$domain" "/etc/nginx/conf.d/default.conf"; then
+    if grep -q "server_name ${domain};" /etc/nginx/conf.d/*.conf; then
         # If the domain is already present in nginx's conf, use the location configuration.
         add_location_configuration "$domain"
     else
@@ -252,7 +287,9 @@ function is_docker_gen_container {
 
 function get_docker_gen_container {
     # First try to get the docker-gen container ID from the container label.
-    local docker_gen_cid; docker_gen_cid="$(labeled_cid com.github.jrcs.letsencrypt_nginx_proxy_companion.docker_gen)"
+    local legacy_docker_gen_cid; legacy_docker_gen_cid="$(labeled_cid com.github.jrcs.letsencrypt_nginx_proxy_companion.docker_gen)"
+    local new_docker_gen_cid; new_docker_gen_cid="$(labeled_cid com.github.nginx-proxy.docker-gen)"
+    local docker_gen_cid; docker_gen_cid="${new_docker_gen_cid:-$legacy_docker_gen_cid}"
 
     # If the labeled_cid function dit not return anything and the env var is set, use it.
     if [[ -z "$docker_gen_cid" ]] && [[ -n "${NGINX_DOCKER_GEN_CONTAINER:-}" ]]; then
@@ -266,7 +303,9 @@ function get_docker_gen_container {
 function get_nginx_proxy_container {
     local volumes_from
     # First try to get the nginx container ID from the container label.
-    local nginx_cid; nginx_cid="$(labeled_cid com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy)"
+    local legacy_nginx_cid; legacy_nginx_cid="$(labeled_cid com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy)"
+    local new_nginx_cid; new_nginx_cid="$(labeled_cid com.github.nginx-proxy.nginx)"
+    local nginx_cid; nginx_cid="${new_nginx_cid:-$legacy_nginx_cid}"
 
     # If the labeled_cid function dit not return anything ...
     if [[ -z "${nginx_cid}" ]]; then
@@ -318,10 +357,10 @@ function reload_nginx {
 
 function set_ownership_and_permissions {
   local path="${1:?}"
-  # The default ownership is root:root, with 755 permissions for folders and 644 for files.
+  # The default ownership is root:root, with 755 permissions for folders and 600 for private files.
   local user="${FILES_UID:-root}"
   local group="${FILES_GID:-$user}"
-  local f_perms="${FILES_PERMS:-644}"
+  local f_perms="${FILES_PERMS:-600}"
   local d_perms="${FOLDERS_PERMS:-755}"
 
   if [[ ! "$f_perms" =~ ^[0-7]{3,4}$ ]]; then
@@ -333,7 +372,7 @@ function set_ownership_and_permissions {
     return 1
   fi
 
-  [[ "$DEBUG" == true ]] && echo "Debug: checking $path ownership and permissions."
+  [[ "$DEBUG" == 1 ]] && echo "Debug: checking $path ownership and permissions."
 
   # Find the user numeric ID if the FILES_UID environment variable isn't numeric.
   if [[ "$user" =~ ^[0-9]+$ ]]; then
@@ -342,7 +381,7 @@ function set_ownership_and_permissions {
   elif id -u "$user" > /dev/null 2>&1; then
     # Convert the user name to numeric ID
     local user_num; user_num="$(id -u "$user")"
-    [[ "$DEBUG" == true ]] && echo "Debug: numeric ID of user $user is $user_num."
+    [[ "$DEBUG" == 1 ]] && echo "Debug: numeric ID of user $user is $user_num."
   else
     echo "Warning: user $user not found in the container, please use a numeric user ID instead of a user name. Skipping ownership and permissions check."
     return 1
@@ -355,7 +394,7 @@ function set_ownership_and_permissions {
   elif getent group "$group" > /dev/null 2>&1; then
     # Convert the group name to numeric ID
     local group_num; group_num="$(getent group "$group" | awk -F ':' '{print $3}')"
-    [[ "$DEBUG" == true ]] && echo "Debug: numeric ID of group $group is $group_num."
+    [[ "$DEBUG" == 1 ]] && echo "Debug: numeric ID of group $group is $group_num."
   else
     echo "Warning: group $group not found in the container, please use a numeric group ID instead of a group name. Skipping ownership and permissions check."
     return 1
@@ -364,7 +403,7 @@ function set_ownership_and_permissions {
   # Check and modify ownership if required.
   if [[ -e "$path" ]]; then
     if [[ "$(stat -c %u:%g "$path" )" != "$user_num:$group_num" ]]; then
-      [[ "$DEBUG" == true ]] && echo "Debug: setting $path ownership to $user:$group."
+      [[ "$DEBUG" == 1 ]] && echo "Debug: setting $path ownership to $user:$group."
       if [[ -L "$path" ]]; then
         chown -h "$user_num:$group_num" "$path"
       else
@@ -374,21 +413,21 @@ function set_ownership_and_permissions {
     # If the path is a folder, check and modify permissions if required.
     if [[ -d "$path" ]]; then
       if [[ "$(stat -c %a "$path")" != "$d_perms" ]]; then
-        [[ "$DEBUG" == true ]] && echo "Debug: setting $path permissions to $d_perms."
+        [[ "$DEBUG" == 1 ]] && echo "Debug: setting $path permissions to $d_perms."
         chmod "$d_perms" "$path"
       fi
     # If the path is a file, check and modify permissions if required.
     elif [[ -f "$path" ]]; then
       # Use different permissions for private files (private keys and ACME account files) ...
-      if [[ "$path" =~ ^.*(default\.key|key\.pem|\.json)$ ]]; then
+      if [[ "$path" =~ ^.*(key\.pem|\.key)$ ]]; then
         if [[ "$(stat -c %a "$path")" != "$f_perms" ]]; then
-          [[ "$DEBUG" == true ]] && echo "Debug: setting $path permissions to $f_perms."
+          [[ "$DEBUG" == 1 ]] && echo "Debug: setting $path permissions to $f_perms."
           chmod "$f_perms" "$path"
         fi
       # ... and for public files (certificates, chains, fullchains, DH parameters).
       else
         if [[ "$(stat -c %a "$path")" != "644" ]]; then
-          [[ "$DEBUG" == true ]] && echo "Debug: setting $path permissions to 644."
+          [[ "$DEBUG" == 1 ]] && echo "Debug: setting $path permissions to 644."
           chmod "644" "$path"
         fi
       fi

@@ -1,13 +1,9 @@
 #!/bin/bash
 set -e
 
-testAlias+=(
-	[jrcs/letsencrypt-nginx-proxy-companion]='le-companion'
-)
-
-imageTests+=(
-	[le-companion]='
+globalTests+=(
 	docker_api
+	docker_api_legacy
 	location_config
 	default_cert
 	certs_single
@@ -15,10 +11,25 @@ imageTests+=(
 	certs_single_domain
 	certs_standalone
 	force_renew
-	certs_validity
+	acme_accounts
+	private_keys
 	container_restart
 	permissions_default
 	permissions_custom
 	symlinks
-	'
+	acme_hooks
 )
+
+# The acme_eab test requires Pebble with a specific configuration
+if [[ "$ACME_CA" == 'pebble' && "$PEBBLE_CONFIG" == 'pebble-config-eab.json' ]]; then
+	globalTests+=(
+		acme_eab
+	)
+fi
+
+# The ocsp_must_staple test does not work with Pebble
+if [[ "$ACME_CA" == 'boulder' ]]; then
+	globalTests+=(
+		ocsp_must_staple
+	)
+fi
