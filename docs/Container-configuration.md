@@ -33,3 +33,11 @@ You can also create test certificates per container (see [Test certificates](./L
 * `ACME_PRE_HOOK` - The provided command will be run before every certificate issuance. The action is limited to the commands available inside the **acme-companion** container. For example `--env "ACME_PRE_HOOK=echo 'start'"`. For more information see [Pre- and Post-Hook](./Hooks.md)
 
 * `ACME_POST_HOOK` - The provided command will be run after every certificate issuance. The action is limited to the commands available inside the **acme-companion** container. For example `--env "ACME_POST_HOOK=echo 'end'"`. For more information see [Pre- and Post-Hook](./Hooks.md)
+
+## Optional docker host configuration
+* `DOCKER_HOST` - set the host for docker. Must include the scheme (`unix://`, `http://` or `https://`)
+
+If the docker host daemon socket is [protected](https://docs.docker.com/engine/security/https/):
+
+* `DOCKER_TLS_VERIFY` - set it to value `1` if the docker host requires client TLS authentication
+* `DOCKER_CERT_PATH` - path to TLS client certificates for the docker host. This folder should contain `cert.pem`, `key.pem` and `ca.pem` files. See [Create a CA, server and client keys with OpenSSL](https://docs.docker.com/engine/security/https/#create-a-ca-server-and-client-keys-with-openssl)
