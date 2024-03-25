@@ -4,12 +4,10 @@ set -u
 
 # shellcheck source=functions.sh
 source /app/functions.sh
-DEBUG="$(lc "$DEBUG")"
 
-function check_deprecated_env_var {
-    if [[ -n "${ACME_TOS_HASH:-}" ]]; then
-        echo "Info: the ACME_TOS_HASH environment variable is no longer used by simp_le and has been deprecated."
-        echo "simp_le now implicitly agree to the ACME CA ToS."
+function print_version {
+    if [[ -n "${COMPANION_VERSION:-}" ]]; then
+        echo "Info: running acme-companion version ${COMPANION_VERSION}"
     fi
 }
 
@@ -47,57 +45,63 @@ function check_writable_directory {
 }
 
 function check_dh_group {
-    # Credits to Steve Kamerman for the background Diffie-Hellman creation logic.
-    # https://github.com/jwilder/nginx-proxy/pull/589
-    local DHPARAM_BITS="${DHPARAM_BITS:-2048}"
-    re='^[0-9]*$'
-    if ! [[ "$DHPARAM_BITS" =~ $re ]] ; then
-       echo "Error: invalid Diffie-Hellman size of $DHPARAM_BITS !" >&2
-       exit 1
+	# DH params will be supplied for acme-companion here:
+	local DHPARAM_FILE='/etc/nginx/certs/dhparam.pem'
+
+	# Should be 2048, 3072, or 4096 (default):
+	local DHPARAM_BITS="${DHPARAM_BITS:=4096}"
+
+    # Skip generation if DHPARAM_SKIP is set to true
+    if parse_true "${DHPARAM_SKIP:=false}"; then
+		echo "Info: Skipping Diffie-Hellman group setup."
+		return 0
     fi
 
-    # If a dhparam file is not available, use the pre-generated one and generate a new one in the background.
-    local PREGEN_DHPARAM_FILE="/app/dhparam.pem.default"
-    local DHPARAM_FILE="/etc/nginx/certs/dhparam.pem"
-    local GEN_LOCKFILE="/tmp/le_companion_dhparam_generating.lock"
+    # Let's check DHPARAM_BITS is set to a supported value
+    if [[ ! "$DHPARAM_BITS" =~ ^(2048|3072|4096)$ ]]; then
+        echo "Error: Unsupported DHPARAM_BITS size: ${DHPARAM_BITS}. Supported values are 2048, 3072, or 4096 (default)." >&2
+        exit 1
+    fi
 
-    # The hash of the pregenerated dhparam file is used to check if the pregen dhparam is already in use
-    local PREGEN_HASH; PREGEN_HASH=$(sha256sum "$PREGEN_DHPARAM_FILE" | cut -d ' ' -f1)
-    if [[ -f "$DHPARAM_FILE" ]]; then
-        local CURRENT_HASH; CURRENT_HASH=$(sha256sum "$DHPARAM_FILE" | cut -d ' ' -f1)
-        if [[ "$PREGEN_HASH" != "$CURRENT_HASH" ]]; then
-            # There is already a dhparam, and it's not the default
+    # Use an existing pre-generated DH group from RFC7919 (https://datatracker.ietf.org/doc/html/rfc7919#appendix-A):
+    local RFC7919_DHPARAM_FILE="/app/dhparam/ffdhe${DHPARAM_BITS}.pem"
+    local EXPECTED_DHPARAM_HASH; EXPECTED_DHPARAM_HASH=$(sha256sum "$RFC7919_DHPARAM_FILE" | cut -d ' ' -f1)
+
+	# DH params may be provided by the user (rarely necessary)
+	if [[ -f "$DHPARAM_FILE" ]]; then
+        local USER_PROVIDED_DH
+
+        # Check if the DH params file is user provided or comes from acme-companion
+        local DHPARAM_HASH; DHPARAM_HASH=$(sha256sum "$DHPARAM_FILE" | cut -d ' ' -f1)
+        
+        for f in /app/dhparam/ffdhe*.pem; do
+            local FFDHE_HASH; FFDHE_HASH=$(sha256sum "$f" | cut -d ' ' -f1)
+            if [[ "$DHPARAM_HASH" == "$FFDHE_HASH" ]]; then
+                # This is an acme-companion created DH params file
+                USER_PROVIDED_DH='false'
+
+                # Check if /etc/nginx/certs/dhparam.pem matches the expected pre-generated DH group
+                if [[ "$DHPARAM_HASH" == "$EXPECTED_DHPARAM_HASH" ]]; then
+                    set_ownership_and_permissions "$DHPARAM_FILE"
+                    echo "Info: ${DHPARAM_BITS} bits RFC7919 Diffie-Hellman group found, generation skipped."
+                    return 0
+                fi
+            fi
+        done
+
+        if parse_true "${USER_PROVIDED_DH:=true}"; then
+            # This is a user provided DH params file
             set_ownership_and_permissions "$DHPARAM_FILE"
-            echo "Info: Custom Diffie-Hellman group found, generation skipped."
-            return 0
-          fi
-
-        if [[ -f "$GEN_LOCKFILE" ]]; then
-            # Generation is already in progress
+            echo "Info: A custom dhparam.pem file was provided. Best practice is to use standardized RFC7919 Diffie-Hellman groups instead."
             return 0
         fi
-    fi
+	fi
 
-    echo "Info: Creating Diffie-Hellman group in the background."
-    echo "A pre-generated Diffie-Hellman group will be used for now while the new one
-is being created."
-
-    # Put the default dhparam file in place so we can start immediately
-    cp "$PREGEN_DHPARAM_FILE" "$DHPARAM_FILE"
+    # The RFC7919 DH params file either need to be created or replaced
+	echo "Info: Setting up ${DHPARAM_BITS} bits RFC7919 Diffie-Hellman group..."
+	cp "$RFC7919_DHPARAM_FILE" "${DHPARAM_FILE}.tmp"
+    mv "${DHPARAM_FILE}.tmp" "$DHPARAM_FILE"
     set_ownership_and_permissions "$DHPARAM_FILE"
-    touch "$GEN_LOCKFILE"
-
-    # Generate a new dhparam in the background in a low priority and reload nginx when finished (grep removes the progress indicator).
-    (
-        (
-            nice -n +5 openssl dhparam -out "${DHPARAM_FILE}.new" "$DHPARAM_BITS" 2>&1 \
-            && mv "${DHPARAM_FILE}.new" "$DHPARAM_FILE" \
-            && echo "Info: Diffie-Hellman group creation complete, reloading nginx." \
-            && set_ownership_and_permissions "$DHPARAM_FILE" \
-            && reload_nginx
-        ) | grep -vE '^[\.+]+'
-        rm "$GEN_LOCKFILE"
-    ) & disown
 }
 
 function check_default_cert_key {
@@ -109,7 +113,7 @@ function check_default_cert_key {
         # than 3 months / 7776000 seconds (60 x 60 x 24 x 30 x 3).
         check_cert_min_validity /etc/nginx/certs/default.crt 7776000
         cert_validity=$?
-        [[ "$DEBUG" == true ]] && echo "Debug: a default certificate with $default_cert_cn is present."
+        [[ "$DEBUG" == 1 ]] && echo "Debug: a default certificate with $default_cert_cn is present."
     fi
 
     # Create a default cert and private key if:
@@ -124,48 +128,53 @@ function check_default_cert_key {
             -keyout /etc/nginx/certs/default.key.new \
             -out /etc/nginx/certs/default.crt.new \
         && mv /etc/nginx/certs/default.key.new /etc/nginx/certs/default.key \
-        && mv /etc/nginx/certs/default.crt.new /etc/nginx/certs/default.crt
+        && mv /etc/nginx/certs/default.crt.new /etc/nginx/certs/default.crt \
+        && reload_nginx
         echo "Info: a default key and certificate have been created at /etc/nginx/certs/default.key and /etc/nginx/certs/default.crt."
-    elif [[ "$DEBUG" == true && "${default_cert_cn:-}" =~ $cn ]]; then
+    elif [[ "$DEBUG" == 1 && "${default_cert_cn:-}" =~ $cn ]]; then
         echo "Debug: the self generated default certificate is still valid for more than three months. Skipping default certificate creation."
-    elif [[ "$DEBUG" == true ]]; then
+    elif [[ "$DEBUG" == 1 ]]; then
         echo "Debug: the default certificate is user provided. Skipping default certificate creation."
     fi
     set_ownership_and_permissions "/etc/nginx/certs/default.key"
     set_ownership_and_permissions "/etc/nginx/certs/default.crt"
 }
 
-if [[ "$*" == "/bin/bash /app/start.sh" ]]; then
-    acmev1_r='acme-(v01\|staging)\.api\.letsencrypt\.org'
-    if [[ "${ACME_CA_URI:-}" =~ $acmev1_r ]]; then
-        echo "Error: the ACME v1 API is no longer supported by simp_le."
-        echo "See https://github.com/zenhack/simp_le/pull/119"
-        echo "Please use one of Let's Encrypt ACME v2 endpoints instead."
-        exit 1
+function check_default_account {
+    # The default account is now for empty account email
+    if [[ -f /etc/acme.sh/default/account.conf ]]; then
+        if grep -q ACCOUNT_EMAIL /etc/acme.sh/default/account.conf; then
+            sed -i '/ACCOUNT_EMAIL/d' /etc/acme.sh/default/account.conf
+        fi
     fi
+}
+
+if [[ "$*" == "/bin/bash /app/start.sh" ]]; then
+    print_version
     check_docker_socket
     if [[ -z "$(get_nginx_proxy_container)" ]]; then
         echo "Error: can't get nginx-proxy container ID !" >&2
         echo "Check that you are doing one of the following :" >&2
         echo -e "\t- Use the --volumes-from option to mount volumes from the nginx-proxy container." >&2
         echo -e "\t- Set the NGINX_PROXY_CONTAINER env var on the letsencrypt-companion container to the name of the nginx-proxy container." >&2
-        echo -e "\t- Label the nginx-proxy container to use with 'com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy'." >&2
+        echo -e "\t- Label the nginx-proxy container to use with 'com.github.nginx-proxy.nginx'." >&2
         exit 1
     elif [[ -z "$(get_docker_gen_container)" ]] && ! is_docker_gen_container "$(get_nginx_proxy_container)"; then
         echo "Error: can't get docker-gen container id !" >&2
         echo "If you are running a three containers setup, check that you are doing one of the following :" >&2
         echo -e "\t- Set the NGINX_DOCKER_GEN_CONTAINER env var on the letsencrypt-companion container to the name of the docker-gen container." >&2
-        echo -e "\t- Label the docker-gen container to use with 'com.github.jrcs.letsencrypt_nginx_proxy_companion.docker_gen.'" >&2
+        echo -e "\t- Label the docker-gen container to use with 'com.github.nginx-proxy.docker-gen'." >&2
         exit 1
     fi
     check_writable_directory '/etc/nginx/certs'
     check_writable_directory '/etc/nginx/vhost.d'
+    check_writable_directory '/etc/acme.sh'
     check_writable_directory '/usr/share/nginx/html'
     [[ -f /app/letsencrypt_user_data ]] && check_writable_directory '/etc/nginx/conf.d'
-    check_deprecated_env_var
     check_default_cert_key
     check_dh_group
     reload_nginx
+    check_default_account
 fi
 
 exec "$@"

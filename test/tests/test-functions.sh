@@ -4,51 +4,184 @@ set -e
 
 # Get the first domain of a comma separated list.
 function get_base_domain {
-  awk -F ',' '{print $1}' <(echo ${1:?}) | tr -d ' '
+  awk -F ',' '{print $1}' <<< "${1:?}" | tr -d ' ' | sed 's/\.$//'
 }
 export -f get_base_domain
 
 
-# Run a letsencrypt-nginx-proxy-companion container
+# Run a acme-companion container
 function run_le_container {
   local image="${1:?}"
   local name="${2:?}"
-  local cli_args="${3:-}"
+  shift 2
+  local -a cli_args_arr
+  
+  while [[ $# -gt 0 ]]; do
+  local flag="$1"
+
+    case $flag in
+      -c|--cli-args) #only one value per flag. Multiple args = use flag multiple times 
+      local cli_args_arr_tmp
+      IFS=' ' read -r -a cli_args_arr_tmp <<< "${2:?}"
+      cli_args_arr+=("${cli_args_arr_tmp[0]}") #Head
+      cli_args_arr+=("${cli_args_arr_tmp[*]:1}") #Tail
+      shift 2
+      ;;
+
+      *) #Legacy Option
+      local cli_args_str="${1:?}"
+      for arg in $cli_args_str; do
+        cli_args_arr+=("$arg")
+      done
+      shift
+      ;;
+    esac
+
+  done
+
   if [[ "$SETUP" == '3containers' ]]; then
-    cli_args+=" --env NGINX_DOCKER_GEN_CONTAINER=$DOCKER_GEN_CONTAINER_NAME"
+    cli_args_arr+=(--env "NGINX_DOCKER_GEN_CONTAINER=$DOCKER_GEN_CONTAINER_NAME")
   fi
-  docker run -d \
+
+  if [[ "$ACME_CA" == 'boulder' ]]; then
+    cli_args_arr+=(--env "ACME_CA_URI=http://boulder:4001/directory")
+    cli_args_arr+=(--network boulder_bluenet)
+  elif [[ "$ACME_CA" == 'pebble' ]]; then
+    cli_args_arr+=(--env "ACME_CA_URI=https://pebble:14000/dir")
+    cli_args_arr+=(--env "CA_BUNDLE=/pebble.minica.pem")
+    cli_args_arr+=(--network acme_net)
+    cli_args_arr+=(--volume "${GITHUB_WORKSPACE}/pebble.minica.pem:/pebble.minica.pem")
+  else
+    return 1
+  fi
+
+  if docker run -d \
     --name "$name" \
-    --volumes-from $NGINX_CONTAINER_NAME \
+    --volumes-from "$NGINX_CONTAINER_NAME" \
     --volume /var/run/docker.sock:/var/run/docker.sock:ro \
-    $cli_args \
-    --env "DHPARAM_BITS=256" \
-    --env "DEBUG=true" \
-    --env "ACME_CA_URI=http://boulder:4001/directory" \
-    --label com.github.jrcs.letsencrypt_nginx_proxy_companion.test_suite \
-    --network boulder_bluenet \
-    "$image" > /dev/null && echo "Started letsencrypt container for test ${name%%_2*}"
+    "${cli_args_arr[@]}" \
+    --env "DOCKER_GEN_WAIT=500ms:2s" \
+    --env "TEST_MODE=true" \
+    --env "DEBUG=1" \
+    --label com.github.nginx-proxy.acme-companion.test-suite \
+    "$image" > /dev/null; \
+  then
+    [[ "${DRY_RUN:-}" == 1 ]] && echo "Started letsencrypt container for test ${name%%_2*}"
+  else
+    echo "Could not start letsencrypt container for test ${name%%_2*}"
+    return 1
+  fi
+  return 0
 }
 export -f run_le_container
+
+# Run an nginx container
+function run_nginx_container {
+  local -a cli_args_arr
+
+  while [[ $# -gt 0 ]]; do
+  local flag="$1"
+
+    case $flag in
+      -h|--hosts)
+      local le_host="${2:?}"
+      local virtual_host="${le_host// /}"; virtual_host="${virtual_host//.,/,}"; virtual_host="${virtual_host%,}"
+      shift 2
+      ;;
+
+      -n|--name)
+      local container_name="${2:?}"
+      shift 2
+      ;;
+
+      -c|--cli-args)
+      local cli_args_arr_tmp
+      IFS=' ' read -r -a cli_args_arr_tmp <<< "${2:?}"
+      cli_args_arr+=("${cli_args_arr_tmp[0]}") #Head
+      cli_args_arr+=("${cli_args_arr_tmp[*]:1}") #Tail
+      shift 2
+      ;;
+
+      *) #Unknown option
+      shift
+      ;;
+    esac
+  done
+
+  if [[ "$ACME_CA" == 'boulder' ]]; then
+    cli_args_arr+=(--network boulder_bluenet)
+  elif [[ "$ACME_CA" == 'pebble' ]]; then
+    cli_args_arr+=(--network acme_net)
+  else
+    return 1
+  fi
+
+  [[ "${DRY_RUN:-}" == 1 ]] && echo "Starting $container_name nginx container, with VIRTUAL_HOST=$virtual_host, LETSENCRYPT_HOST=$le_host and the following cli arguments : ${cli_args_arr[*]}."
+  
+  if docker run --rm -d \
+    --name "${container_name:-$virtual_host}" \
+    -e "VIRTUAL_HOST=$virtual_host" \
+    -e "LETSENCRYPT_HOST=$le_host" \
+    --label com.github.nginx-proxy.acme-companion.test-suite \
+    "${cli_args_arr[@]}" \
+    nginx:alpine > /dev/null ; \
+  then
+    [[ "${DRY_RUN:-}" == 1 ]] && echo "Started $container_name nginx container."
+  else
+    echo "Failed to start $container_name nginx container, with VIRTUAL_HOST=$virtual_host, LETSENCRYPT_HOST=$le_host and the following cli arguments : ${cli_args_arr[*]}."
+    return 1
+  fi
+  return 0
+}
+export -f run_nginx_container
+
+
+# Wait for the /etc/nginx/conf.d/standalone-cert-$1.conf file to exist inside container $2
+function wait_for_standalone_conf {
+  local domain="${1:?}"
+  local name="${2:?}"
+  local timeout
+  timeout="$(date +%s)"
+  timeout="$((timeout + 120))"
+  local target
+  until docker exec "$name" [ -f "/etc/nginx/conf.d/standalone-cert-$domain.conf" ]; do
+    if [[ "$(date +%s)" -gt "$timeout" ]]; then
+      echo "Standalone configuration file for $domain was not generated under one minute, timing out."
+      return 1
+    fi
+    sleep 0.1
+  done
+}
+export -f wait_for_standalone_conf
 
 
 # Wait for the /etc/nginx/certs/$1.crt symlink to exist inside container $2
 function wait_for_symlink {
   local domain="${1:?}"
   local name="${2:?}"
-  local i=0
+  local expected_target="${3:-}"
+  local timeout
+  timeout="$(date +%s)"
+  timeout="$((timeout + 120))"
   local target
   until docker exec "$name" [ -L "/etc/nginx/certs/$domain.crt" ]; do
-    if [ $i -gt 60 ]; then
+    if [[ "$(date +%s)" -gt "$timeout" ]]; then
       echo "Symlink for $domain certificate was not generated under one minute, timing out."
       return 1
     fi
-    i=$((i + 2))
-    sleep 2
+    sleep 0.1
   done
-  target="$(docker exec "$name" readlink "/etc/nginx/certs/$domain.crt")"
-  echo "Symlink to $domain certificate has been generated."
-  echo "The link is pointing to the file $target"
+  [[ "${DRY_RUN:-}" == 1 ]] && echo "Symlink to $domain certificate has been generated."
+  if [[ -n "$expected_target" ]]; then
+    target="$(docker exec "$name" readlink "/etc/nginx/certs/$domain.crt")"
+    if [[ "$target" != "$expected_target" ]]; then
+      echo "The symlink to the $domain certificate is expected to point to $expected_target but point to $target instead."
+      return 1
+    elif [[ "${DRY_RUN:-}" == 1 ]]; then
+      echo "The symlink is pointing to the file $target"
+    fi
+  fi
+  return 0
 }
 export -f wait_for_symlink
 
@@ -57,16 +190,18 @@ export -f wait_for_symlink
 function wait_for_symlink_rm {
   local domain="${1:?}"
   local name="${2:?}"
-  local i=0
+  local timeout
+  timeout="$(date +%s)"
+  timeout="$((timeout + 120))"
   until docker exec "$name" [ ! -L "/etc/nginx/certs/$domain.crt" ]; do
-    if [ $i -gt 60 ]; then
+    if [[ "$(date +%s)" -gt "$timeout" ]]; then
       echo "Certificate symlink for $domain was not removed under one minute, timing out."
       return 1
     fi
-    i=$((i + 2))
-    sleep 2
+    sleep 0.1
   done
-  echo "Symlink to $domain certificate has been removed."
+  [[ "${DRY_RUN:-}" == 1 ]] && echo "Symlink to $domain certificate has been removed."
+  return 0
 }
 export -f wait_for_symlink_rm
 
@@ -108,7 +243,7 @@ function check_cert_subj {
     esac
   done
 
-  if curl -k https://"$domain" > /dev/null 2>&1; then
+  if curl -k https://"$domain" &> /dev/null; then
     local cert_subject
     cert_subject="$(echo \
       | openssl s_client -showcerts -servername "$domain" -connect "$domain:443" 2>/dev/null \
@@ -163,19 +298,21 @@ function wait_for_conn {
     esac
   done
 
-  local i=0
+  local timeout
+  timeout="$(date +%s)"
+  timeout="$((timeout + 120))"
   action="${action:---no-match}"
   string="${string:-letsencrypt-nginx-proxy-companion}"
 
   until check_cert_subj --domain "$domain" "$action" "$string"; do
-    if [ $i -gt 120 ]; then
+    if [[ "$(date +%s)" -gt "$timeout" ]]; then
       echo "Could not connect to $domain using https under two minutes, timing out."
       return 1
     fi
-    i=$((i + 2))
-    sleep 2
+    sleep 0.1
   done
-  echo "Connection to $domain using https was successful."
+  [[ "${DRY_RUN:-}" == 1 ]] && echo "Connection to $domain using https was successful."
+  return 0
 }
 export -f wait_for_conn
 

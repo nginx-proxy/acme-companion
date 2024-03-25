@@ -198,12 +198,12 @@
 
 set -e
 
-## Next twelve lines were added by jrcs/docker-letsencrypt-nginx-proxy-companion
+## Next twelve lines were added by nginxproxy/acme-companion
 dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 self="$(basename "$0")"
 failed_tests=()
 
-if [[ -z $TRAVIS ]] && [[ -f "$dir/local_test_env.sh" ]]; then
+if [[ -z $GITHUB_ACTIONS ]] && [[ -f "$dir/local_test_env.sh" ]]; then
 	# shellcheck source=/dev/null
 	source "$dir/local_test_env.sh"
 fi
@@ -226,7 +226,7 @@ EOUSAGE
 }
 
 # arg handling
-## Next nine lines were added or modified by jrcs/docker-letsencrypt-nginx-proxy-companion
+## Next nine lines were added or modified by nginxproxy/acme-companion
 case "$(uname)" in
 	Linux)
 	opts="$(getopt -o 'hdkt:c:?' --long 'dry-run,help,test:,config:,keep-namespace' -- "$@" || { usage >&2 && false; })"
@@ -247,12 +247,12 @@ while true; do
 	flag=$1
 	shift
 	case "$flag" in
-		## Next line was modified by jrcs/docker-letsencrypt-nginx-proxy-companion
-		--dry-run|-d) dryRun=1 ;;
+		## Next line was modified by nginxproxy/acme-companion
+		--dry-run|-d) dryRun=1 && export DRY_RUN=1 ;;
 		--help|-h|'-?') usage && exit 0 ;;
 		--test|-t) argTests["$1"]=1 && shift ;;
 		--config|-c) configs+=("$(readlink -f "$1")") && shift ;;
-		## Next line was modified by jrcs/docker-letsencrypt-nginx-proxy-companion
+		## Next line was modified by nginxproxy/acme-companion
 		--keep-namespace|-k) keepNamespace=1 ;;
 		--) break ;;
 		*)
@@ -285,7 +285,7 @@ fi
 # load the configs
 declare -A testPaths=()
 for conf in "${configs[@]}"; do
-	## Next two line were modified by jrcs/docker-letsencrypt-nginx-proxy-companion
+	## Next two line were modified by nginxproxy/acme-companion
   # shellcheck source=./config.sh
 	source "$conf"
 	## End of modifications
@@ -321,7 +321,7 @@ for dockerImage in "$@"; do
 	#version="${tagVar%-*}"
 	variant="${tagVar##*-}"
 
-	## Irrelevant code was removed here by jrcs/docker-letsencrypt-nginx-proxy-companion
+	## Irrelevant code was removed here by nginxproxy/acme-companion
 
 	testRepo="$repo"
 	if [ -z "$keepNamespace" ]; then
@@ -330,7 +330,7 @@ for dockerImage in "$@"; do
 	[ -z "${testAlias[$repo]}" ] || testRepo="${testAlias[$repo]}"
 
 	explicitVariant=
-	## Next four lines were modified by jrcs/docker-letsencrypt-nginx-proxy-companion
+	## Next four lines were modified by nginxproxy/acme-companion
 	if [ "${explicitTests[:$variant]}" ] \
 	|| [ "${explicitTests[$repo:$variant]}" ] \
 	|| [ "${explicitTests[$testRepo:$variant]}" ]
@@ -367,14 +367,14 @@ for dockerImage in "$@"; do
 
 	tests=()
 	for t in "${testCandidates[@]}"; do
-		## Next line was modified by jrcs/docker-letsencrypt-nginx-proxy-companion
+		## Next line was modified by nginxproxy/acme-companion
 		if [ ${#argTests[@]} -gt 0 ] && [ -z "${argTests[$t]}" ]; then
 		## End of modified code
 			# skipping due to -t
 			continue
 		fi
 
-		## Next seven lines were modified by jrcs/docker-letsencrypt-nginx-proxy-companion
+		## Next seven lines were modified by nginxproxy/acme-companion
 		if [ -n "${globalExcludeTests[${testRepo}_$t]}" ] \
 		|| [ -n "${globalExcludeTests[${testRepo}:${variant}_$t]}" ] \
 		|| [ -n "${globalExcludeTests[:${variant}_$t]}" ] \
@@ -401,10 +401,10 @@ for dockerImage in "$@"; do
 		scriptDir="${testPaths[$t]}"
 		if [ -d "$scriptDir" ]; then
 			script="$scriptDir/run.sh"
-			## Next nine lines were modified or added by jrcs/docker-letsencrypt-nginx-proxy-companion
+			## Next nine lines were modified or added by nginxproxy/acme-companion
 			if [ -x "$script" ] && [ ! -d "$script" ]; then
 				if [ $dryRun ]; then
-					if "$script" $dockerImage; then
+					if "$script" "$dockerImage"; then
 						echo 'passed'
 					else
 						echo 'failed'
@@ -412,12 +412,12 @@ for dockerImage in "$@"; do
 					fi
 				else
 				## End of modified / additional code
-					if output="$("$script" $dockerImage)"; then
+					if output="$("$script" "$dockerImage")"; then
 						if [ -f "$scriptDir/expected-std-out.txt" ] && ! d="$(echo "$output" | diff -u "$scriptDir/expected-std-out.txt" - 2>/dev/null)"; then
 							echo 'failed; unexpected output:'
 							echo "$d"
-							## Next line was added by jrcs/docker-letsencrypt-nginx-proxy-companion
-							failed_tests+=("$(basename $scriptDir)")
+							## Next line was added by nginxproxy/acme-companion
+							failed_tests+=("$(basename "$scriptDir")")
 							## End of additional code
 							didFail=1
 						else
@@ -425,8 +425,8 @@ for dockerImage in "$@"; do
 						fi
 					else
 						echo 'failed'
-						## Next line was added by jrcs/docker-letsencrypt-nginx-proxy-companion
-						failed_tests+=("$(basename $scriptDir)")
+						## Next line was added by nginxproxy/acme-companion
+						failed_tests+=("$(basename "$scriptDir")")
 						## End of additional code
 						didFail=1
 					fi
@@ -447,10 +447,10 @@ for dockerImage in "$@"; do
 done
 
 if [ "$didFail" ]; then
-	## Next five lines were added by jrcs/docker-letsencrypt-nginx-proxy-companion
-	if [[ $TRAVIS == 'true' ]]; then
+	## Next five lines were added by nginxproxy/acme-companion
+	if [[ $GITHUB_ACTIONS == 'true' ]]; then
 		for test in "${failed_tests[@]}"; do
-			echo "$test" >> "$dir/travis/failed_tests.txt"
+			echo "$test" >> "$dir/github_actions/failed_tests.txt"
 		done
 	fi
 	## End of additional code

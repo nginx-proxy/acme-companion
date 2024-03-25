@@ -7,7 +7,7 @@ test_comment='### This is a test comment'
 vhost_path='/etc/nginx/vhost.d'
 
 # Create custom location configuration file to be bind mounted
-location_file="${TRAVIS_BUILD_DIR}/test/tests/location_config/le2.wtf"
+location_file="${GITHUB_WORKSPACE}/test/tests/location_config/le2.wtf"
 echo "$test_comment" > "$location_file"
 
 # Create le1.wtf configuration file, *.le3.wtf and test.* from inside the nginx container
@@ -18,10 +18,10 @@ docker exec "$NGINX_CONTAINER_NAME" sh -c "echo '### This is a test comment' > /
 # Zero the default configuration file.
 docker exec "$NGINX_CONTAINER_NAME" sh -c "echo '' > /etc/nginx/vhost.d/default"
 
-if [[ -z $TRAVIS ]]; then
-  le_container_name="$(basename ${0%/*})_$(date "+%Y-%m-%d_%H.%M.%S")"
+if [[ -z $GITHUB_ACTIONS ]]; then
+  le_container_name="$(basename "${0%/*}")_$(date "+%Y-%m-%d_%H.%M.%S")"
 else
-  le_container_name="$(basename ${0%/*})"
+  le_container_name="$(basename "${0%/*}")"
 fi
 run_le_container "${1:?}" "$le_container_name" "--volume $location_file:$vhost_path/le2.wtf"
 
@@ -31,9 +31,7 @@ IFS=',' read -r -a domains <<< "$TEST_DOMAINS"
 # Cleanup function with EXIT trap
 function cleanup {
   # Cleanup the files created by this run of the test to avoid foiling following test(s).
-  docker exec "$le_container_name" bash -c 'rm -rf /etc/nginx/vhost.d/le1.wtf'
-  docker exec "$le_container_name" bash -c 'rm -rf /etc/nginx/vhost.d/\*.example.com'
-  docker exec "$le_container_name" bash -c 'rm -rf /etc/nginx/vhost.d/test.\*'
+  docker exec "$le_container_name" /app/cleanup_test_artifacts --location-config
   # Stop the LE container
   docker stop "$le_container_name" > /dev/null
 }
@@ -56,7 +54,7 @@ function check_location {
 }
 
 # check the wildcard location enumeration function
-docker exec "$le_container_name" bash -c 'source /app/functions.sh; enumerate_wildcard_locations foo.bar.baz.example.com'
+docker exec "$le_container_name" bash -c 'source /app/functions.sh; enumerate_wildcard_locations foo.bar.baz.com.example.com'
 
 # default configuration file should be empty
 config_path="$vhost_path/default"
@@ -152,6 +150,10 @@ for domain in "${domains[@]:0:2}" '*.example.com' 'test.*'; do
   fi
 done
 
+# Should not be used by anything, but potentially matches an enumerate_wildcard_locations file glob.
+docker exec "$NGINX_CONTAINER_NAME" touch /etc/nginx/vhost.d/le3.pizza
+docker exec "$le_container_name" touch le3.pizza
+
 # Trying to add location configuration to non existing le3.wtf should only configure default
 docker exec "$le_container_name" bash -c "source /app/functions.sh; add_location_configuration ${domains[2]}"
 
@@ -163,8 +165,7 @@ if docker exec "$le_container_name" [ -e "$config_path" ]; then
 fi
 
 config_path="$vhost_path/default"
-docker exec "$le_container_name" bash -c 'source /app/functions.sh; add_location_configuration'
 if ! check_location "$le_container_name" "$config_path" ; then
-  echo "Unexpected location configuration on $config_path after call to remove_all_location_configurations ${domains[2]}:"
+  echo "Unexpected location configuration on $config_path after call to add_location_configuration ${domains[2]}:"
   docker exec "$le_container_name" cat "$config_path"
 fi

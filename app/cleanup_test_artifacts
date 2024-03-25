@@ -1,0 +1,46 @@
+#!/bin/bash
+
+# This script should not be run outside of a test container
+[[ "$TEST_MODE" == 'true' ]] || exit 1
+
+while [[ $# -gt 0 ]]; do
+    flag="$1"
+
+    case $flag in
+        --default-cert)
+        for filename in default.crt default.key; do
+            filepath="/etc/nginx/certs/$filename"
+            [[ -f "$filepath" ]] && rm -rf "$filepath"
+        done
+        shift
+        ;;
+
+        --location-config)
+        for domain in 'le1.wtf' '*.example.com' 'test.*' 'le3.pizza' 'subdomain.example.com' 'test.domain.tld'; do
+            [[ -f "/etc/nginx/vhost.d/$domain" ]] && rm -f "/etc/nginx/vhost.d/$domain"
+        done
+        shift
+        ;;
+
+        *) #Unknown option
+        shift
+        ;;
+    esac
+done
+
+for domain in le1.wtf le2.wtf le3.wtf le4.wtf lim.it; do
+    folder="/etc/nginx/certs/$domain"
+    [[ -d "$folder" ]] && rm -rf "$folder"
+    folder="/etc/acme.sh/default/$domain"
+    [[ -d "$folder" ]] && rm -rf "$folder"
+    folder="/etc/acme.sh/default/${domain}_ecc"
+    [[ -d "$folder" ]] && rm -rf "$folder"
+    location_file="/etc/nginx/vhost.d/$domain"
+    [[ -f "$location_file" ]] && rm -rf "$location_file" 2> /dev/null
+    for extension in key crt chain.pem dhparam.pem; do
+        symlink="/etc/nginx/certs/${domain}.${extension}"
+        [[ -L "$symlink" ]] && rm -rf "$symlink"
+    done
+done
+
+exit 0
