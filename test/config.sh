@@ -18,18 +18,12 @@ globalTests+=(
 	permissions_custom
 	symlinks
 	acme_hooks
+	ocsp_must_staple
 )
 
 # The acme_eab test requires Pebble with a specific configuration
 if [[ "$ACME_CA" == 'pebble' && "$PEBBLE_CONFIG" == 'pebble-config-eab.json' ]]; then
 	globalTests+=(
 		acme_eab
-	)
-fi
-
-# The ocsp_must_staple test does not work with Pebble
-if [[ "$ACME_CA" == 'boulder' ]]; then
-	globalTests+=(
-		ocsp_must_staple
 	)
 fi

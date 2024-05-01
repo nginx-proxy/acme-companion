@@ -97,6 +97,7 @@ jobs:
             permissions_custom,
             symlinks,
             acme_hooks,
+            ocsp_must_staple,
           ]
         setup: [2containers, 3containers]
         acme-ca: [pebble]
@@ -110,12 +111,6 @@ jobs:
             setup: 3containers
             acme-ca: pebble
             pebble-config: pebble-config-eab.json
-          - test-name: ocsp_must_staple
-            setup: 2containers
-            acme-ca: boulder
-          - test-name: ocsp_must_staple
-            setup: 3containers
-            acme-ca: boulder
     runs-on: ubuntu-latest
 
     steps:
