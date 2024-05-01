@@ -43,7 +43,7 @@ jobs:
         run: docker save $IMAGE > companion.tar
 
       - name: Upload Image Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: companion.tar
           path: companion.tar
@@ -60,7 +60,7 @@ jobs:
           path: official-images
 
       - name: Download Builded Image
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: companion.tar
 
@@ -108,7 +108,7 @@ jobs:
             pebble-config: pebble-config-eab.json
           - test-name: acme_eab
             setup: 3containers
-            acme-ca: pebble 
+            acme-ca: pebble
             pebble-config: pebble-config-eab.json
           - test-name: ocsp_must_staple
             setup: 2containers
@@ -150,7 +150,7 @@ jobs:
 
       # ADD BUILT IMAGE
       - name: Download Built Image
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: companion.tar
 
