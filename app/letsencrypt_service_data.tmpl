@@ -1,19 +1,21 @@
+#!/bin/bash
+# shellcheck disable=SC2034
 LETSENCRYPT_CONTAINERS=(
-    {{ $orderedContainers := sortObjectsByKeysDesc $ "Created" }}
-    {{ range $_, $container := whereExist $orderedContainers "Env.LETSENCRYPT_HOST" }}
-        {{ if trim $container.Env.LETSENCRYPT_HOST }}
-            {{ if parseBool (coalesce $container.Env.LETSENCRYPT_SINGLE_DOMAIN_CERTS "false") }}
-                {{/* Explicit per-domain splitting of the certificate */}}
-                {{ range $host := split $container.Env.LETSENCRYPT_HOST "," }}
-                    {{ $host := trim $host }}
-                    '{{ printf "%.12s" $container.ID }}_{{ sha1 $host }}'
-                {{ end }}
-            {{ else }}
-                {{/* Default: multi-domain (SAN) certificate */}}
-                {{- "\t"}}'{{ printf "%.12s" $container.ID }}'
+{{ $orderedContainers := sortObjectsByKeysDesc $ "Created" }}
+{{ range $_, $container := whereExist $orderedContainers "Env.LETSENCRYPT_HOST" }}
+    {{ if trim $container.Env.LETSENCRYPT_HOST }}
+        {{ if parseBool (coalesce $container.Env.LETSENCRYPT_SINGLE_DOMAIN_CERTS "false") }}
+            {{/* Explicit per-domain splitting of the certificate */}}
+            {{ range $host := split $container.Env.LETSENCRYPT_HOST "," }}
+                {{ $host := trim $host }}
+{{- "\n    " }}'{{ printf "%.12s" $container.ID }}_{{ sha1 $host }}' # {{ $container.Name }}, created at {{ $container.Created }}
             {{ end }}
+        {{ else }}
+            {{/* Default: multi-domain (SAN) certificate */}}
+{{- "\n    " }}'{{ printf "%.12s" $container.ID }}' # {{ $container.Name }}, created at {{ $container.Created }}
         {{ end }}
     {{ end }}
+{{ end }}
 )
 
 {{ range $hosts, $containers := groupBy $ "Env.LETSENCRYPT_HOST" }}
@@ -33,6 +35,7 @@ LETSENCRYPT_CONTAINERS=(
         {{ $PRE_HOOK := trim (coalesce $container.Env.ACME_PRE_HOOK "") }}
         {{ $POST_HOOK := trim (coalesce $container.Env.ACME_POST_HOOK "") }}
         {{ $cid := printf "%.12s" $container.ID }}
+        {{- "\n" }}# Container {{ $cid }} ({{ $container.Name }})
         {{ if parseBool (coalesce $container.Env.LETSENCRYPT_SINGLE_DOMAIN_CERTS "false") }}
             {{/* Explicit per-domain splitting of the certificate */}}
             {{ range $host := split $hosts "," }}
