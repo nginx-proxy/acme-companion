@@ -199,10 +199,14 @@ function get_self_cid {
 
     # Try the /proc files methods first then resort to the Docker API.
     if [[ -f /proc/1/cpuset ]]; then
-        self_cid="$(grep -Eo '[[:alnum:]]{64}' /proc/1/cpuset)"
+        self_cid="$(grep -Eo -m 1 '[[:alnum:]]{64}' /proc/1/cpuset)"
     fi
     if [[ ( ${#self_cid} != 64 ) && ( -f /proc/self/cgroup ) ]]; then
         self_cid="$(grep -Eo -m 1 '[[:alnum:]]{64}' /proc/self/cgroup)"
+    fi
+    # cgroups v2
+    if [[ ( ${#self_cid} != 64 ) && ( -f /proc/self/mountinfo ) ]]; then
+        self_cid="$(grep '/userdata/hostname' /proc/self/mountinfo | grep -Eo -m 1 '[[:alnum:]]{64}')"
     fi
     if [[ ( ${#self_cid} != 64 ) ]]; then
         self_cid="$(docker_api "/containers/$(hostname)/json" | jq -r '.Id')"
