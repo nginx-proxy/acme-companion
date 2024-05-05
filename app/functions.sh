@@ -240,6 +240,14 @@ function docker_api {
     else
         scheme="http://${DOCKER_HOST#*://}"
     fi
+    
+    if [[ -v DOCKER_TLS_VERIFY && -v DOCKER_CERT_PATH && ! -z "$DOCKER_TLS_VERIFY" ]]; then
+        curl_opts+=(--cert ${DOCKER_CERT_PATH}/cert.pem)
+        curl_opts+=(--key ${DOCKER_CERT_PATH}/key.pem)
+        curl_opts+=(--cacert ${DOCKER_CERT_PATH}/ca.pem)
+        scheme="https://${DOCKER_HOST#*://}"
+    fi
+
     [[ $method = "POST" ]] && curl_opts+=(-H 'Content-Type: application/json')
     curl "${curl_opts[@]}" -X "${method}" "${scheme}$1"
 }
