@@ -14,6 +14,7 @@ on:
       - "*.md"
 
 env:
+  ACME_CA: pebble
   DOCKER_GEN_CONTAINER_NAME: nginx-proxy-gen
   IMAGE: nginxproxy/acme-companion
   NGINX_CONTAINER_NAME: nginx-proxy
@@ -97,25 +98,17 @@ jobs:
             permissions_custom,
             symlinks,
             acme_hooks,
+            ocsp_must_staple,
           ]
         setup: [2containers, 3containers]
-        acme-ca: [pebble]
         pebble-config: [pebble-config.json]
         include:
           - test-name: acme_eab
             setup: 2containers
-            acme-ca: pebble
             pebble-config: pebble-config-eab.json
           - test-name: acme_eab
             setup: 3containers
-            acme-ca: pebble
             pebble-config: pebble-config-eab.json
-          - test-name: ocsp_must_staple
-            setup: 2containers
-            acme-ca: boulder
-          - test-name: ocsp_must_staple
-            setup: 3containers
-            acme-ca: boulder
     runs-on: ubuntu-latest
 
     steps:
@@ -133,19 +126,13 @@ jobs:
           done
 
       - name: Setup Pebble
-        if: ${{ matrix.acme-ca == 'pebble' }}
         env:
           PEBBLE_CONFIG: ${{ matrix.pebble-config }}
         run: test/setup/pebble/setup-pebble.sh
 
-      - name: Setup Boulder
-        if: ${{ matrix.acme-ca == 'boulder' }}
-        run: test/setup/setup-boulder.sh
-
       - name: Setup nginx-proxy
         env:
           SETUP: ${{ matrix.setup }}
-          ACME_CA: ${{ matrix.acme-ca }}
         run: test/setup/setup-nginx-proxy.sh
 
       # ADD BUILT IMAGE
@@ -161,7 +148,6 @@ jobs:
       - name: Integration Testing
         env:
           SETUP: ${{ matrix.setup }}
-          ACME_CA: ${{ matrix.acme-ca }}
           PEBBLE_CONFIG: ${{ matrix.pebble-config }}
         run: test/run.sh -t ${{ matrix.test-name }} "$IMAGE"
 
@@ -169,5 +155,4 @@ jobs:
         if: ${{ failure() }}
         env:
           SETUP: ${{ matrix.setup }}
-          ACME_CA: ${{ matrix.acme-ca }}
         run: test/github_actions/containers-logs.sh
