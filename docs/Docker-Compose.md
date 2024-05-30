@@ -15,7 +15,7 @@ The use of named containers and volume is not required but helps keeping everyth
 ### Two containers example
 
 ```yaml
-version: '2'
+version: "2"
 
 services:
   nginx-proxy:
@@ -25,8 +25,10 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - conf:/etc/nginx/conf.d
-      - vhost:/etc/nginx/vhost.d
+      # The vhost and conf volumes are only required
+      # if you plan to obtain standalone certificates
+      # - vhost:/etc/nginx/vhost.d
+      # - conf:/etc/nginx/conf.d
       - html:/usr/share/nginx/html
       - certs:/etc/nginx/certs:ro
       - /var/run/docker.sock:/tmp/docker.sock:ro
@@ -46,8 +48,8 @@ services:
     network_mode: bridge
 
 volumes:
-  conf:
-  vhost:
+  # vhost:
+  # conf:
   html:
   certs:
   acme:
@@ -56,7 +58,7 @@ volumes:
 ### Three containers example
 
 ```yaml
-version: '2'
+version: "2"
 
 services:
   nginx-proxy:
@@ -66,8 +68,10 @@ services:
       - "80:80"
       - "443:443"
     volumes:
+      # The vhost volume is only required if you
+      # plan to obtain standalone certificates
+      # - vhost:/etc/nginx/vhost.d
       - conf:/etc/nginx/conf.d
-      - vhost:/etc/nginx/vhost.d
       - html:/usr/share/nginx/html
       - certs:/etc/nginx/certs:ro
     network_mode: bridge
@@ -99,8 +103,8 @@ services:
     network_mode: bridge
 
 volumes:
+  # vhost:
   conf:
-  vhost:
   html:
   certs:
   acme:
