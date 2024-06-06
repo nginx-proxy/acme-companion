@@ -26,7 +26,6 @@ $ docker run --detach \
     --publish 80:80 \
     --publish 443:443 \
     --volume conf:/etc/nginx/conf.d  \
-    --volume vhost:/etc/nginx/vhost.d \
     --volume html:/usr/share/nginx/html \
     --volume certs:/etc/nginx/certs \
     nginx

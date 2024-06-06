@@ -1,6 +1,6 @@
 ## Standalone certificates
 
-You can generate certificate that are not tied to containers environment variable by mounting a user configuration file inside the container at `/app/letsencrypt_user_data`. This feature also require sharing the `/etc/nginx/conf.d` folder between the **nginx-proxy** and **acme-companion** container (and the **docker-gen** container if you are running a [three container setup](./Advanced-usage.md)):
+You can generate certificate that are not tied to containers environment variable by mounting a user configuration file inside the container at `/app/letsencrypt_user_data`. This feature also require sharing the `/etc/nginx/vhost.d` and `/etc/nginx/conf.d` folder between the **nginx-proxy** and **acme-companion** container (and the **docker-gen** container if you are running a [three container setup](./Advanced-usage.md)):
 
 ```bash
 $ docker run --detach \
@@ -14,6 +14,7 @@ $ docker run --detach \
     --volume /var/run/docker.sock:/tmp/docker.sock:ro \
     nginxproxy/nginx-proxy
 ```
+
 ```bash
 $ docker run --detach \
     --name nginx-proxy-acme \
