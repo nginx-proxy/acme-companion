@@ -50,6 +50,7 @@ $ docker run --detach \
     --publish 443:443 \
     --volume certs:/etc/nginx/certs \
     --volume html:/usr/share/nginx/html \
+    --volume vhost:/etc/nginx/vhost.d \
     --volume /var/run/docker.sock:/tmp/docker.sock:ro \
     nginxproxy/nginx-proxy
 ```
