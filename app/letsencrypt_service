@@ -349,9 +349,7 @@ function update_cert {
         # Add all the domains to certificate
         params_issue_arr+=(--domain "$domain")
         # If enabled, add location configuration for the domain
-        if parse_true "${ACME_HTTP_CHALLENGE_LOCATION:=false}"; then
-            add_location_configuration "$domain" || reload_nginx
-        fi
+        add_standalone_configuration "$domain" || reload_nginx
     done
 
     params_issue_arr=("${params_base_arr[@]}" "${params_issue_arr[@]}")
