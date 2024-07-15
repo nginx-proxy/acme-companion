@@ -155,7 +155,7 @@ function update_cert {
 
     local -n cert_keysize="LETSENCRYPT_${cid}_KEYSIZE"
     if [[ -z "$cert_keysize" ]] || \
-        [[ ! "$cert_keysize" =~ ^(2048|3072|4096|ec-256|ec-384)$ ]]; then
+        [[ ! "$cert_keysize" =~ ^('2048'|'3072'|'4096'|'ec-256'|'ec-384')$ ]]; then
         cert_keysize=$DEFAULT_KEY_SIZE
     fi
     params_issue_arr+=(--keylength "$cert_keysize")
@@ -381,7 +381,8 @@ function update_cert {
             local file_path="${certificate_dir}/${file}"
             [[ -e "$file_path" ]] && set_ownership_and_permissions "$file_path"
         done
-        local acme_private_key="$(find /etc/acme.sh -name "*.key" -path "*${hosts_array[0]}*")"
+        local acme_private_key
+        acme_private_key="$(find /etc/acme.sh -name "*.key" -path "*${hosts_array[0]}*")"
         [[ -e "$acme_private_key" ]] && set_ownership_and_permissions "$acme_private_key"
         # Queue nginx reload if a certificate was issued or renewed
         [[ $acmesh_return -eq 0 ]] \
