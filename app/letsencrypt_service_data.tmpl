@@ -8,11 +8,11 @@ LETSENCRYPT_CONTAINERS=(
             {{/* Explicit per-domain splitting of the certificate */}}
             {{ range $host := split $container.Env.LETSENCRYPT_HOST "," }}
                 {{ $host := trim $host }}
-{{- "\n    " }}'{{ printf "%.12s" $container.ID }}_{{ sha1 $host }}' # {{ $container.Name }}, created at {{ $container.Created }}
+                {{- "\n\t" }}'{{ printf "%.12s" $container.ID }}_{{ sha1 $host }}' # {{ $container.Name }}, created at {{ $container.Created }}
             {{ end }}
         {{ else }}
             {{/* Default: multi-domain (SAN) certificate */}}
-{{- "\n    " }}'{{ printf "%.12s" $container.ID }}' # {{ $container.Name }}, created at {{ $container.Created }}
+            {{- "\n\t" }}'{{ printf "%.12s" $container.ID }}' # {{ $container.Name }}, created at {{ $container.Created }}
         {{ end }}
     {{ end }}
 {{ end }}
@@ -59,12 +59,12 @@ LETSENCRYPT_CONTAINERS=(
         {{ else }}
             {{/* Default: multi-domain (SAN) certificate */}}
             {{- "\n" }}LETSENCRYPT_{{ $cid }}_HOST=( 
-                    {{- range $host := split $hosts "," }}
+                    {{- range $i, $host := split $hosts "," }}
                         {{- $host := trim $host }}
-                        {{- $host := trimSuffix "." $host -}}
-                        '{{ $host }}'{{ " " }} 
-                    {{- end -}}
-            )
+                        {{- $host := trimSuffix "." $host }}
+                        {{- "\n\t" }}'{{ $host }}'
+                    {{- end }}
+            {{- "\n" }})
             {{- "\n" }}LETSENCRYPT_{{ $cid }}_KEYSIZE="{{ $KEYSIZE }}"
             {{- "\n" }}LETSENCRYPT_{{ $cid }}_TEST="{{ $STAGING }}"
             {{- "\n" }}LETSENCRYPT_{{ $cid }}_EMAIL="{{ $EMAIL }}"
