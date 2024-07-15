@@ -10,6 +10,42 @@ The following environment variables are optional and parametrize the way the Let
 
 ### per proxyed container
 
+#### DNS-01 ACME challenge
+
+In order to switch to the DNS-01 ACME challenge, set the `ACME_CHALLENGE` environment variable to `DNS-01` on your proxied container. This will also require you to set the `ACMESH_DNS_API_CONFIG` environment variable to a JSON or YAML string containing the configuration for the DNS provider you are using. Inside the JSON or YAML string, the `DNS_API` property is always required and should be set to the name of the [acme.sh DNS API](https://github.com/acmesh-official/acme.sh/tree/3.0.7/dnsapi) you want to use.
+
+The other properties required will depend on the DNS provider you are using. For more information on the required properties for each DNS provider, please refer to the [acme.sh documentation](https://github.com/acmesh-official/acme.sh/wiki/dnsapi) (please keep in mind that nginxproxy/acme-companion is using a fixed version of acme.sh, so the documentation might include DNS providers that are not yet available in the version used by this image).
+
+Example using the [Gandi Live DNS API](https://github.com/acmesh-official/acme.sh/blob/3.0.7/dnsapi/dns_gandi_livedns.sh):
+```console
+docker run --detach \
+    --name your-proxyed-app \
+    --env "VIRTUAL_HOST=yourdomain.tld" \
+    --env "LETSENCRYPT_HOST=yourdomain.tld" \
+    --env "ACME_CHALLENGE=DNS-01" \
+    --env "ACMESH_DNS_API_CONFIG={'DNS_API': 'dns_gandi_livedns', 'GANDI_LIVEDNS_KEY': 'yourApiKey'}" \
+    nginx
+```
+
+Same example on a Docker compose file:
+```yaml
+services:
+  # [...]
+    
+  app:
+    image: nginx
+    container_name: your-proxyed-app
+    environment:
+      VIRTUAL_HOST: yourdomain.tld
+      LETSENCRYPT_HOST: yourdomain.tld
+      ACME_CHALLENGE: DNS-01
+      ACMESH_DNS_API_CONFIG: |-
+        DNS_API: dns_gandi_livedns
+        GANDI_LIVEDNS_KEY: yourApiKey
+```
+
+If you experience issues with the DNS-01 ACME challenge, please try to get it working outside of the container before opening an issue. If you can't get it working outside of the container, please seek support on the [acme.sh repository](https://github.com/acmesh-official).
+
 #### Multi-domains certificates
 
 Specify multiple hosts with a comma delimiter to create multi-domains ([SAN](https://www.digicert.com/subject-alternative-name.htm)) certificates (the first domain in the list will be the base domain).
