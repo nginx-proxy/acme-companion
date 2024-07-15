@@ -151,7 +151,41 @@ function update_cert {
 
     # CLI parameters array used for --issue
     local -a params_issue_arr
-    params_issue_arr+=(--webroot /usr/share/nginx/html)
+
+    # ACME challenge type
+    local -n acme_challenge="ACME_${cid}_CHALLENGE"
+    if [[ -z "${acme_challenge}" ]]; then
+        acme_challenge="${ACME_CHALLENGE:-HTTP-01}"
+    fi
+    
+    if [[ "$acme_challenge" == "HTTP-01" ]]; then
+        # HTTP-01 challenge
+        params_issue_arr+=(--webroot /usr/share/nginx/html)
+    elif [[ "$acme_challenge" == "DNS-01" ]]; then
+        # DNS-01 challenge
+        local -n acmesh_dns_config="ACMESH_${cid}_DNS_API_CONFIG"
+
+        local acmesh_dns_api="${acmesh_dns_config[DNS_API]}"
+        if [[ -z "$acmesh_dns_api" ]]; then
+            echo "Error: missing acme.sh DNS API for DNS challenge"
+            return 1
+        fi
+        params_issue_arr+=(--dns "$acmesh_dns_api")
+
+        # Loop over defined variable for acme.sh DNS api config
+        local -a dns_api_keys
+        for key in "${!acmesh_dns_config[@]}"; do
+            [[ "$key" == "DNS_API" ]] && continue
+            dns_api_keys+=("$key")
+            local value="${acmesh_dns_config[$key]}"
+            declare -x "$key"="$value"
+        done
+
+        echo "Info: DNS challenge using $acmesh_dns_api DNS API with the following keys: ${dns_api_keys[*]}"
+    else 
+        echo "Error: unknown ACME challenge method: $acme_challenge"
+        return 1
+    fi
 
     local -n cert_keysize="LETSENCRYPT_${cid}_KEYSIZE"
     if [[ -z "$cert_keysize" ]] || \
@@ -349,7 +383,7 @@ function update_cert {
         # Add all the domains to certificate
         params_issue_arr+=(--domain "$domain")
         # If enabled, add location configuration for the domain
-        if parse_true "${ACME_HTTP_CHALLENGE_LOCATION:=false}"; then
+        if [[ "$acme_challenge" == "HTTP-01" ]] && parse_true "${ACME_HTTP_CHALLENGE_LOCATION:=false}"; then
             add_location_configuration "$domain" || reload_nginx
         fi
     done
@@ -360,6 +394,16 @@ function update_cert {
     acme.sh --issue "${params_issue_arr[@]}"
 
     local acmesh_return=$?
+
+    # DNS challenge: clean environment variables
+    if [[ "$acme_challenge" == "DNS-01" ]]; then
+        local -n acmesh_dns_config="ACMESH_${cid}_DNS_API_CONFIG"
+        # Loop over defined variable for acme.sh DNS api config
+        for key in "${!acmesh_dns_config[@]}"; do
+            [[ "$key" == "DNS_API" ]] && continue
+            unset "$key"
+        done
+    fi
 
     # 0 = success, 2 = RENEW_SKIP
     if [[ $acmesh_return == 0 || $acmesh_return == 2 ]]; then
