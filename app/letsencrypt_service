@@ -198,7 +198,7 @@ function update_cert {
             [[ "$key" == "DNS_API" ]] && continue
             dns_api_keys+=("$key")
             local value="${acmesh_dns_config[$key]}"
-            declare -x "$key"="$value"
+            local -x "$key"="$value"
         done
 
         echo "Info: DNS challenge using $acmesh_dns_api DNS API with the following keys: ${dns_api_keys[*]}"
@@ -419,16 +419,6 @@ function update_cert {
     acme.sh --issue "${params_issue_arr[@]}"
 
     local acmesh_return=$?
-
-    # DNS challenge: clean environment variables
-    if [[ "$acme_challenge" == "DNS-01" ]]; then
-        local -n acmesh_dns_config="ACMESH_${cid}_DNS_API_CONFIG"
-        # Loop over defined variable for acme.sh DNS api config
-        for key in "${!acmesh_dns_config[@]}"; do
-            [[ "$key" == "DNS_API" ]] && continue
-            unset "$key"
-        done
-    fi
 
     # 0 = success, 2 = RENEW_SKIP
     if [[ $acmesh_return == 0 || $acmesh_return == 2 ]]; then
