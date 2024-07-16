@@ -13,6 +13,7 @@ It handles the automated creation, renewal and use of SSL certificates for proxi
 * Let's Encrypt / ACME domain validation through `HTTP-01` (by default) or [`DNS-01`](https://github.com/nginx-proxy/acme-companion/blob/main/docs/Let's-Encrypt-and-ACME.md#dns-01-acme-challenge) challenge.
 * Automated update and reload of nginx config on certificate creation/renewal.
 * Support creation of [Multi-Domain (SAN) Certificates](https://github.com/nginx-proxy/acme-companion/blob/main/docs/Let's-Encrypt-and-ACME.md#multi-domains-certificates).
+* Support creation of [Wildcard Certificates](https://community.letsencrypt.org/t/acme-v2-production-environment-wildcards/55578) (with `DNS-01` challenge only).
 * Creation of a strong [RFC7919 Diffie-Hellman Group](https://datatracker.ietf.org/doc/html/rfc7919#appendix-A) at startup.
 * Work with all versions of docker.
 

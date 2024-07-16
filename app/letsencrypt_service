@@ -12,6 +12,17 @@ RENEW_PRIVATE_KEYS="$(lc "${RENEW_PRIVATE_KEYS:-true}")"
 # Backward compatibility environment variable
 REUSE_PRIVATE_KEYS="$(lc "${REUSE_PRIVATE_KEYS:-false}")"
 
+function strip_wildcard {
+    # Remove wildcard prefix if present
+    # https://github.com/nginx-proxy/nginx-proxy/tree/main/docs#wildcard-certificates
+    local -r domain="${1?missing domain argument}"
+    if [[ "${domain:0:2}" == "*." ]]; then
+        echo "${domain:2}"
+    else
+        echo "$domain"
+    fi
+}
+
 function create_link {
     local -r source=${1?missing source argument}
     local -r target=${2?missing target argument}
@@ -27,7 +38,8 @@ function create_link {
 
 function create_links {
     local -r base_domain=${1?missing base_domain argument}
-    local -r domain=${2?missing base_domain argument}
+    local domain=${2?missing base_domain argument}
+    domain="$(strip_wildcard "$domain")"
 
     if [[ ! -f "/etc/nginx/certs/$base_domain/fullchain.pem" || \
           ! -f "/etc/nginx/certs/$base_domain/key.pem" ]]; then
@@ -75,6 +87,7 @@ function cleanup_links {
     for cid in "${LETSENCRYPT_CONTAINERS[@]}"; do
       local -n hosts_array="LETSENCRYPT_${cid}_HOST"
       for domain in "${hosts_array[@]}"; do
+        domain="$(strip_wildcard "$domain")"
         # Add domain to the array storing currently enabled domains.
         ENABLED_DOMAINS+=("$domain")
       done
@@ -128,6 +141,11 @@ function update_cert {
     # First domain will be our base domain
     local base_domain="${hosts_array[0]}"
 
+    local wildcard_certificate='false'
+    if [[ "${base_domain:0:2}" == "*." ]]; then
+        wildcard_certificate='true'
+    fi
+
     local should_restart_container='false'
 
     # Base CLI parameters array, used for both --register-account and --issue
@@ -160,6 +178,10 @@ function update_cert {
     
     if [[ "$acme_challenge" == "HTTP-01" ]]; then
         # HTTP-01 challenge
+        if [[ "$wildcard_certificate" == 'true' ]]; then
+            echo "Error: wildcard certificates (${base_domain}) can't be obtained with HTTP-01 challenge"
+            return 1
+        fi
         params_issue_arr+=(--webroot /usr/share/nginx/html)
     elif [[ "$acme_challenge" == "DNS-01" ]]; then
         # DNS-01 challenge
@@ -240,7 +262,12 @@ function update_cert {
     local ca_path_dir
     ca_path_dir="$(echo "$acme_ca_uri" | cut -d : -f 2- | tr -s / | cut -d / -f 3-)"
 
-    local certificate_dir
+    local relative_certificate_dir
+    if [[ "$wildcard_certificate" == 'true' ]]; then
+        relative_certificate_dir="wildcard_${base_domain:2}"
+    else
+        relative_certificate_dir="$base_domain"
+    fi
     # If we're going to use one of LE stating endpoints ...
     if [[ "$acme_ca_uri" =~ ^https://acme-staging.* ]]; then
         # Unset accountemail
@@ -248,15 +275,15 @@ function update_cert {
         unset accountemail
         config_home="/etc/acme.sh/staging"
         # Prefix test certificate directory with _test_
-        certificate_dir="/etc/nginx/certs/_test_$base_domain"
-    else
-        certificate_dir="/etc/nginx/certs/$base_domain"
+        relative_certificate_dir="_test_${relative_certificate_dir}"
     fi
+
+    local absolute_certificate_dir="/etc/nginx/certs/$relative_certificate_dir"
     params_issue_arr+=( \
-        --cert-file "${certificate_dir}/cert.pem" \
-        --key-file "${certificate_dir}/key.pem" \
-        --ca-file "${certificate_dir}/chain.pem" \
-        --fullchain-file "${certificate_dir}/fullchain.pem" \
+        --cert-file "${absolute_certificate_dir}/cert.pem" \
+        --key-file "${absolute_certificate_dir}/key.pem" \
+        --ca-file "${absolute_certificate_dir}/chain.pem" \
+        --fullchain-file "${absolute_certificate_dir}/fullchain.pem" \
     )
 
     [[ ! -d "$config_home" ]] && mkdir -p "$config_home"
@@ -376,8 +403,8 @@ function update_cert {
     [[ "${2:-}" == "--force-renew" ]] && params_issue_arr+=(--force)
 
     # Create directory for the first domain
-    mkdir -p "$certificate_dir"
-    set_ownership_and_permissions "$certificate_dir"
+    mkdir -p "$absolute_certificate_dir"
+    set_ownership_and_permissions "$absolute_certificate_dir"
 
     for domain in "${hosts_array[@]}"; do
         # Add all the domains to certificate
@@ -408,21 +435,15 @@ function update_cert {
     # 0 = success, 2 = RENEW_SKIP
     if [[ $acmesh_return == 0 || $acmesh_return == 2 ]]; then
         for domain in "${hosts_array[@]}"; do
-            if [[ $acme_ca_uri =~ ^https://acme-staging.* ]]; then
-                create_links "_test_$base_domain" "$domain" \
-                    && should_reload_nginx='true' \
-                    && should_restart_container='true'
-            else
-                create_links "$base_domain" "$domain" \
-                    && should_reload_nginx='true' \
-                    && should_restart_container='true'
-            fi
+            create_links "$relative_certificate_dir" "$domain" \
+                && should_reload_nginx='true' \
+                && should_restart_container='true'
         done
-        echo "${COMPANION_VERSION:-}" > "${certificate_dir}/.companion"
-        set_ownership_and_permissions "${certificate_dir}/.companion"
+        echo "${COMPANION_VERSION:-}" > "${absolute_certificate_dir}/.companion"
+        set_ownership_and_permissions "${absolute_certificate_dir}/.companion"
         # Make private key root readable only
         for file in cert.pem key.pem chain.pem fullchain.pem; do
-            local file_path="${certificate_dir}/${file}"
+            local file_path="${absolute_certificate_dir}/${file}"
             [[ -e "$file_path" ]] && set_ownership_and_permissions "$file_path"
         done
         local acme_private_key
