@@ -172,9 +172,7 @@ function update_cert {
 
     # ACME challenge type
     local -n acme_challenge="ACME_${cid}_CHALLENGE"
-    if [[ -z "${acme_challenge}" ]]; then
-        acme_challenge="${ACME_CHALLENGE:-HTTP-01}"
-    fi
+    acme_challenge="${acme_challenge:-HTTP-01}"
     
     if [[ "$acme_challenge" == "HTTP-01" ]]; then
         # HTTP-01 challenge
