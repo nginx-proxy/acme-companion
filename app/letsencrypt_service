@@ -488,9 +488,15 @@ function update_certs {
         if source /app/letsencrypt_user_data; then
             for cid in "${LETSENCRYPT_STANDALONE_CERTS[@]}"; do
                 local -n hosts_array="LETSENCRYPT_${cid}_HOST"
-                for domain in "${hosts_array[@]}"; do
-                    add_standalone_configuration "$domain"
-                done
+                
+                local -n acme_challenge="ACME_${cid}_CHALLENGE"
+                acme_challenge="${acme_challenge:-HTTP-01}"
+                
+                if [[ "$acme_challenge" == "HTTP-01" ]]; then
+                    for domain in "${hosts_array[@]}"; do
+                        add_standalone_configuration "$domain"
+                    done
+                fi
             done
             reload_nginx
             LETSENCRYPT_CONTAINERS+=( "${LETSENCRYPT_STANDALONE_CERTS[@]}" )
