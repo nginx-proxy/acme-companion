@@ -172,7 +172,9 @@ function update_cert {
 
     # ACME challenge type
     local -n acme_challenge="ACME_${cid}_CHALLENGE"
-    acme_challenge="${acme_challenge:-HTTP-01}"
+    if [[ -z "${acme_challenge}" ]]; then
+        acme_challenge="${ACME_CHALLENGE:-HTTP-01}"
+    fi
     
     if [[ "$acme_challenge" == "HTTP-01" ]]; then
         # HTTP-01 challenge
@@ -183,25 +185,45 @@ function update_cert {
         params_issue_arr+=(--webroot /usr/share/nginx/html)
     elif [[ "$acme_challenge" == "DNS-01" ]]; then
         # DNS-01 challenge
+        local acmesh_dns_config_used='none'
+
+        local default_acmesh_dns_api="${DEFAULT_ACMESH_DNS_API_CONFIG[DNS_API]}"
+        [[ -n "$default_acmesh_dns_api" ]] && acmesh_dns_config_used='default'
+
         local -n acmesh_dns_config="ACMESH_${cid}_DNS_API_CONFIG"
-
         local acmesh_dns_api="${acmesh_dns_config[DNS_API]}"
-        if [[ -z "$acmesh_dns_api" ]]; then
-            echo "Error: missing acme.sh DNS API for DNS challenge"
-            return 1
-        fi
-        params_issue_arr+=(--dns "$acmesh_dns_api")
+        [[ -n "$acmesh_dns_api" ]] && acmesh_dns_config_used='container'
 
-        # Loop over defined variable for acme.sh DNS api config
         local -a dns_api_keys
-        for key in "${!acmesh_dns_config[@]}"; do
-            [[ "$key" == "DNS_API" ]] && continue
-            dns_api_keys+=("$key")
-            local value="${acmesh_dns_config[$key]}"
-            local -x "$key"="$value"
-        done
 
-        echo "Info: DNS challenge using $acmesh_dns_api DNS API with the following keys: ${dns_api_keys[*]}"
+        case "$acmesh_dns_config_used" in
+            'default')
+                params_issue_arr+=(--dns "$default_acmesh_dns_api")
+                # Loop over defined variable for default acme.sh DNS api config
+                for key in "${!DEFAULT_ACMESH_DNS_API_CONFIG[@]}"; do
+                    [[ "$key" == "DNS_API" ]] && continue
+                    dns_api_keys+=("$key")
+                    local value="${DEFAULT_ACMESH_DNS_API_CONFIG[$key]}"
+                    local -x "$key"="$value"
+                done
+                ;;
+            'container')
+                params_issue_arr+=(--dns "$acmesh_dns_api")
+                # Loop over defined variable for per container acme.sh DNS api config
+                for key in "${!acmesh_dns_config[@]}"; do
+                    [[ "$key" == "DNS_API" ]] && continue
+                    dns_api_keys+=("$key")
+                    local value="${acmesh_dns_config[$key]}"
+                    local -x "$key"="$value"
+                done
+                ;;
+            *)
+                echo "Error: missing acme.sh DNS API for DNS challenge"
+                return 1
+                ;;
+        esac
+
+        echo "Info: DNS challenge using $acmesh_dns_api DNS API with the following keys: ${dns_api_keys[*]} (${acmesh_dns_config_used} config)"
     else 
         echo "Error: unknown ACME challenge method: $acme_challenge"
         return 1
