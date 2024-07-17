@@ -79,7 +79,7 @@ LETSENCRYPT_CONTAINERS=(
         {{ else }}
             {{/* Default: multi-domain (SAN) certificate */}}
             {{- "\n" }}LETSENCRYPT_{{ $cid }}_HOST=( 
-                    {{- range $i, $host := split $hosts "," }}
+                    {{- range $host := split $hosts "," }}
                         {{- $host := trim $host }}
                         {{- $host := trimSuffix "." $host }}
                         {{- "\n\t" }}'{{ $host }}'
