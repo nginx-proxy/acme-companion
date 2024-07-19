@@ -24,7 +24,7 @@ It handles the automated creation, renewal and use of SSL certificates for proxi
 * The (sub)domains you want to issue certificates for must correctly resolve to the host.
 * If your (sub)domains have AAAA records set, the host must be publicly reachable over IPv6 on port `80` and `443`.
 
-If you can't meet these requirements, you can use the `DNS-01` challenge instead. Please refer to the [documentation](./docs/Let's-Encrypt-and-ACME.md#dns-01-acme-challenge) for more information.
+If you can't meet these requirements, you can use the `DNS-01` challenge instead. Please refer to the [documentation](https://github.com/nginx-proxy/acme-companion/blob/main/docs/Let's-Encrypt-and-ACME.md#dns-01-acme-challenge) for more information.
 
 In addition to the above, please ensure that your DNS provider answers correctly to CAA record requests. [If your DNS provider answer with an error, Let's Encrypt won't issue a certificate for your domain](https://letsencrypt.org/docs/caa/). Let's Encrypt do not require that you set a CAA record on your domain, just that your DNS provider answers correctly.
 

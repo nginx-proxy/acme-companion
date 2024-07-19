@@ -7,9 +7,7 @@ term_handler() {
 
     # shellcheck source=functions.sh
     source /app/functions.sh
-    if parse_true "${ACME_HTTP_CHALLENGE_LOCATION:=false}"; then
-        remove_all_location_configurations
-    fi
+    remove_all_location_configurations
     remove_all_standalone_configurations
 
     exit 0
