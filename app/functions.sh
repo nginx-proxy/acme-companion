@@ -141,7 +141,9 @@ function add_standalone_configuration {
     local domain="${1:?}"
     if grep -q "server_name ${domain};" /etc/nginx/conf.d/*.conf; then
         # If the domain is already present in nginx's conf, use the location configuration.
-        add_location_configuration "$domain"
+        if parse_true "${ACME_HTTP_CHALLENGE_LOCATION:=false}"; then
+            add_location_configuration "$domain"
+        fi
     else
         # Else use the standalone configuration.
         cat > "/etc/nginx/conf.d/standalone-cert-$domain.conf" << EOF
