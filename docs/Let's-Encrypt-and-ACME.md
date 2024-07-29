@@ -10,6 +10,58 @@ The following environment variables are optional and parametrize the way the Let
 
 ### per proxyed container
 
+#### DNS-01 ACME challenge
+
+In order to switch to the DNS-01 ACME challenge, set the `ACME_CHALLENGE` environment variable to `DNS-01` on your acme-companion container. This will also require you to set the `ACMESH_DNS_API_CONFIG` environment variable to a JSON or YAML string containing the configuration for the DNS provider you are using. Inside the JSON or YAML string, the `DNS_API` property is always required and should be set to the name of the [acme.sh DNS API](https://github.com/acmesh-official/acme.sh/tree/3.0.7/dnsapi) you want to use.
+
+The other properties required will depend on the DNS provider you are using. For more information on the required properties for each DNS provider, please refer to the [acme.sh documentation](https://github.com/acmesh-official/acme.sh/wiki/dnsapi) (please keep in mind that nginxproxy/acme-companion is using a fixed version of acme.sh, so the documentation might include DNS providers that are not yet available in the version used by this image).
+
+Both `ACME_CHALLENGE` and `ACMESH_DNS_API_CONFIG` environment variables can also be set on the proxied application container, in which case they will override the values set on the acme-companion container, if any.
+
+Not: if you do not plan on using the `HTTP-01` challenge at all, you won't need to share `/usr/share/nginx/html` between the **nginx-proxy** and **acme-companion** containers, and can remove this volume from both.
+
+Example using [Cloudflare DNS](https://github.com/acmesh-official/acme.sh/blob/master/dnsapi/dns_cf.sh):
+```console
+docker run --detach \
+    --name nginx-proxy-acme \
+    --volume certs:/etc/nginx/certs \
+    --volume acme:/etc/acme.sh \
+    --volume /var/run/docker.sock:/var/run/docker.sock:ro \
+    --env "DEFAULT_EMAIL=mail@yourdomain.tld" \
+    --env "ACME_CHALLENGE=DNS-01" \
+    --env "ACMESH_DNS_API_CONFIG={'DNS_API': 'dns_cf', 'CF_Key': 'yourCloudflareApiKey', 'CF_Email': 'yourCloudflareAccountEmail'}" \
+    nginxproxy/acme-companion
+```
+
+Same example on a Docker compose file:
+```yaml
+services:
+  # nginx proxy container omitted
+    
+  acme:
+    image: nginxproxy/acme-companion
+    container_name: nginx-proxy-acme
+    volumes:
+      - certs:/etc/nginx/certs
+      - acme:/etc/acme.sh
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      DEFAULT_EMAIL: mail@yourdomain.tld
+      ACME_CHALLENGE: DNS-01
+      ACMESH_DNS_API_CONFIG: |-
+        DNS_API: dns_cf
+        CF_Key: yourCloudflareApiKey
+        CF_Email: yourCloudflareAccountEmail
+    
+    # app container omitted
+
+volumes:
+  certs:
+  acme:
+```
+
+If you experience issues with the DNS-01 ACME challenge, please try to get it working outside of the container before opening an issue. If you can't get it working outside of the container, please seek support on the [acme.sh repository](https://github.com/acmesh-official).
+
 #### Multi-domains certificates
 
 Specify multiple hosts with a comma delimiter to create multi-domains ([SAN](https://www.digicert.com/subject-alternative-name.htm)) certificates (the first domain in the list will be the base domain).

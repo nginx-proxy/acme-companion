@@ -3,7 +3,7 @@
 Two writable volumes must be declared on the **nginx-proxy** container so that they can be shared with the **acme-companion** container:
 
 * `/etc/nginx/certs` to store certificates and private keys (readonly for the **nginx-proxy** container).
-* `/usr/share/nginx/html` to write `http-01` challenge files.
+* `/usr/share/nginx/html` to write `HTTP-01` challenge files.
 
 Additionally, a fourth volume must be declared on the **acme-companion** container to store `acme.sh` configuration and state: `/etc/acme.sh`.
 
