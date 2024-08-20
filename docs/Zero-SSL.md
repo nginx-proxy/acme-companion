@@ -19,4 +19,4 @@ Unlike Let's Encrypt, Zero SSL requires the use of an email bound account. If yo
 
 These variables can be set on the proxied containers or directly on the **acme-companion** container.
 
-If you don't have a ZeroSSL account, you can let **acme-companion** create a Zero SSL account with the adress provided in the `ACME_EMAIL` or `DEFAULT_EMAIL` environment variable. Note that the adresse that will be used must be a valid email adress that you actually own.
+If you don't have a ZeroSSL account, you can let **acme-companion** create a Zero SSL account with the address provided in the `ACME_EMAIL` or `DEFAULT_EMAIL` environment variable. Note that the address that will be used must be a valid email address that you actually own.
