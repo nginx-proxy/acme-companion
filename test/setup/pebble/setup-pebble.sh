@@ -5,7 +5,7 @@ set -e
 setup_pebble() {
     curl --silent --show-error https://raw.githubusercontent.com/letsencrypt/pebble/master/test/certs/pebble.minica.pem > "${GITHUB_WORKSPACE}/pebble.minica.pem"
     cat "${GITHUB_WORKSPACE}/pebble.minica.pem"
-    docker-compose --file "${GITHUB_WORKSPACE}/test/setup/pebble/docker-compose.yml" up --detach
+    docker compose --file "${GITHUB_WORKSPACE}/test/setup/pebble/docker-compose.yml" up --detach
 }
 
 wait_for_pebble() {
@@ -30,4 +30,4 @@ setup_pebble_challtestserv() {
 setup_pebble
 wait_for_pebble
 setup_pebble_challtestserv
-docker-compose --file "${GITHUB_WORKSPACE}/test/setup/pebble/docker-compose.yml" logs
+docker compose --file "${GITHUB_WORKSPACE}/test/setup/pebble/docker-compose.yml" logs

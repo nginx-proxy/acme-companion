@@ -1,5 +1,3 @@
-version: "3"
-
 services:
   pebble:
     image: "ghcr.io/letsencrypt/pebble:${PEBBLE_VERSION}"
