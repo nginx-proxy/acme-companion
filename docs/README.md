@@ -16,6 +16,8 @@
 
 [Container configuration](./Container-configuration.md)
 
+[Google Trust Services](./Google-Trust-Services.md)
+
 [Persistent data](./Persistent-data.md)
 
 [Standalone certificates](./Standalone-certificates.md)
