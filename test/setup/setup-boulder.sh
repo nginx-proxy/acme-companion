@@ -28,8 +28,8 @@ setup_boulder() {
     # Modify custom rate limit
     sed --in-place 's/le.wtf,le1.wtf/le1.wtf,le2.wtf,le3.wtf/g' test/rate-limit-policies.yml
   fi
-  docker-compose build --pull
-  docker-compose run -d \
+  docker compose build --pull
+  docker compose run -d \
     --use-aliases \
     --name boulder \
     -e FAKE_DNS=10.77.77.1 \
