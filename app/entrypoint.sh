@@ -14,6 +14,11 @@ function print_version {
 function check_docker_socket {
     if [[ $DOCKER_HOST == unix://* ]]; then
         socket_file=${DOCKER_HOST#unix://}
+	if [[ ! -r $socket_file ]]; then
+            echo "Error: Docker host socket at $socket_file is not readable. Please check user permissions" >&2
+            echo "If you are in a SELinux environment, try using: '-v /var/run/docker.sock:$socket_file:z'" >&2
+            exit 1
+        fi
         if [[ ! -S $socket_file ]]; then
             echo "Error: you need to share your Docker host socket with a volume at $socket_file" >&2
             echo "Typically you should run your container with: '-v /var/run/docker.sock:$socket_file:ro'" >&2
