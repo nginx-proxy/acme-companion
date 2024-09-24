@@ -3,7 +3,7 @@ FROM docker.io/nginxproxy/docker-gen:0.14.2 AS docker-gen
 FROM docker.io/library/alpine:3.20.3
 
 ARG GIT_DESCRIBE="unknown"
-ARG ACMESH_VERSION=3.0.7
+ARG ACMESH_VERSION=3.0.9
 
 ENV ACMESH_VERSION=${ACMESH_VERSION} \
     COMPANION_VERSION=${GIT_DESCRIBE} \
