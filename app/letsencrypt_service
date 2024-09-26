@@ -190,7 +190,15 @@ function update_cert {
         local default_acmesh_dns_api="${DEFAULT_ACMESH_DNS_API_CONFIG[DNS_API]}"
         [[ -n "$default_acmesh_dns_api" ]] && acmesh_dns_config_used='default'
 
-        local -n acmesh_dns_config="ACMESH_${cid}_DNS_API_CONFIG"
+        local -n acmesh_dns_config_env_var="ACMESH_${cid}_DNS_API_CONFIG"
+
+        # Fix formatting for jq (switch single quotes for double)
+        acmesh_dns_config_env_var=${acmesh_dns_config_env_var//\'/\"}
+
+        # Convert json to assoc array
+        declare -A acmesh_dns_config=$(
+            jq -r '"(",(to_entries | .[] | "["+(.key|@sh)+"]="+(.value|@sh)),")"' <<< $acmesh_dns_config_env_var
+        )
         local acmesh_dns_api="${acmesh_dns_config[DNS_API]}"
         [[ -n "$acmesh_dns_api" ]] && acmesh_dns_config_used='container'
 
