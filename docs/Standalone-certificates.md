@@ -52,7 +52,8 @@ LETSENCRYPT_othersite_HOST=('yetanotherdomain.tld')
 ```
 
 **Example using DNS-01 verification:**
-In this `web` and `app` generate a vertificate using the default configuration (HTTP-01). But `othersite` will perform it's certificate generation using DNS-01.
+
+In this example: `web` and `app` generate a certificate using the global/default configuration. However `othersite` will perform it's certificate verification using a specific DNS-01 API configuration.
 
 ```bash
 LETSENCRYPT_STANDALONE_CERTS=('web' 'app' 'othersite')
