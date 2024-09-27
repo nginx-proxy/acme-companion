@@ -61,7 +61,7 @@ LETSENCRYPT_web_HOST=('yourdomain.tld' 'www.yourdomain.tld')
 LETSENCRYPT_app_HOST=('myapp.yourdomain.tld' 'myapp.yourotherdomain.tld' 'service.yourotherdomain.tld')
 LETSENCRYPT_othersite_HOST=('yetanotherdomain.tld')
 
-ACMESH_othersite_DNS_API_CONFIG
+ACME_othersite_CHALLENGE=DNS-01
 declare -A ACMESH_othersite_DNS_API_CONFIG=(
     ['DNS_API']='dns_cf'
     ['CF_Token']='<CLOUDFLARE_TOKEN>'
