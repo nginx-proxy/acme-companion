@@ -80,7 +80,7 @@ Single bash variables:
 
 `LETSENCRYPT_uniqueidentifier_TEST` : if set to true, the corresponding certificate will be a test certificates: it won't have the 5 certs/week/domain limits and will be signed by an untrusted intermediate (ie it won't be trusted by browsers).
 
-Using DNS-01 on standalone certificates:
+DNS-01 related variables:
 
 `ACME_uniqueidentifier_CHALLENGE`: Defaults to HTTP-01. In order to switch to the DNS-01 ACME challenge set it to `DNS-01`
 
