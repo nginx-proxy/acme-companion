@@ -53,13 +53,29 @@ LETSENCRYPT_othersite_HOST=('yetanotherdomain.tld')
 
 ### Optional configuration parameters:
 
-Those are all single bash variables.
+Single bash variables:
 
 `LETSENCRYPT_uniqueidentifier_EMAIL` : must be a valid email and will be used by Let's Encrypt to warn you of impeding certificate expiration (should the automated renewal fail).
 
 `LETSENCRYPT_uniqueidentifier_KEYSIZE` : determines the size of the requested private key. See [private key size](./Let's-Encrypt-and-ACME.md#private-key-size) for accepted values.
 
 `LETSENCRYPT_uniqueidentifier_TEST` : if set to true, the corresponding certificate will be a test certificates: it won't have the 5 certs/week/domain limits and will be signed by an untrusted intermediate (ie it won't be trusted by browsers).
+
+`ACME_uniqueidentifier_CHALLENGE`: Defaults to HTTP-01. In order to switch to the DNS-01 ACME challenge set it to `DNS-01`
+
+More advanced types:
+
+`ACMESH_uniqueidentifier_DNS_API_CONFIG`: Defaults to the values of DNS_API_CONFIG. However if you wish to specify a specific DNS-01 verification method on a particular standalone certificate. It must be defined as a bash associative array.
+
+Example
+```
+declare -A ACMESH_alt_DNS_API_CONFIG=(
+    ['DNS_API']='dns_cf'
+    ['CF_Token']='<CLOUDFLARE_TOKEN>'
+    ['CF_Account_ID']='<CLOUDFLARE_ACCOUNT_ID>'
+    ['CF_Zone_ID']='<CLOUDFLARE_ZONE_ID>'
+)
+```
 
 ### Picking up changes to letsencrypt_user_data
 
