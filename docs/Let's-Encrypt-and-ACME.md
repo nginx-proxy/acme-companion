@@ -153,3 +153,7 @@ Reusing private keys can help if you intend to use [HPKP](https://developer.mozi
     1. The container will use the special purpose `staging` configuration directory.
     1. The directory URI is forced to The Let's Encrypt v2 staging one (`ACME_CA_URI` is ignored)
     2. The account email address is forced empty (`DEFAULT_EMAIL` and `LETSENCRYPT_EMAIL` are ignored)
+
+#### Self signed default certificate
+
+If you want **acme-companio** to create a self signed certificate as default certificate for **nginx-proxy**, you can set the `CREATE_DEFAULT_CERTIFICATE` environment variable to `true`. This will generate a self signed cert / key pair to `/etc/nginx/certs/default.crt` and `/etc/nginx/certs/default.key`, with `acme-companion` as Common Name. Please note that no future support is planned for this feature and it might be removed in a future release.
