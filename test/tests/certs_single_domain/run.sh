@@ -96,7 +96,6 @@ for hosts in "${letsencrypt_hosts[@]}"; do
   done
 
   docker stop "$container" &> /dev/null
-  docker exec "$le_container_name" /app/cleanup_test_artifacts --default-cert
   i=$(( i + 1 ))
 
 done

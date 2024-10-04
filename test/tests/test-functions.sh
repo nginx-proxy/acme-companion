@@ -263,7 +263,6 @@ export -f check_cert_subj
 
 # Wait for a successful https connection to domain passed with -d/--domain then wait
 #   - until the served certificate isn't the default one (default behavior)
-#   - until the served certificate is the default one (--default-cert)
 #   - until the served certificate subject match a string (--subject-match)
 function wait_for_conn {
   local action
@@ -277,11 +276,6 @@ function wait_for_conn {
       -d|--domain)
       domain="${2:?}"
       shift
-      shift
-      ;;
-
-      --default-cert)
-      action='--match'
       shift
       ;;
 

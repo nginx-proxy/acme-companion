@@ -110,7 +110,9 @@ function check_dh_group {
 }
 
 function check_default_cert_key {
-    local cn='letsencrypt-nginx-proxy-companion'
+    local cn='acme-companion'
+
+    echo "Warning: there is no future support planned for the self signed default certificate creation feature and it might be removed in a future release."
 
     if [[ -e /etc/nginx/certs/default.crt && -e /etc/nginx/certs/default.key ]]; then
         default_cert_cn="$(openssl x509 -noout -subject -in /etc/nginx/certs/default.crt)"
@@ -179,7 +181,7 @@ if [[ "$*" == "/bin/bash /app/start.sh" ]]; then
         check_writable_directory '/etc/nginx/vhost.d'
         check_writable_directory '/etc/nginx/conf.d'
     fi
-    check_default_cert_key
+    parse_true "${CREATE_DEFAULT_CERTIFICATE:=false}" && check_default_cert_key
     check_dh_group
     reload_nginx
     check_default_account

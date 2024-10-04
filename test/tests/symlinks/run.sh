@@ -47,8 +47,7 @@ docker exec "$le_container_name" cp /etc/nginx/certs/le1.wtf/key.pem /etc/nginx/
 docker exec "$le_container_name" bash -c 'cd /etc/nginx/certs; ln -s ./le4.wtf/fullchain.pem ./le4.wtf.crt'
 docker exec "$le_container_name" bash -c 'cd /etc/nginx/certs; ln -s ./le4.wtf/key.pem ./le4.wtf.key'
 
-# symlink default certificate to le1.wtf certificate
-docker exec "$le_container_name" rm -f /etc/nginx/certs/default.crt /etc/nginx/certs/default.key
+# Symlink default certificate to le1.wtf certificate
 docker exec "$le_container_name" bash -c 'cd /etc/nginx/certs; ln -s ./le1.wtf/fullchain.pem ./default.crt'
 docker exec "$le_container_name" bash -c 'cd /etc/nginx/certs; ln -s ./le1.wtf/key.pem ./default.key'
 

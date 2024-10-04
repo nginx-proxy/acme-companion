@@ -65,8 +65,6 @@ By default, the **acme-companion** container will enforce the following ownershi
 ```
 [drwxr-xr-x]  /etc/nginx/certs
 ├── [-rw-r--r-- root root]  dhparam.pem
-├── [-rw-r--r-- root root]  default.crt
-├── [-rw------- root root]  default.key
 ├── [drwxr-xr-x root root]  domain.tld
 │   ├── [-rw-r--r-- root root]  cert.pem
 │   ├── [-rw-r--r-- root root]  chain.pem
@@ -90,8 +88,6 @@ For example, `FILES_UID=1000`, `FILES_PERMS=644` and `FOLDERS_PERMS=700` will re
 ```
 [drwxr-xr-x]  /etc/nginx/certs
 ├── [-rw-r--r-- 1000 1000]  dhparam.pem
-├── [-rw-r--r-- 1000 1000]  default.crt
-├── [-rw-r--r-- 1000 1000]  default.key
 ├── [drwx------ 1000 1000]  domain.tld
 │   ├── [-rw-r--r-- 1000 1000]  cert.pem
 │   ├── [-rw-r--r-- 1000 1000]  chain.pem
