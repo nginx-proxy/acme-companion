@@ -5,7 +5,6 @@ globalTests+=(
 	docker_api
 	docker_api_legacy
 	location_config
-	default_cert
 	certs_single
 	certs_san
 	certs_single_domain

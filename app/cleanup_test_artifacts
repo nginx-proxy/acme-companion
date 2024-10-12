@@ -7,14 +7,6 @@ while [[ $# -gt 0 ]]; do
     flag="$1"
 
     case $flag in
-        --default-cert)
-        for filename in default.crt default.key; do
-            filepath="/etc/nginx/certs/$filename"
-            [[ -f "$filepath" ]] && rm -rf "$filepath"
-        done
-        shift
-        ;;
-
         --location-config)
         for domain in 'le1.wtf' '*.example.com' 'test.*' 'le3.pizza' 'subdomain.example.com' 'test.domain.tld'; do
             [[ -f "/etc/nginx/vhost.d/$domain" ]] && rm -f "/etc/nginx/vhost.d/$domain"
