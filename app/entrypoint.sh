@@ -27,7 +27,7 @@ function check_docker_socket {
     fi
 }
 
-function check_writable_directory {
+function check_dir_is_mounted_volume {
     local dir="$1"
     if [[ $(get_self_cid) ]]; then
         if ! docker_api "/containers/$(get_self_cid)/json" | jq ".Mounts[].Destination" | grep -q "^\"$dir\"$"; then
@@ -36,6 +36,13 @@ function check_writable_directory {
     else
         echo "Warning: can't check if '$dir' is a mounted volume without self container ID."
     fi
+}
+
+function check_writable_directory {
+    local dir="$1"
+
+    check_dir_is_mounted_volume "$dir"
+
     if [[ ! -d "$dir" ]]; then
         echo "Error: can't access to '$dir' directory !" >&2
         echo "Check that '$dir' directory is declared as a writable volume." >&2
@@ -45,6 +52,18 @@ function check_writable_directory {
         echo "Error: can't write to the '$dir' directory !" >&2
         echo "Check that '$dir' directory is export as a writable volume." >&2
         exit 1
+    fi
+    rm -f "$dir/.check_writable"
+}
+
+function warn_html_directory {
+    local dir='/usr/share/nginx/html'
+    
+    check_dir_is_mounted_volume "$dir"
+
+    if [[ ! -d "$dir" ]] || ! touch "$dir/.check_writable" 2>/dev/null; then
+        echo "Warning: can't access or write to '$dir' directory. This will prevent HTML-01 challenges from working correctly."
+        echo "If you are only using DNS-01 challenges, you can ignore this warning, otherwise check that '$dir' is declared as a writable volume."
     fi
     rm -f "$dir/.check_writable"
 }
@@ -176,7 +195,7 @@ if [[ "$*" == "/bin/bash /app/start.sh" ]]; then
     check_writable_directory '/etc/nginx/certs'
     parse_true "${ACME_HTTP_CHALLENGE_LOCATION:=false}" && check_writable_directory '/etc/nginx/vhost.d'
     check_writable_directory '/etc/acme.sh'
-    check_writable_directory '/usr/share/nginx/html'
+    warn_html_directory
     if [[ -f /app/letsencrypt_user_data ]]; then
         check_writable_directory '/etc/nginx/vhost.d'
         check_writable_directory '/etc/nginx/conf.d'
