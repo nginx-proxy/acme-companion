@@ -479,6 +479,9 @@ function update_cert {
         fi
     done
 
+    if ! parse_true "${RELOAD_NGINX_ONLY_ONCE:-false}" && parse_true $should_reload_nginx; then
+        reload_nginx
+    fi
 }
 
 function update_certs {
