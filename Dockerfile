@@ -1,4 +1,4 @@
-FROM docker.io/nginxproxy/docker-gen:0.14.3 AS docker-gen
+FROM docker.io/nginxproxy/docker-gen:0.14.4 AS docker-gen
 
 FROM docker.io/library/alpine:3.20.3
 
