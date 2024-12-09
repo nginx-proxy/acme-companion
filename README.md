@@ -32,12 +32,12 @@ In addition to the above, please ensure that your DNS provider answers correctly
 
 ## Basic usage (with the nginx-proxy container)
 
-Three writable volumes must be declared on the **nginx-proxy** container so that they can be shared with the **acme-companion** container:
+Two writable volumes must be declared on the **nginx-proxy** container so that they can be shared with the **acme-companion** container:
 
 * `/etc/nginx/certs` to store certificates and private keys (readonly for the **nginx-proxy** container).
 * `/usr/share/nginx/html` to write `http-01` challenge files.
 
-Additionally, a fourth volume must be declared on the **acme-companion** container to store `acme.sh` configuration and state: `/etc/acme.sh`.
+Additionally, a third volume must be declared on the **acme-companion** container to store `acme.sh` configuration and state: `/etc/acme.sh`.
 
 Please also read the doc about [data persistence](./docs/Persistent-data.md).
 
@@ -45,7 +45,7 @@ Example of use:
 
 ### Step 1 - nginx-proxy
 
-Start **nginx-proxy** with the three additional volumes declared:
+Start **nginx-proxy** with the two additional volumes declared:
 
 ```shell
 $ docker run --detach \
