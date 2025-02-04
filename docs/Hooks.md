@@ -59,7 +59,7 @@ $ docker run --detach \
 #### Verification:
 If you want to check wether the hook-command is delivered properly to [acme.sh](https://github.com/acmesh-official/acme.sh/), you should check `/etc/acme.sh/[EMAILADDRESS]/[DOMAIN]/[DOMAIN].conf`.
 The variable `Le_PreHook` contains the Pre-Hook-Command base64 encoded.
-The variable `Le_PostHook` contains the Pre-Hook-Command base64 encoded.
+The variable `Le_PostHook` contains the Post-Hook-Command base64 encoded.
 
 #### Limitations
 * The commands that can be used in the hooks are limited to the commands available inside the **acme-companion** container. `curl` and `wget` are available, therefore it is possible to communicate with tools outside the container via HTTP, allowing for complex actions to be implemented outside or in other containers.
