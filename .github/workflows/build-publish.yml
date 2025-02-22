@@ -22,7 +22,7 @@ jobs:
   multiarch-build:
     name: Build and publish Docker image
     runs-on: ubuntu-latest
-    if: (github.event_name == "schedule" && github.repository == "nginx-proxy/acme-companion") || (github.event_name != "schedule")
+    if: (github.event_name == 'schedule' && github.repository == 'nginx-proxy/acme-companion') || (github.event_name != 'schedule')
     steps:
       - name: Checkout
         uses: actions/checkout@v4
