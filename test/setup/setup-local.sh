@@ -144,7 +144,7 @@ EOF
       docker rm boulder
     elif [[ "$ACME_CA" == 'pebble' ]]; then
       # Stop and remove Pebble
-      docker compose --file "${GITHUB_WORKSPACE}/test/setup/pebble/docker-compose.yml" down
+      docker compose --file "${GITHUB_WORKSPACE}/test/setup/pebble/compose.yaml" down
       [[ -f "${GITHUB_WORKSPACE}/pebble.minica.pem" ]] && rm "${GITHUB_WORKSPACE}/pebble.minica.pem"
     fi
 
