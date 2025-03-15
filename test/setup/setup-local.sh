@@ -130,7 +130,7 @@ EOF
     get_environment
 
     # Stop and remove nginx-proxy and (if required) docker-gen
-    for cid in $(docker ps -a --filter "label=com.github.jrcs.letsencrypt_nginx_proxy_companion.test_suite" --format "{{.ID}}"); do
+    for cid in $(docker ps -a --filter "label=com.github.nginx-proxy.acme-companion.test-suite" --format "{{.ID}}"); do
       docker stop "$cid"
       docker rm --volumes "$cid"
     done
@@ -138,13 +138,13 @@ EOF
     if [[ "$ACME_CA" == 'boulder' ]]; then
       # Stop and remove Boulder
       docker stop boulder
-      docker-compose --project-name 'boulder' \
+      docker compose --project-name 'boulder' \
         --file "${GITHUB_WORKSPACE}/go/src/github.com/letsencrypt/boulder/docker-compose.yml" \
         down --volumes
       docker rm boulder
     elif [[ "$ACME_CA" == 'pebble' ]]; then
       # Stop and remove Pebble
-      docker-compose --file "${GITHUB_WORKSPACE}/test/setup/pebble/docker-compose.yml" down
+      docker compose --file "${GITHUB_WORKSPACE}/test/setup/pebble/compose.yaml" down
       [[ -f "${GITHUB_WORKSPACE}/pebble.minica.pem" ]] && rm "${GITHUB_WORKSPACE}/pebble.minica.pem"
     fi
 

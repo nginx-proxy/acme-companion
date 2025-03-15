@@ -1,12 +1,11 @@
 ## Basic usage (with the nginx-proxy container)
 
-Three writable volumes must be declared on the **nginx-proxy** container so that they can be shared with the **acme-companion** container:
+Two writable volumes must be declared on the **nginx-proxy** container so that they can be shared with the **acme-companion** container:
 
 * `/etc/nginx/certs` to store certificates and private keys (readonly for the **nginx-proxy** container).
-* `/etc/nginx/vhost.d` to change the configuration of vhosts (required so the CA may access `http-01` challenge files).
-* `/usr/share/nginx/html` to write `http-01` challenge files.
+* `/usr/share/nginx/html` to write `HTTP-01` challenge files.
 
-Additionally, a fourth volume must be declared on the **acme-companion** container to store `acme.sh` configuration and state: `/etc/acme.sh`.
+Additionally, a third volume must be declared on the **acme-companion** container to store `acme.sh` configuration and state: `/etc/acme.sh`.
 
 Please also read the doc about [data persistence](./Persistent-data.md).
 
@@ -14,7 +13,7 @@ Example of use:
 
 ### Step 1 - nginx-proxy
 
-Start **nginx-proxy** with the three additional volumes declared:
+Start **nginx-proxy** with the two additional volumes declared:
 
 ```shell
 $ docker run --detach \
@@ -22,7 +21,6 @@ $ docker run --detach \
     --publish 80:80 \
     --publish 443:443 \
     --volume certs:/etc/nginx/certs \
-    --volume vhost:/etc/nginx/vhost.d \
     --volume html:/usr/share/nginx/html \
     --volume /var/run/docker.sock:/tmp/docker.sock:ro \
     nginxproxy/nginx-proxy

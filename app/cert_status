@@ -10,6 +10,15 @@ function print_cert_info {
   subject="$(openssl x509 -noout -subject -in "$1" | sed -n 's/.*CN = \([a-z0-9.-]*\)/- \1/p')"
   san_str="$(openssl x509 -text -in "$1" | grep 'DNS:')"
 
+  case "$issuer" in
+    R3 | R4 | E1 | E2)
+      issuer="Let's Encrypt $issuer"
+      ;;
+
+    *)
+      ;;
+  esac
+
   echo "Certificate was issued by $issuer"
   if [[ "$2" == "expired" ]]; then
       echo "Certificate was valid until $enddate"
@@ -35,7 +44,7 @@ for cert in /etc/nginx/certs/*/fullchain.pem; do
     [[ -e "$cert" ]] || continue
     if [[ -e "${cert%fullchain.pem}chain.pem" ]]; then
         # Verify the certificate with OpenSSL.
-        if verify=$(openssl verify -CAfile "${cert%fullchain.pem}chain.pem" "$cert" 2>&1); then
+        if verify=$(openssl verify -untrusted "${cert%fullchain.pem}chain.pem" "$cert" 2>&1); then
             echo "$verify"
             # Print certificate info.
             print_cert_info "$cert"

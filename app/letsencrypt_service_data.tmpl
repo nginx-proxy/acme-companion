@@ -1,20 +1,31 @@
+#!/bin/bash
+# shellcheck disable=SC2034
+{{- $DEFAULT_ACMESH_DNS_API_CONFIG := fromYaml (coalesce $.Env.ACMESH_DNS_API_CONFIG "") }}
+{{- if $DEFAULT_ACMESH_DNS_API_CONFIG }}
+    {{- "\n" }}declare -A DEFAULT_ACMESH_DNS_API_CONFIG=(
+    {{- range $key, $value := $DEFAULT_ACMESH_DNS_API_CONFIG }}
+        {{- "\n\t" }}['{{ $key }}']='{{ $value }}'
+    {{- end }}
+    {{- "\n" }})
+{{- end }}
+
+
 LETSENCRYPT_CONTAINERS=(
-    {{ range $hosts, $containers := groupBy $ "Env.LETSENCRYPT_HOST" }}
-        {{ if trim $hosts }}
-            {{ range $container := $containers }}
-                {{ if parseBool (coalesce $container.Env.LETSENCRYPT_SINGLE_DOMAIN_CERTS "false") }}
-                    {{/* Explicit per-domain splitting of the certificate */}}
-                    {{ range $host := split $hosts "," }}
-                        {{ $host := trim $host }}
-                        {{- "\t"}}'{{ printf "%.12s" $container.ID }}_{{ sha1 $host }}'
-                    {{ end }}
-                {{ else }}
-                    {{/* Default: multi-domain (SAN) certificate */}}
-                    {{- "\t"}}'{{ printf "%.12s" $container.ID }}'
-                {{ end }}
+{{ $orderedContainers := sortObjectsByKeysDesc $ "Created" }}
+{{ range $_, $container := whereExist $orderedContainers "Env.LETSENCRYPT_HOST" }}
+    {{ if trim $container.Env.LETSENCRYPT_HOST }}
+        {{ if parseBool (coalesce $container.Env.LETSENCRYPT_SINGLE_DOMAIN_CERTS "false") }}
+            {{/* Explicit per-domain splitting of the certificate */}}
+            {{ range $host := split $container.Env.LETSENCRYPT_HOST "," }}
+                {{ $host := trim $host }}
+                {{- "\n\t" }}'{{ printf "%.12s" $container.ID }}_{{ sha1 $host }}' # {{ $container.Name }}, created at {{ $container.Created }}
             {{ end }}
+        {{ else }}
+            {{/* Default: multi-domain (SAN) certificate */}}
+            {{- "\n\t" }}'{{ printf "%.12s" $container.ID }}' # {{ $container.Name }}, created at {{ $container.Created }}
         {{ end }}
     {{ end }}
+{{ end }}
 )
 
 {{ range $hosts, $containers := groupBy $ "Env.LETSENCRYPT_HOST" }}
@@ -25,6 +36,8 @@ LETSENCRYPT_CONTAINERS=(
         {{ $STAGING := trim (coalesce $container.Env.LETSENCRYPT_TEST "") }}
         {{ $EMAIL := trim (coalesce $container.Env.LETSENCRYPT_EMAIL "") }}
         {{ $CA_URI := trim (coalesce $container.Env.ACME_CA_URI "") }}
+        {{ $ACME_CHALLENGE := trim (coalesce $container.Env.ACME_CHALLENGE "") }}
+        {{ $ACMESH_DNS_API_CONFIG := fromYaml (coalesce $container.Env.ACMESH_DNS_API_CONFIG "") }}
         {{ $PREFERRED_CHAIN := trim (coalesce $container.Env.ACME_PREFERRED_CHAIN "") }}
         {{ $OCSP := trim (coalesce $container.Env.ACME_OCSP "") }}
         {{ $EAB_KID := trim (coalesce $container.Env.ACME_EAB_KID "") }}
@@ -34,6 +47,7 @@ LETSENCRYPT_CONTAINERS=(
         {{ $PRE_HOOK := trim (coalesce $container.Env.ACME_PRE_HOOK "") }}
         {{ $POST_HOOK := trim (coalesce $container.Env.ACME_POST_HOOK "") }}
         {{ $cid := printf "%.12s" $container.ID }}
+        {{- "\n" }}# Container {{ $cid }} ({{ $container.Name }})
         {{ if parseBool (coalesce $container.Env.LETSENCRYPT_SINGLE_DOMAIN_CERTS "false") }}
             {{/* Explicit per-domain splitting of the certificate */}}
             {{ range $host := split $hosts "," }}
@@ -45,6 +59,14 @@ LETSENCRYPT_CONTAINERS=(
                 {{- "\n" }}LETSENCRYPT_{{ $cid }}_{{ $hostHash }}_TEST="{{ $STAGING }}"
                 {{- "\n" }}LETSENCRYPT_{{ $cid }}_{{ $hostHash }}_EMAIL="{{ $EMAIL }}"
                 {{- "\n" }}ACME_{{ $cid }}_{{ $hostHash }}_CA_URI="{{ $CA_URI }}"
+                {{- "\n" }}ACME_{{ $cid }}_{{ $hostHash }}_CHALLENGE="{{ $ACME_CHALLENGE }}"
+                {{- if $ACMESH_DNS_API_CONFIG }}
+                    {{- "\n" }}declare -A ACMESH_{{ $cid }}_{{ $hostHash }}_DNS_API_CONFIG=(
+                    {{- range $key, $value := $ACMESH_DNS_API_CONFIG }}
+                        {{- "\n\t" }}['{{ $key }}']='{{ $value }}'
+                    {{- end }}
+                    {{- "\n" }})
+                {{- end }}
                 {{- "\n" }}ACME_{{ $cid }}_{{ $hostHash }}_PREFERRED_CHAIN="{{ $PREFERRED_CHAIN }}"
                 {{- "\n" }}ACME_{{ $cid }}_{{ $hostHash }}_OCSP="{{ $OCSP }}"
                 {{- "\n" }}ACME_{{ $cid }}_{{ $hostHash }}_EAB_KID="{{ $EAB_KID }}"
@@ -59,14 +81,22 @@ LETSENCRYPT_CONTAINERS=(
             {{- "\n" }}LETSENCRYPT_{{ $cid }}_HOST=( 
                     {{- range $host := split $hosts "," }}
                         {{- $host := trim $host }}
-                        {{- $host := trimSuffix "." $host -}}
-                        '{{ $host }}'{{ " " }} 
-                    {{- end -}}
-            )
+                        {{- $host := trimSuffix "." $host }}
+                        {{- "\n\t" }}'{{ $host }}'
+                    {{- end }}
+            {{- "\n" }})
             {{- "\n" }}LETSENCRYPT_{{ $cid }}_KEYSIZE="{{ $KEYSIZE }}"
             {{- "\n" }}LETSENCRYPT_{{ $cid }}_TEST="{{ $STAGING }}"
             {{- "\n" }}LETSENCRYPT_{{ $cid }}_EMAIL="{{ $EMAIL }}"
             {{- "\n" }}ACME_{{ $cid }}_CA_URI="{{ $CA_URI }}"
+            {{- "\n" }}ACME_{{ $cid }}_CHALLENGE="{{ $ACME_CHALLENGE }}"
+            {{- if $ACMESH_DNS_API_CONFIG }}
+                {{- "\n" }}declare -A ACMESH_{{ $cid }}_DNS_API_CONFIG=(
+                {{- range $key, $value := $ACMESH_DNS_API_CONFIG }}
+                    {{- "\n\t" }}['{{ $key }}']='{{ $value }}'
+                {{- end }}
+                {{- "\n" }})
+            {{- end }}
             {{- "\n" }}ACME_{{ $cid }}_PREFERRED_CHAIN="{{ $PREFERRED_CHAIN }}"
             {{- "\n" }}ACME_{{ $cid }}_OCSP="{{ $OCSP }}"
             {{- "\n" }}ACME_{{ $cid }}_EAB_KID="{{ $EAB_KID }}"

@@ -14,6 +14,7 @@ on:
       - "*.md"
 
 env:
+  ACME_CA: pebble
   DOCKER_GEN_CONTAINER_NAME: nginx-proxy-gen
   IMAGE: nginxproxy/acme-companion
   NGINX_CONTAINER_NAME: nginx-proxy
@@ -25,7 +26,7 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Build Image
         run: docker build -t "$IMAGE" .
@@ -43,7 +44,7 @@ jobs:
         run: docker save $IMAGE > companion.tar
 
       - name: Upload Image Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: companion.tar
           path: companion.tar
@@ -54,13 +55,13 @@ jobs:
 
     steps:
       - name: Checkout Docker official images tests
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: docker-library/official-images
           path: official-images
 
       - name: Download Builded Image
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: companion.tar
 
@@ -83,6 +84,7 @@ jobs:
         test-name:
           [
             docker_api,
+            docker_api_legacy,
             location_config,
             certs_single,
             certs_san,
@@ -96,30 +98,22 @@ jobs:
             permissions_custom,
             symlinks,
             acme_hooks,
+            ocsp_must_staple,
           ]
         setup: [2containers, 3containers]
-        acme-ca: [pebble]
         pebble-config: [pebble-config.json]
         include:
           - test-name: acme_eab
             setup: 2containers
-            acme-ca: pebble
             pebble-config: pebble-config-eab.json
           - test-name: acme_eab
             setup: 3containers
-            acme-ca: pebble 
             pebble-config: pebble-config-eab.json
-          - test-name: ocsp_must_staple
-            setup: 2containers
-            acme-ca: boulder
-          - test-name: ocsp_must_staple
-            setup: 3containers
-            acme-ca: boulder
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       # PREPARE RUNNER ENV
       - name: Add Test Domains in /etc/hosts
@@ -132,24 +126,18 @@ jobs:
           done
 
       - name: Setup Pebble
-        if: ${{ matrix.acme-ca == 'pebble' }}
         env:
           PEBBLE_CONFIG: ${{ matrix.pebble-config }}
         run: test/setup/pebble/setup-pebble.sh
 
-      - name: Setup Boulder
-        if: ${{ matrix.acme-ca == 'boulder' }}
-        run: test/setup/setup-boulder.sh
-
       - name: Setup nginx-proxy
         env:
           SETUP: ${{ matrix.setup }}
-          ACME_CA: ${{ matrix.acme-ca }}
         run: test/setup/setup-nginx-proxy.sh
 
       # ADD BUILT IMAGE
       - name: Download Built Image
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: companion.tar
 
@@ -160,7 +148,6 @@ jobs:
       - name: Integration Testing
         env:
           SETUP: ${{ matrix.setup }}
-          ACME_CA: ${{ matrix.acme-ca }}
           PEBBLE_CONFIG: ${{ matrix.pebble-config }}
         run: test/run.sh -t ${{ matrix.test-name }} "$IMAGE"
 
@@ -168,5 +155,4 @@ jobs:
         if: ${{ failure() }}
         env:
           SETUP: ${{ matrix.setup }}
-          ACME_CA: ${{ matrix.acme-ca }}
         run: test/github_actions/containers-logs.sh

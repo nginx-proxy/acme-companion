@@ -63,7 +63,7 @@ function run_le_container {
     --env "DOCKER_GEN_WAIT=500ms:2s" \
     --env "TEST_MODE=true" \
     --env "DEBUG=1" \
-    --label com.github.jrcs.letsencrypt_nginx_proxy_companion.test_suite \
+    --label com.github.nginx-proxy.acme-companion.test-suite \
     "$image" > /dev/null; \
   then
     [[ "${DRY_RUN:-}" == 1 ]] && echo "Started letsencrypt container for test ${name%%_2*}"
@@ -122,7 +122,7 @@ function run_nginx_container {
     --name "${container_name:-$virtual_host}" \
     -e "VIRTUAL_HOST=$virtual_host" \
     -e "LETSENCRYPT_HOST=$le_host" \
-    --label com.github.jrcs.letsencrypt_nginx_proxy_companion.test_suite \
+    --label com.github.nginx-proxy.acme-companion.test-suite \
     "${cli_args_arr[@]}" \
     nginx:alpine > /dev/null ; \
   then
@@ -263,7 +263,6 @@ export -f check_cert_subj
 
 # Wait for a successful https connection to domain passed with -d/--domain then wait
 #   - until the served certificate isn't the default one (default behavior)
-#   - until the served certificate is the default one (--default-cert)
 #   - until the served certificate subject match a string (--subject-match)
 function wait_for_conn {
   local action
@@ -277,11 +276,6 @@ function wait_for_conn {
       -d|--domain)
       domain="${2:?}"
       shift
-      shift
-      ;;
-
-      --default-cert)
-      action='--match'
       shift
       ;;
 

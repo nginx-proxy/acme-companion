@@ -10,7 +10,6 @@ $ docker run -d \
     -p 80:80 \
     -p 443:443 \
     -v certs:/etc/nginx/certs \
-    -v vhost:/etc/nginx/vhost.d \
     -v html:/usr/share/nginx/html \
     -v /var/run/docker.sock:/tmp/docker.sock:ro \
     nginxproxy/nginx-proxy
@@ -18,7 +17,6 @@ $ docker run -d \
 $ docker volume ls
 DRIVER              VOLUME NAME
 local               certs
-local               vhost
 local               html
 ```
 
@@ -32,7 +30,6 @@ $ docker run -d \
     -p 80:80 \
     -p 443:443 \
     -v /etc/nginx/certs \
-    -v /etc/nginx/vhost.d \
     -v /usr/share/nginx/html \
     -v /var/run/docker.sock:/tmp/docker.sock:ro \
     nginxproxy/nginx-proxy
@@ -40,7 +37,6 @@ $ docker run -d \
 $ docker volume ls
 DRIVER              VOLUME NAME
 local               287be3abd610e5566500d719ceb8b952952f12c9324ef02d05785d4ee9737ae9
-local               6530b1b40cf89efb71aa7fd19bddec927fa2bcae59b04b9c1c850af72ffe0123
 local               f260f71fefadcdfc311d285d69151f2312915174d3fb1fab89949ec5ec871a54
 ```
 
@@ -69,8 +65,6 @@ By default, the **acme-companion** container will enforce the following ownershi
 ```
 [drwxr-xr-x]  /etc/nginx/certs
 ├── [-rw-r--r-- root root]  dhparam.pem
-├── [-rw-r--r-- root root]  default.crt
-├── [-rw------- root root]  default.key
 ├── [drwxr-xr-x root root]  domain.tld
 │   ├── [-rw-r--r-- root root]  cert.pem
 │   ├── [-rw-r--r-- root root]  chain.pem
@@ -94,8 +88,6 @@ For example, `FILES_UID=1000`, `FILES_PERMS=644` and `FOLDERS_PERMS=700` will re
 ```
 [drwxr-xr-x]  /etc/nginx/certs
 ├── [-rw-r--r-- 1000 1000]  dhparam.pem
-├── [-rw-r--r-- 1000 1000]  default.crt
-├── [-rw-r--r-- 1000 1000]  default.key
 ├── [drwx------ 1000 1000]  domain.tld
 │   ├── [-rw-r--r-- 1000 1000]  cert.pem
 │   ├── [-rw-r--r-- 1000 1000]  chain.pem

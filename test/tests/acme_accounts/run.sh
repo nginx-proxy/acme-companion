@@ -31,8 +31,21 @@ run_nginx_container --hosts "${domains[0]}"
 # Wait for a symlink at /etc/nginx/certs/${domains[0]}.crt
 wait_for_symlink "${domains[0]}" "$le_container_name"
 
+# Hard set the account dir based on the test ACME CA used.
+case $ACME_CA in
+  pebble)
+    account_dir="pebble/dir"
+    ;;
+  boulder)
+    account_dir="boulder/directory"
+    ;;
+  *)
+    echo "$0 $ACME_CA: invalid option."
+    exit 1
+esac
+
 # Test if the expected folder / file / content are there.
-json_file="/etc/acme.sh/default/ca/$ACME_CA/account.json"
+json_file="/etc/acme.sh/default/ca/$account_dir/account.json"
 if [[ "$ACME_CA" == 'boulder' ]]; then
   no_mail_str='[]'
 elif [[ "$ACME_CA" == 'pebble' ]]; then
@@ -64,7 +77,7 @@ run_nginx_container --hosts "${domains[1]}"
 wait_for_symlink "${domains[1]}" "$le_container_name"
 
 # Test if the expected folder / file / content are there.
-json_file="/etc/acme.sh/${default_email}/ca/$ACME_CA/account.json"
+json_file="/etc/acme.sh/${default_email}/ca/$account_dir/account.json"
 if docker exec "$le_container_name" [[ ! -d "/etc/acme.sh/$default_email" ]]; then
   echo "The /etc/acme.sh/$default_email folder does not exist."
 elif docker exec "$le_container_name" [[ ! -f "$json_file" ]]; then
@@ -82,7 +95,7 @@ run_nginx_container --hosts "${domains[2]}" --cli-args "--env LETSENCRYPT_EMAIL=
 wait_for_symlink "${domains[2]}" "$le_container_name"
 
 # Test if the expected folder / file / content are there.
-json_file="/etc/acme.sh/${container_email}/ca/$ACME_CA/account.json"
+json_file="/etc/acme.sh/${container_email}/ca/$account_dir/account.json"
 if docker exec "$le_container_name" [[ ! -d "/etc/acme.sh/$container_email" ]]; then
   echo "The /etc/acme.sh/$container_email folder does not exist."
 elif docker exec "$le_container_name" [[ ! -f "$json_file" ]]; then

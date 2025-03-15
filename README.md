@@ -1,4 +1,4 @@
-![Tests](https://github.com/nginx-proxy/acme-companion/workflows/Tests/badge.svg)
+[![Tests](https://github.com/nginx-proxy/acme-companion/actions/workflows/test.yml/badge.svg)](https://github.com/nginx-proxy/acme-companion/actions/workflows/test.yml)
 [![GitHub release](https://img.shields.io/github/release/nginx-proxy/acme-companion.svg)](https://github.com/nginx-proxy/acme-companion/releases)
 [![Docker Image Size](https://img.shields.io/docker/image-size/nginxproxy/acme-companion?sort=semver)](https://hub.docker.com/r/nginxproxy/acme-companion "Click to view the image on Docker Hub")
 [![Docker stars](https://img.shields.io/docker/stars/nginxproxy/acme-companion.svg)](https://hub.docker.com/r/nginxproxy/acme-companion "Click to view the image on Docker Hub")
@@ -8,35 +8,36 @@
 
 It handles the automated creation, renewal and use of SSL certificates for proxied Docker containers through the ACME protocol.
 
-**Required read if you use the `latest` version** : the `v2.0.0` release of this project mark the switch of the ACME client used by the Docker image from [**simp.le**](https://github.com/zenhack/simp_le) to [**acme.sh**](https://github.com/acmesh-official/acme.sh). This switch result in some backward incompatible changes, so please read [this issue](https://github.com/nginx-proxy/acme-companion/issues/510) and the updated docs for more details before updating your image. The single most important change is that the container now requires a volume mounted to `/etc/acme.sh` in order to persist ACME account keys and SSL certificates. The last tagged version that uses **simp_le** is `v1.13.1`.
-
 ### Features:
 * Automated creation/renewal of Let's Encrypt (or other ACME CAs) certificates using [**acme.sh**](https://github.com/acmesh-official/acme.sh).
-* Let's Encrypt / ACME domain validation through `http-01` challenge only.
+* Let's Encrypt / ACME domain validation through `HTTP-01` (by default) or [`DNS-01`](https://github.com/nginx-proxy/acme-companion/blob/main/docs/Let's-Encrypt-and-ACME.md#dns-01-acme-challenge) challenge.
 * Automated update and reload of nginx config on certificate creation/renewal.
 * Support creation of [Multi-Domain (SAN) Certificates](https://github.com/nginx-proxy/acme-companion/blob/main/docs/Let's-Encrypt-and-ACME.md#multi-domains-certificates).
+* Support creation of [Wildcard Certificates](https://community.letsencrypt.org/t/acme-v2-production-environment-wildcards/55578) (with `DNS-01` challenge only).
 * Creation of a strong [RFC7919 Diffie-Hellman Group](https://datatracker.ietf.org/doc/html/rfc7919#appendix-A) at startup.
 * Work with all versions of docker.
 
-### Requirements:
+### HTTP-01 challenge requirements:
 * Your host **must** be publicly reachable on **both** port [`80`](https://letsencrypt.org/docs/allow-port-80/) and [`443`](https://github.com/nginx-proxy/acme-companion/discussions/873#discussioncomment-1410225).
-* Check your firewall rules and [**do not attempt to block port `80`**](https://letsencrypt.org/docs/allow-port-80/) as that will prevent `http-01` challenges from completing.
+* Check your firewall rules and [**do not attempt to block port `80`**](https://letsencrypt.org/docs/allow-port-80/) as that will prevent `HTTP-01` challenges from completing.
 * For the same reason, you can't use nginx-proxy's [`HTTPS_METHOD=nohttp`](https://github.com/nginx-proxy/nginx-proxy#how-ssl-support-works).
 * The (sub)domains you want to issue certificates for must correctly resolve to the host.
-* Your DNS provider must [answer correctly to CAA record requests](https://letsencrypt.org/docs/caa/).
 * If your (sub)domains have AAAA records set, the host must be publicly reachable over IPv6 on port `80` and `443`.
+
+If you can't meet these requirements, you can use the `DNS-01` challenge instead. Please refer to the [documentation](https://github.com/nginx-proxy/acme-companion/blob/main/docs/Let's-Encrypt-and-ACME.md#dns-01-acme-challenge) for more information.
+
+In addition to the above, please ensure that your DNS provider answers correctly to CAA record requests. [If your DNS provider answer with an error, Let's Encrypt won't issue a certificate for your domain](https://letsencrypt.org/docs/caa/). Let's Encrypt do not require that you set a CAA record on your domain, just that your DNS provider answers correctly.
 
 ![schema](https://github.com/nginx-proxy/acme-companion/blob/main/schema.png)
 
 ## Basic usage (with the nginx-proxy container)
 
-Three writable volumes must be declared on the **nginx-proxy** container so that they can be shared with the **acme-companion** container:
+Two writable volumes must be declared on the **nginx-proxy** container so that they can be shared with the **acme-companion** container:
 
 * `/etc/nginx/certs` to store certificates and private keys (readonly for the **nginx-proxy** container).
-* `/etc/nginx/vhost.d` to change the configuration of vhosts (required so the CA may access `http-01` challenge files).
 * `/usr/share/nginx/html` to write `http-01` challenge files.
 
-Additionally, a fourth volume must be declared on the **acme-companion** container to store `acme.sh` configuration and state: `/etc/acme.sh`.
+Additionally, a third volume must be declared on the **acme-companion** container to store `acme.sh` configuration and state: `/etc/acme.sh`.
 
 Please also read the doc about [data persistence](./docs/Persistent-data.md).
 
@@ -44,7 +45,7 @@ Example of use:
 
 ### Step 1 - nginx-proxy
 
-Start **nginx-proxy** with the three additional volumes declared:
+Start **nginx-proxy** with the two additional volumes declared:
 
 ```shell
 $ docker run --detach \
@@ -52,7 +53,6 @@ $ docker run --detach \
     --publish 80:80 \
     --publish 443:443 \
     --volume certs:/etc/nginx/certs \
-    --volume vhost:/etc/nginx/vhost.d \
     --volume html:/usr/share/nginx/html \
     --volume /var/run/docker.sock:/tmp/docker.sock:ro \
     nginxproxy/nginx-proxy

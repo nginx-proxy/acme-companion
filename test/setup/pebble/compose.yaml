@@ -1,14 +1,12 @@
-version: '3'
-
 services:
   pebble:
-    image: "letsencrypt/pebble:${PEBBLE_VERSION}"
+    image: "ghcr.io/letsencrypt/pebble:${PEBBLE_VERSION}"
     container_name: pebble
     volumes:
       - "./${PEBBLE_CONFIG}:/test/config/pebble-config.json"
     environment:
       - PEBBLE_VA_NOSLEEP=1
-    command: pebble -config /test/config/pebble-config.json -dnsserver 10.30.50.3:8053
+    command: -config /test/config/pebble-config.json -dnsserver 10.30.50.3:8053
     ports:
       - 14000:14000 # HTTPS ACME API
       - 15000:15000 # HTTPS Management API
@@ -17,9 +15,9 @@ services:
         ipv4_address: 10.30.50.2
 
   challtestsrv:
-    image: "letsencrypt/pebble-challtestsrv:${PEBBLE_VERSION}"
+    image: "ghcr.io/letsencrypt/pebble-challtestsrv:${PEBBLE_VERSION}"
     container_name: challtestserv
-    command: pebble-challtestsrv -tlsalpn01 ""
+    command: -defaultIPv6 "" -defaultIPv4 10.30.50.3
     ports:
       - 8055:8055 # HTTP Management API
     networks:

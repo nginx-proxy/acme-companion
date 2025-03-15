@@ -15,6 +15,10 @@ function check_docker_socket {
     if [[ $DOCKER_HOST == unix://* ]]; then
         socket_file=${DOCKER_HOST#unix://}
         if [[ ! -S $socket_file ]]; then
+            if [[ ! -r $socket_file ]]; then
+                echo "Warning: Docker host socket at $socket_file might not be readable. Please check user permissions" >&2
+                echo "If you are in a SELinux environment, try using: '-v /var/run/docker.sock:$socket_file:z'" >&2
+            fi
             echo "Error: you need to share your Docker host socket with a volume at $socket_file" >&2
             echo "Typically you should run your container with: '-v /var/run/docker.sock:$socket_file:ro'" >&2
             exit 1
@@ -22,7 +26,7 @@ function check_docker_socket {
     fi
 }
 
-function check_writable_directory {
+function check_dir_is_mounted_volume {
     local dir="$1"
     if [[ $(get_self_cid) ]]; then
         if ! docker_api "/containers/$(get_self_cid)/json" | jq ".Mounts[].Destination" | grep -q "^\"$dir\"$"; then
@@ -31,6 +35,13 @@ function check_writable_directory {
     else
         echo "Warning: can't check if '$dir' is a mounted volume without self container ID."
     fi
+}
+
+function check_writable_directory {
+    local dir="$1"
+
+    check_dir_is_mounted_volume "$dir"
+
     if [[ ! -d "$dir" ]]; then
         echo "Error: can't access to '$dir' directory !" >&2
         echo "Check that '$dir' directory is declared as a writable volume." >&2
@@ -40,6 +51,18 @@ function check_writable_directory {
         echo "Error: can't write to the '$dir' directory !" >&2
         echo "Check that '$dir' directory is export as a writable volume." >&2
         exit 1
+    fi
+    rm -f "$dir/.check_writable"
+}
+
+function warn_html_directory {
+    local dir='/usr/share/nginx/html'
+    
+    check_dir_is_mounted_volume "$dir"
+
+    if [[ ! -d "$dir" ]] || ! touch "$dir/.check_writable" 2>/dev/null; then
+        echo "Warning: can't access or write to '$dir' directory. This will prevent HTML-01 challenges from working correctly."
+        echo "If you are only using DNS-01 challenges, you can ignore this warning, otherwise check that '$dir' is declared as a writable volume."
     fi
     rm -f "$dir/.check_writable"
 }
@@ -105,7 +128,9 @@ function check_dh_group {
 }
 
 function check_default_cert_key {
-    local cn='letsencrypt-nginx-proxy-companion'
+    local cn='acme-companion'
+
+    echo "Warning: there is no future support planned for the self signed default certificate creation feature and it might be removed in a future release."
 
     if [[ -e /etc/nginx/certs/default.crt && -e /etc/nginx/certs/default.key ]]; then
         default_cert_cn="$(openssl x509 -noout -subject -in /etc/nginx/certs/default.crt)"
@@ -157,21 +182,24 @@ if [[ "$*" == "/bin/bash /app/start.sh" ]]; then
         echo "Check that you are doing one of the following :" >&2
         echo -e "\t- Use the --volumes-from option to mount volumes from the nginx-proxy container." >&2
         echo -e "\t- Set the NGINX_PROXY_CONTAINER env var on the letsencrypt-companion container to the name of the nginx-proxy container." >&2
-        echo -e "\t- Label the nginx-proxy container to use with 'com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy'." >&2
+        echo -e "\t- Label the nginx-proxy container to use with 'com.github.nginx-proxy.nginx'." >&2
         exit 1
     elif [[ -z "$(get_docker_gen_container)" ]] && ! is_docker_gen_container "$(get_nginx_proxy_container)"; then
         echo "Error: can't get docker-gen container id !" >&2
         echo "If you are running a three containers setup, check that you are doing one of the following :" >&2
         echo -e "\t- Set the NGINX_DOCKER_GEN_CONTAINER env var on the letsencrypt-companion container to the name of the docker-gen container." >&2
-        echo -e "\t- Label the docker-gen container to use with 'com.github.jrcs.letsencrypt_nginx_proxy_companion.docker_gen'." >&2
+        echo -e "\t- Label the docker-gen container to use with 'com.github.nginx-proxy.docker-gen'." >&2
         exit 1
     fi
     check_writable_directory '/etc/nginx/certs'
-    check_writable_directory '/etc/nginx/vhost.d'
+    parse_true "${ACME_HTTP_CHALLENGE_LOCATION:=false}" && check_writable_directory '/etc/nginx/vhost.d'
     check_writable_directory '/etc/acme.sh'
-    check_writable_directory '/usr/share/nginx/html'
-    [[ -f /app/letsencrypt_user_data ]] && check_writable_directory '/etc/nginx/conf.d'
-    check_default_cert_key
+    warn_html_directory
+    if [[ -f /app/letsencrypt_user_data ]]; then
+        check_writable_directory '/etc/nginx/vhost.d'
+        check_writable_directory '/etc/nginx/conf.d'
+    fi
+    parse_true "${CREATE_DEFAULT_CERTIFICATE:=false}" && check_default_cert_key
     check_dh_group
     reload_nginx
     check_default_account

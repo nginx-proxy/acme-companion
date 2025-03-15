@@ -54,7 +54,7 @@ function check_location {
 }
 
 # check the wildcard location enumeration function
-docker exec "$le_container_name" bash -c 'source /app/functions.sh; enumerate_wildcard_locations foo.bar.baz.example.com'
+docker exec "$le_container_name" bash -c 'source /app/functions.sh; enumerate_wildcard_locations foo.bar.baz.com.example.com'
 
 # default configuration file should be empty
 config_path="$vhost_path/default"

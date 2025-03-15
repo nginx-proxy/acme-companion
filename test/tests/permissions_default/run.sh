@@ -60,9 +60,8 @@ done
 
 # Array of private file paths to test
 private_files=( \
-  [0]="/etc/nginx/certs/default.key" \
-  [1]="/etc/nginx/certs/${domains[0]}/key.pem" \
-  [2]="/etc/acme.sh/default/${domains[0]}/${domains[0]}.key" \
+  [0]="/etc/nginx/certs/${domains[0]}/key.pem" \
+  [1]="/etc/acme.sh/default/${domains[0]}/${domains[0]}.key" \
   )
 
 # Test private file paths
@@ -79,8 +78,7 @@ public_files=( \
   [1]="/etc/nginx/certs/${domains[0]}/cert.pem" \
   [2]="/etc/nginx/certs/${domains[0]}/chain.pem" \
   [3]="/etc/nginx/certs/${domains[0]}/fullchain.pem" \
-  [4]="/etc/nginx/certs/default.crt" \
-  [5]="/etc/nginx/certs/dhparam.pem" \
+  [4]="/etc/nginx/certs/dhparam.pem" \
   )
 
 # Test public file paths

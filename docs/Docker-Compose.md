@@ -15,7 +15,7 @@ The use of named containers and volume is not required but helps keeping everyth
 ### Two containers example
 
 ```yaml
-version: '2'
+version: "2"
 
 services:
   nginx-proxy:
@@ -25,8 +25,10 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - conf:/etc/nginx/conf.d
-      - vhost:/etc/nginx/vhost.d
+      # The vhost and conf volumes are only required
+      # if you plan to obtain standalone certificates
+      # - vhost:/etc/nginx/vhost.d
+      # - conf:/etc/nginx/conf.d
       - html:/usr/share/nginx/html
       - certs:/etc/nginx/certs:ro
       - /var/run/docker.sock:/tmp/docker.sock:ro
@@ -46,8 +48,8 @@ services:
     network_mode: bridge
 
 volumes:
-  conf:
-  vhost:
+  # vhost:
+  # conf:
   html:
   certs:
   acme:
@@ -56,7 +58,7 @@ volumes:
 ### Three containers example
 
 ```yaml
-version: '2'
+version: "2"
 
 services:
   nginx-proxy:
@@ -66,8 +68,10 @@ services:
       - "80:80"
       - "443:443"
     volumes:
+      # The vhost volume is only required if you
+      # plan to obtain standalone certificates
+      # - vhost:/etc/nginx/vhost.d
       - conf:/etc/nginx/conf.d
-      - vhost:/etc/nginx/vhost.d
       - html:/usr/share/nginx/html
       - certs:/etc/nginx/certs:ro
     network_mode: bridge
@@ -75,14 +79,14 @@ services:
   docker-gen:
     image: nginxproxy/docker-gen
     container_name: nginx-proxy-gen
-    command: -notify-sighup nginx-proxy -watch /etc/docker-gen/templates/nginx.tmpl /etc/nginx/conf.d/default.conf
+    command: -notify-sighup nginx-proxy -watch -wait 5s:30s /etc/docker-gen/templates/nginx.tmpl /etc/nginx/conf.d/default.conf
     volumes_from:
       - nginx-proxy
     volumes:
       - /path/to/nginx.tmpl:/etc/docker-gen/templates/nginx.tmpl:ro
       - /var/run/docker.sock:/tmp/docker.sock:ro
     labels:
-      - "com.github.jrcs.letsencrypt_nginx_proxy_companion.docker_gen"
+      - "com.github.nginx-proxy.docker-gen"
     network_mode: bridge
 
   acme-companion:
@@ -99,8 +103,8 @@ services:
     network_mode: bridge
 
 volumes:
+  # vhost:
   conf:
-  vhost:
   html:
   certs:
   acme:

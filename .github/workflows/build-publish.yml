@@ -22,9 +22,10 @@ jobs:
   multiarch-build:
     name: Build and publish Docker image
     runs-on: ubuntu-latest
+    if: (github.event_name == 'schedule' && github.repository == 'nginx-proxy/acme-companion') || (github.event_name != 'schedule')
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -34,7 +35,7 @@ jobs:
 
       - name: Get Docker tags
         id: docker_meta
-        uses: docker/metadata-action@v4
+        uses: docker/metadata-action@v5
         with:
           images: |
             ghcr.io/nginx-proxy/acme-companion
@@ -49,19 +50,19 @@ jobs:
             org.opencontainers.image.version=${{ steps.acme-companion_version.outputs.VERSION }}
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
+        uses: docker/setup-qemu-action@v3
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
 
       - name: Login to DockerHub
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -69,12 +70,14 @@ jobs:
 
       - name: Build and push
         id: docker_build
-        uses: docker/build-push-action@v4
+        uses: docker/build-push-action@v6
         with:
           context: .
           build-args: GIT_DESCRIBE=${{ steps.acme-companion_version.outputs.VERSION }}
           platforms: linux/amd64,linux/arm64,linux/arm/v7
+          sbom: true
           push: true
+          provenance: mode=max
           tags: ${{ steps.docker_meta.outputs.tags }}
           labels: ${{ steps.docker_meta.outputs.labels }}
           cache-from: type=gha
