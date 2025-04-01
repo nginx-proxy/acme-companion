@@ -15,8 +15,6 @@ The use of named containers and volume is not required but helps keeping everyth
 ### Two containers example
 
 ```yaml
-version: "2"
-
 services:
   nginx-proxy:
     image: nginxproxy/nginx-proxy
@@ -32,7 +30,6 @@ services:
       - html:/usr/share/nginx/html
       - certs:/etc/nginx/certs:ro
       - /var/run/docker.sock:/tmp/docker.sock:ro
-    network_mode: bridge
 
   acme-companion:
     image: nginxproxy/acme-companion
@@ -45,7 +42,10 @@ services:
       - certs:/etc/nginx/certs:rw
       - acme:/etc/acme.sh
       - /var/run/docker.sock:/var/run/docker.sock:ro
-    network_mode: bridge
+
+#networks:
+#    default:
+#        name: nginx-proxy
 
 volumes:
   # vhost:
@@ -58,8 +58,6 @@ volumes:
 ### Three containers example
 
 ```yaml
-version: "2"
-
 services:
   nginx-proxy:
     image: nginx:alpine
@@ -74,7 +72,6 @@ services:
       - conf:/etc/nginx/conf.d
       - html:/usr/share/nginx/html
       - certs:/etc/nginx/certs:ro
-    network_mode: bridge
 
   docker-gen:
     image: nginxproxy/docker-gen
@@ -87,7 +84,6 @@ services:
       - /var/run/docker.sock:/tmp/docker.sock:ro
     labels:
       - "com.github.nginx-proxy.docker-gen"
-    network_mode: bridge
 
   acme-companion:
     image: nginxproxy/acme-companion
@@ -100,7 +96,10 @@ services:
       - certs:/etc/nginx/certs:rw
       - acme:/etc/acme.sh
       - /var/run/docker.sock:/var/run/docker.sock:ro
-    network_mode: bridge
+
+#networks:
+#    default:
+#        name: nginx-proxy
 
 volumes:
   # vhost:
