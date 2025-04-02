@@ -34,7 +34,7 @@ You can also create test certificates per container (see [Test certificates](./L
 
 * `ACME_POST_HOOK` - The provided command will be run after every certificate issuance. The action is limited to the commands available inside the **acme-companion** container. For example `--env "ACME_POST_HOOK=echo 'end'"`. For more information see [Pre- and Post-Hook](./Hooks.md)
 
-* `DEFAULT_RENEW` - 60 days by default, this defines the day to renew cert, cert from some CA like Buypass has 180 days lifetime, so you might want to renew it at day 170 instead of day 60, see [BuyPass.com CA](https://github.com/acmesh-official/acme.sh/wiki/BuyPass.com-CA) for more detail.
+* `DEFAULT_RENEW` - 60 days by default, this defines the number of days between certificate renewals attempts. For certificates issued by certain Certificate Authorities, such as Buypass, which have a lifespan of 180 days, it may be advisable to initiate the renewal process on day 170 rather than the default day 60. See [BuyPass.com CA](https://github.com/acmesh-official/acme.sh/wiki/BuyPass.com-CA) for more detail.
 
 * `ACME_HTTP_CHALLENGE_LOCATION` - Previously **acme-companion** automatically added the ACME HTTP challenge location to the nginx configuration through files generated in `/etc/nginx/vhost.d`. Recent versions of **nginx-proxy** (>= `1.6`) already include the required location configuration, which remove the need for **acme-companion** to attempt to dynamically add them. If you're running and older version of **nginx-proxy** (or **docker-gen** with an older version of the `nginx.tmpl` file), you can re-enable this behaviour by setting `ACME_HTTP_CHALLENGE_LOCATION` to `true`.
 
