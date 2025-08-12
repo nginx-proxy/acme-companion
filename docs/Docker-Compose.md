@@ -41,6 +41,7 @@ services:
     volumes:
       - certs:/etc/nginx/certs:rw
       - acme:/etc/acme.sh
+      - html:/usr/share/nginx/html
       - /var/run/docker.sock:/var/run/docker.sock:ro
 
 #networks:
@@ -95,6 +96,7 @@ services:
     volumes:
       - certs:/etc/nginx/certs:rw
       - acme:/etc/acme.sh
+      - html:/usr/share/nginx/html
       - /var/run/docker.sock:/var/run/docker.sock:ro
 
 #networks:
