@@ -11,6 +11,7 @@ $ docker run -d \
     -p 443:443 \
     -v certs:/etc/nginx/certs \
     -v html:/usr/share/nginx/html \
+    -v acme:/etc/acme.sh \
     -v /var/run/docker.sock:/tmp/docker.sock:ro \
     nginxproxy/nginx-proxy
 
@@ -31,6 +32,7 @@ $ docker run -d \
     -p 443:443 \
     -v /etc/nginx/certs \
     -v /usr/share/nginx/html \
+    -v /etc/acme.sh \
     -v /var/run/docker.sock:/tmp/docker.sock:ro \
     nginxproxy/nginx-proxy
 
@@ -38,6 +40,7 @@ $ docker volume ls
 DRIVER              VOLUME NAME
 local               287be3abd610e5566500d719ceb8b952952f12c9324ef02d05785d4ee9737ae9
 local               f260f71fefadcdfc311d285d69151f2312915174d3fb1fab89949ec5ec871a54
+local               f8ae9efc77a9ef71deafbeef197dae8a7e0d240257b82c70a71748927ca7490f
 ```
 
 ### Host volumes
