@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-FROM docker.io/nginxproxy/docker-gen:0.15.0 AS docker-gen
+FROM docker.io/nginxproxy/docker-gen:0.15.1 AS docker-gen
 
 FROM docker.io/library/alpine:3.22.1
 
