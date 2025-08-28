@@ -98,7 +98,7 @@ Every hour (3600 seconds) the certificates are checked and per default every cer
 
 #### Contact address
 
-The `LETSENCRYPT_EMAIL` environment variable must be a valid email and will be used by Let's Encrypt to warn you of impeding certificate expiration (should the automated renewal fail) and to recover an account.
+The `LETSENCRYPT_EMAIL` environment variable must be a valid email and can be used to recover an account.
 
 #### Private key size
 
