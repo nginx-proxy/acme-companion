@@ -40,3 +40,4 @@ You can also create test certificates per container (see [Test certificates](./L
 
 * `RELOAD_NGINX_ONLY_ONCE` - The companion reload nginx configuration after every new or renewed certificate. Previously this was done only once per service loop, at the end of the loop (this was causing delayed availability of HTTPS enabled application when multiple new certificates where requested at once, see [issue #1147](https://github.com/nginx-proxy/acme-companion/issues/1147)). You can restore the previous behaviour if needed by setting the environment variable `RELOAD_NGINX_ONLY_ONCE` to `true`.
 
+* `INCLUDE_STOPPED` - Whether to include stopped containers when generating certificates. Useful for when the **nginx-proxy** container might need to serve a valid page for offline containers.
