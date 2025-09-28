@@ -3,7 +3,7 @@
 set -e
 
 setup_pebble() {
-    curl --silent --show-error https://raw.githubusercontent.com/letsencrypt/pebble/master/test/certs/pebble.minica.pem > "${GITHUB_WORKSPACE}/pebble.minica.pem"
+    curl --silent --show-error https://raw.githubusercontent.com/letsencrypt/pebble/refs/tags/v2.8.0/test/certs/pebble.minica.pem > "${GITHUB_WORKSPACE}/pebble.minica.pem"
     cat "${GITHUB_WORKSPACE}/pebble.minica.pem"
     docker compose --file "${GITHUB_WORKSPACE}/test/setup/pebble/compose.yaml" up --detach
 }
