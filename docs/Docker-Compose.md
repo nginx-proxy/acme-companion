@@ -55,6 +55,46 @@ volumes:
   acme:
 ```
 
+```yaml
+version: '3'
+
+services:
+  nginx-proxy:
+    image: nginxproxy/nginx-proxy
+    container_name: nginx-proxy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - conf:/etc/nginx/conf.d
+      - vhost:/etc/nginx/vhost.d
+      - html:/usr/share/nginx/html
+      - certs:/etc/nginx/certs:ro
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+    network_mode: bridge
+
+  acme-companion:
+    image: nginxproxy/acme-companion
+    container_name: nginx-proxy_acme-companion
+    volumes:
+      - certs:/etc/nginx/certs
+      - html:/usr/share/nginx/html
+      - vhost:/etc/nginx/vhost.d
+      - acme:/etc/acme.sh
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      - "DEFAULT_MAIL=mail@yourdomain.tld"
+      - "NGINX_PROXY_CONTAINER=nginx-proxy"
+    network_mode: bridge
+      
+volumes:
+  conf:
+  vhost:
+  html:
+  certs:
+  acme:
+```
+
 ### Three containers example
 
 ```yaml
