@@ -394,6 +394,15 @@ function update_cert {
         return 1
     fi
 
+    local -n acme_cert_profile="ACME_${cid}_CERT_PROFILE"
+    if [[ -n "$acme_cert_profile" ]]; then
+        # Use per-container certificate profile
+        params_issue_arr+=(--cert-profile "$acme_cert_profile")
+    elif [[ -n ${ACME_CERT_PROFILE} ]]; then
+        # Use default certificate profile
+        params_issue_arr+=(--cert-profile "$ACME_CERT_PROFILE")
+    fi
+
     # acme.sh pre and post hooks
     local -n acme_pre_hook="ACME_${cid}_PRE_HOOK"
     if [[ -n "${acme_pre_hook}" ]]; then
