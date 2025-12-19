@@ -64,7 +64,7 @@ jobs:
           path: official-images
 
       - name: Download Builded Image
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           name: companion.tar
 
@@ -140,7 +140,7 @@ jobs:
 
       # ADD BUILT IMAGE
       - name: Download Built Image
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           name: companion.tar
 
