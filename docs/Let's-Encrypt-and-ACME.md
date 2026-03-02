@@ -29,7 +29,7 @@ docker run --detach \
     --volume /var/run/docker.sock:/var/run/docker.sock:ro \
     --env "DEFAULT_EMAIL=mail@yourdomain.tld" \
     --env "ACME_CHALLENGE=DNS-01" \
-    --env "ACMESH_DNS_API_CONFIG={'DNS_API': 'dns_cf', 'CF_Key': 'yourCloudflareApiKey', 'CF_Email': 'yourCloudflareAccountEmail'}" \
+    --env "ACMESH_DNS_API_CONFIG={'DNS_API': 'dns_cf', 'CF_Key': 'yourCloudflareGlobalApiKey', 'CF_Email': 'yourCloudflareAccountEmail'}" \
     nginxproxy/acme-companion
 ```
 
@@ -50,7 +50,7 @@ services:
       ACME_CHALLENGE: DNS-01
       ACMESH_DNS_API_CONFIG: |-
         DNS_API: dns_cf
-        CF_Key: yourCloudflareApiKey
+        CF_Key: yourCloudflareGlobalApiKey
         CF_Email: yourCloudflareAccountEmail
     
     # app container omitted
