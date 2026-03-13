@@ -74,7 +74,7 @@ jobs:
 
       - name: Build and push
         id: docker_build
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           build-args: GIT_DESCRIBE=${{ steps.acme-companion_version.outputs.VERSION }}
