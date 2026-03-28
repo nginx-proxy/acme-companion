@@ -181,14 +181,16 @@ if [[ "$*" == "/bin/bash /app/start.sh" ]]; then
         echo "Error: can't get nginx-proxy container ID !" >&2
         echo "Check that you are doing one of the following :" >&2
         echo -e "\t- Use the --volumes-from option to mount volumes from the nginx-proxy container." >&2
-        echo -e "\t- Set the NGINX_PROXY_CONTAINER env var on the letsencrypt-companion container to the name of the nginx-proxy container." >&2
-        echo -e "\t- Label the nginx-proxy container to use with 'com.github.nginx-proxy.nginx'." >&2
+        echo -e "\t- Set the NGINX_PROXY_CONTAINER env var on the acme-companion container to the name of the nginx-proxy container." >&2
+        echo -e "\t- Label the nginx-proxy container to use with '${default_nginx_proxy_container_label}'." >&2
+        echo -e "\t- Label the nginx-proxy container with a custom label and set NGINX_PROXY_CONTAINER_LABEL env var on the acme-companion container to match the custom label." >&2
         exit 1
     elif [[ -z "$(get_docker_gen_container)" ]] && ! is_docker_gen_container "$(get_nginx_proxy_container)"; then
         echo "Error: can't get docker-gen container id !" >&2
         echo "If you are running a three containers setup, check that you are doing one of the following :" >&2
-        echo -e "\t- Set the NGINX_DOCKER_GEN_CONTAINER env var on the letsencrypt-companion container to the name of the docker-gen container." >&2
-        echo -e "\t- Label the docker-gen container to use with 'com.github.nginx-proxy.docker-gen'." >&2
+        echo -e "\t- Set the NGINX_DOCKER_GEN_CONTAINER env var on the acme-companion container to the name of the docker-gen container." >&2
+        echo -e "\t- Label the docker-gen container to use with '${default_nginx_docker_gen_container_label}'." >&2
+        echo -e "\t- Label the docker-gen container with a custom label and set NGINX_DOCKER_GEN_CONTAINER_LABEL env var on the acme-companion container to match the custom label." >&2
         exit 1
     fi
     check_writable_directory '/etc/nginx/certs'

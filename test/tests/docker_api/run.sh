@@ -5,8 +5,10 @@
 nginx_vol='nginx-volumes-from'
 nginx_env='nginx-env-var'
 nginx_lbl='nginx-label'
+nginx_cstm_lbl='nginx-custom-label'
 docker_gen='docker-gen-no-label'
 docker_gen_lbl='docker-gen-label'
+docker_gen_cstm_lbl='docker-gen-custom-label'
 
 case $SETUP in
 
@@ -20,6 +22,7 @@ case $SETUP in
       "$nginx_vol" \
       "$nginx_env" \
       "$nginx_lbl" \
+      "$nginx_cstm_lbl" \
       &> /dev/null
   }
   trap cleanup EXIT
@@ -78,6 +81,22 @@ case $SETUP in
     "$1" \
     bash -c "$commands" 2>&1
 
+  # Run a nginx-proxy container named nginx-custom-label, with a custom label.
+  # Store the container id in the custom_labeled_nginx_cid variable.
+  custom_labeled_nginx_cid="$(docker run --rm -d \
+    --name "$nginx_cstm_lbl" \
+    -v /var/run/docker.sock:/tmp/docker.sock:ro \
+    --label custom.label.nginx \
+    nginxproxy/nginx-proxy)"
+
+  # This should target the nginx-proxy container with the custom label (nginx-custom-label)
+  docker run --rm \
+    -v /var/run/docker.sock:/var/run/docker.sock:ro \
+    --volumes-from "$nginx_vol" \
+    -e "NGINX_PROXY_CONTAINER_LABEL=custom.label.nginx" \
+    "$1" \
+    bash -c "$commands" 2>&1
+
   cat > "${GITHUB_WORKSPACE}/test/tests/docker_api/expected-std-out.txt" <<EOF
 Container $nginx_vol received exec_start: sh -c /app/docker-entrypoint.sh /usr/local/bin/docker-gen /app/nginx.tmpl /etc/nginx/conf.d/default.conf; /usr/sbin/nginx -s reload
 $nginx_vol
@@ -85,6 +104,8 @@ Container $nginx_env received exec_start: sh -c /app/docker-entrypoint.sh /usr/l
 $nginx_env
 Container $nginx_lbl received exec_start: sh -c /app/docker-entrypoint.sh /usr/local/bin/docker-gen /app/nginx.tmpl /etc/nginx/conf.d/default.conf; /usr/sbin/nginx -s reload
 $labeled_nginx_cid
+Container $nginx_cstm_lbl received exec_start: sh -c /app/docker-entrypoint.sh /usr/local/bin/docker-gen /app/nginx.tmpl /etc/nginx/conf.d/default.conf; /usr/sbin/nginx -s reload
+$custom_labeled_nginx_cid
 EOF
   ;;
 
@@ -98,8 +119,10 @@ EOF
       "$nginx_vol" \
       "$nginx_env" \
       "$nginx_lbl" \
+      "$nginx_cstm_lbl" \
       "$docker_gen" \
       "$docker_gen_lbl" \
+      "$docker_gen_cstm_lbl" \
       &> /dev/null
   }
   trap cleanup EXIT
@@ -220,6 +243,30 @@ EOF
     "$1" \
     bash -c "$commands" 2>&1
 
+  # Spawn a nginx container named nginx-custom-label, with a custom label.
+  custom_labeled_nginx2_cid="$(docker run --rm -d \
+    --name "$nginx_cstm_lbl" \
+    --label custom.label.nginx \
+    nginx:alpine)"
+
+  # Spawn a "fake docker-gen" container named docker-gen-custom-label, with a custom label.
+  custom_labeled_docker_gen_cid="$(docker run --rm -d \
+    --name "$docker_gen_cstm_lbl" \
+    --label custom.label.docker-gen \
+    nginx:alpine)"
+
+  # This should target the nginx container whose id or name was obtained with
+  # the custom label (nginx-custom-label)
+  # and the docker-gen container whose id or name was obtained with
+  # the custom label (docker-gen-custom-label)
+  docker run --rm \
+    -v /var/run/docker.sock:/var/run/docker.sock:ro \
+    --volumes-from "$nginx_vol" \
+    -e "NGINX_PROXY_CONTAINER_LABEL=custom.label.nginx" \
+    -e "NGINX_DOCKER_GEN_CONTAINER_LABEL=custom.label.docker-gen" \
+    "$1" \
+    bash -c "$commands" 2>&1
+
     cat > "${GITHUB_WORKSPACE}/test/tests/docker_api/expected-std-out.txt" <<EOF
 Container $docker_gen received signal 1
 Container $nginx_vol received signal 1
@@ -246,7 +293,12 @@ Container $docker_gen_lbl received signal 1
 Container $nginx_lbl received signal 1
 $labeled_docker_gen_cid
 $labeled_nginx2_cid
+Container $docker_gen_cstm_lbl received signal 1
+Container $nginx_cstm_lbl received signal 1
+$custom_labeled_docker_gen_cid
+$custom_labeled_nginx2_cid
 EOF
   ;;
 
 esac
+sleep 60
