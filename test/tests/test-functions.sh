@@ -311,18 +311,51 @@ function wait_for_conn {
 export -f wait_for_conn
 
 
-# Get the expiration date in unix epoch of domain $1 inside container $2
-function get_cert_expiration_epoch {
+# Convert an OpenSSL certificate date string to unix epoch seconds
+function cert_date_to_epoch {
+  local cert_date="${1:?}"
+  if [[ "$(uname)" == 'Darwin' ]]; then
+    date -j -f "%b %d %T %Y %Z" "$cert_date" "+%s"
+  else
+    date -d "$cert_date" "+%s"
+  fi
+}
+export -f cert_date_to_epoch
+
+# Get either the start or end date in unix epoch of domain $1 inside container $2
+function get_cert_date_epoch {
+  local date_type="${1:?}"
+  local domain="${2:?}"
+  local name="${3:?}"
+  local _date
+
+  case "$date_type" in
+    start|issue)
+      _date="$(docker exec "$name" openssl x509 -noout -startdate -in "/etc/nginx/certs/$domain.crt")"
+      ;;
+    end|expiration)
+      _date="$(docker exec "$name" openssl x509 -noout -enddate -in "/etc/nginx/certs/$domain.crt")"
+      ;;
+    *)
+      echo "Invalid date type $date_type, expected 'start', 'issue', 'end', or 'expiration'."
+      return 1
+      ;;
+  esac
+
+  _date="$(echo "$_date" | cut -d "=" -f 2)"
+  _date="$(cert_date_to_epoch "$_date")"
+  echo "$_date"
+}
+export -f get_cert_date_epoch
+
+# Get the certificate validity period in seconds of domain $1 inside container $2
+function get_cert_validity_seconds {
   local domain="${1:?}"
   local name="${2:?}"
+  local cert_issue
   local cert_expiration
-  cert_expiration="$(docker exec "$name" openssl x509 -noout -enddate -in "/etc/nginx/certs/$domain.crt")"
-  cert_expiration="$(echo "$cert_expiration" | cut -d "=" -f 2)"
-  if [[ "$(uname)" == 'Darwin' ]]; then
-    cert_expiration="$(date -j -f "%b %d %T %Y %Z" "$cert_expiration" "+%s")"
-  else
-    cert_expiration="$(date -d "$cert_expiration" "+%s")"
-  fi
-  echo "$cert_expiration"
+  cert_issue="$(get_cert_date_epoch issue "$domain" "$name")"
+  cert_expiration="$(get_cert_date_epoch expiration "$domain" "$name")"
+  echo "$(( cert_expiration - cert_issue ))"
 }
-export -f get_cert_expiration_epoch
+export -f get_cert_validity_seconds

@@ -123,6 +123,10 @@ The `ACME_CA_URI` environment variable is used to set the ACME API endpoint from
 
 If the ACME CA provides multiple cert chain, you can use the `ACME_PREFERRED_CHAIN` environment variable to select one. See [`acme.sh --preferred-chain` documentation](https://github.com/acmesh-official/acme.sh/wiki/Preferred-Chain) for more info.
 
+#### Certificate profile
+
+The `ACME_CERT_PROFILE` environment variable is used to select a specific profile offered by the CA. See for example [the list of profiles offered by Letsencrypt](https://letsencrypt.org/docs/profiles). Note that some profiles might reduce the validity period of the certificate; you might need to adjust the (global) `DEFAULT_RENEW` variable to make sure it gets updated in time.
+
 #### Container restart on cert renewal
 
 The `LETSENCRYPT_RESTART_CONTAINER` environment variable, when set to `true` on an application container, will restart this container whenever the corresponding cert (`LETSENCRYPT_HOST`) is renewed. This is useful when certificates are directly used inside a container for other purposes than HTTPS (e.g. an FTPS server), to make sure those containers always use an up to date certificate.
@@ -154,6 +158,10 @@ Reusing private keys can help if you intend to use [HPKP](https://developer.mozi
     1. The directory URI is forced to The Let's Encrypt v2 staging one (`ACME_CA_URI` is ignored)
     2. The account email address is forced empty (`DEFAULT_EMAIL` and `LETSENCRYPT_EMAIL` are ignored)
 
+#### Default certificate profile
+
+The `ACME_CERT_PROFILE` environment variable, when set on the **acme-companion** container changes the [certificate profile](#certificate-profile) requested for each certificate. It can be overridden per container by defining the `ACME_CERT_PROFILE` on that container. If not set, the CA's default profile is used.
+
 #### Self signed default certificate
 
-If you want **acme-companio** to create a self signed certificate as default certificate for **nginx-proxy**, you can set the `CREATE_DEFAULT_CERTIFICATE` environment variable to `true`. This will generate a self signed cert / key pair to `/etc/nginx/certs/default.crt` and `/etc/nginx/certs/default.key`, with `acme-companion` as Common Name. Please note that no future support is planned for this feature and it might be removed in a future release.
+If you want **acme-companion** to create a self signed certificate as default certificate for **nginx-proxy**, you can set the `CREATE_DEFAULT_CERTIFICATE` environment variable to `true`. This will generate a self signed cert / key pair to `/etc/nginx/certs/default.crt` and `/etc/nginx/certs/default.key`, with `acme-companion` as Common Name. Please note that no future support is planned for this feature and it might be removed in a future release.
