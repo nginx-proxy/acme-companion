@@ -93,6 +93,7 @@ jobs:
             certs_san,
             certs_single_domain,
             certs_standalone,
+            cert_profiles,
             force_renew,
             acme_accounts,
             private_keys,

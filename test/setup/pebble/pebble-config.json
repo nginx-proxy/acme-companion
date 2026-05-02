@@ -12,6 +12,15 @@
       "authz": 3,
       "order": 5
     },
-    "certificateValidityPeriod": 157766400
+    "profiles": {
+      "default": {
+        "description": "Default test profile",
+        "validityPeriod": 157766400
+      },
+      "shortlived": {
+        "description": "Shorter-lived test profile",
+        "validityPeriod": 518400
+      }
+    }
   }
 }
