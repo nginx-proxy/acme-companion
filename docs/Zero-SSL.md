@@ -19,4 +19,6 @@ Unlike Let's Encrypt, Zero SSL requires the use of an email bound account. If yo
 
 These variables can be set on the proxied containers or directly on the **acme-companion** container.
 
+When a new ACME account is registered with EAB credentials, **acme-companion** will also pass `LETSENCRYPT_EMAIL` or `DEFAULT_EMAIL` if one is configured. If both are unset or blank, registration still proceeds without a contact email and a warning is logged, because some ACME CAs require an email for EAB account registration.
+
 If you don't have a ZeroSSL account, you can let **acme-companion** create a Zero SSL account with the address provided in the `ACME_EMAIL` or `DEFAULT_EMAIL` environment variable. Note that the address that will be used must be a valid email address that you actually own.

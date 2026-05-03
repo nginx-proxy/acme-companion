@@ -15,3 +15,7 @@ Google Trust Services requires the use of an externally bound account. First cre
 - provide the pre-generated [EAB credentials](https://tools.ietf.org/html/rfc8555#section-7.3.4) using the `ACME_EAB_KID` and `ACME_EAB_HMAC_KEY` environment variables.
 
 These variables can be set on the proxied containers or directly on the **acme-companion** container.
+
+When registering a new ACME account with EAB, Google Trust Services expects a contact email. Set either `LETSENCRYPT_EMAIL` on the proxied container or `DEFAULT_EMAIL` on the **acme-companion** container so the initial `acme.sh --register-account` call includes it.
+
+If both are unset or blank, **acme-companion** will still try to register the EAB account without an email and log a warning, but Google Trust Services may reject the registration.
