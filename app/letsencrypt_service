@@ -314,36 +314,47 @@ function update_cert {
     # External Account Binding (EAB)
     local -n eab_kid="ACME_${cid}_EAB_KID"
     local -n eab_hmac_key="ACME_${cid}_EAB_HMAC_KEY"
+    local eab_registration='false'
+    local email_registration='false'
     if [[ ! -f "$account_file" ]]; then
         if [[ -n "${eab_kid}" && -n "${eab_hmac_key}" ]]; then
             # Register the ACME account with the per container EAB credentials.
             params_register_arr+=(--eab-kid "$eab_kid" --eab-hmac-key "$eab_hmac_key")
+            eab_registration='true'
         elif [[ -n "${ACME_EAB_KID// }" && -n "${ACME_EAB_HMAC_KEY// }" ]]; then
             # We don't have per-container EAB kid and hmac key or Zero SSL API key.
             # Register the ACME account with the default EAB credentials.
             params_register_arr+=(--eab-kid "$ACME_EAB_KID" --eab-hmac-key "$ACME_EAB_HMAC_KEY")
+            eab_registration='true'
         elif [[ -n "${accountemail// }" ]]; then
             # We don't have per container nor default EAB credentials, register a new account.
             params_register_arr+=(--accountemail "$accountemail")
+            email_registration='true'
+        fi
+
+        if parse_true "$eab_registration"; then
+            if [[ -n "${accountemail// }" ]]; then
+                params_register_arr+=(--accountemail "$accountemail")
+            else
+                echo "Warning: registering a new ACME account with EAB but no contact email." \
+                    "Some ACME CAs require one, so registration may fail." \
+                    "Set LETSENCRYPT_EMAIL or DEFAULT_EMAIL to provide it."
+            fi
         fi
     fi
 
     # Zero SSL
     if [[ "$acme_ca_uri" == "https://acme.zerossl.com/v2/DV90" ]]; then
-        # Test if we already have:
-        #   - an account file
-        #   - the --accountemail account registration parameter
-        #   - the --eab-kid and --eab-hmac-key account registration parameters
+        # Test if :
+        #   - we already have an account file
+        #   - we're going to register a new account with an email
+        #   - we're going to register a new account with EAB credentials
         local account_ok='false'
-        if [[ -f "$account_file" ]]; then
-            account_ok='true'
-        elif in_array '--accountemail' 'params_register_arr'; then
-            account_ok='true'
-        elif in_array '--eab-kid' 'params_register_arr' && in_array '--eab-hmac-key' 'params_register_arr'; then
+        if [[ -f "$account_file" ]] || parse_true "$eab_registration" || parse_true "$email_registration"; then
             account_ok='true'
         fi
 
-        if [[ $account_ok == 'false' ]]; then
+        if ! parse_true "$account_ok"; then
             local -n zerossl_api_key="ZEROSSL_${cid}_API_KEY"
             if [[ -z "$zerossl_api_key" ]]; then
                 # Try using the default API key

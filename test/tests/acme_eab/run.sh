@@ -12,12 +12,16 @@ if [[ -z $GITHUB_ACTIONS ]]; then
 else
   le_container_name="$(basename "${0%/*}")"
 fi
-run_le_container "${1:?}" "$le_container_name" \
-  --cli-args "--env ACME_EAB_KID=kid-1" \
-  --cli-args "--env ACME_EAB_HMAC_KEY=${eab[kid-1]}"
 
 # Create the $domains array from comma separated domains in TEST_DOMAINS.
 IFS=',' read -r -a domains <<< "$TEST_DOMAINS"
+
+# Run the acme-companion container with the EAB environment variables and DEFAULT_EMAIL set.
+default_email="contact@${domains[0]}"
+run_le_container "${1:?}" "$le_container_name" \
+  --cli-args "--env DEFAULT_EMAIL=${default_email}" \
+  --cli-args "--env ACME_EAB_KID=kid-1" \
+  --cli-args "--env ACME_EAB_HMAC_KEY=${eab[kid-1]}"
 
 # Cleanup function with EXIT trap
 function cleanup {
@@ -46,13 +50,18 @@ run_nginx_container --hosts "${domains[1]}"  \
 wait_for_symlink "${domains[0]}" "$le_container_name"
 
 # Test if the expected file is there.
-config_path="/etc/acme.sh/default/ca/$ACME_CA/dir"
+config_path="/etc/acme.sh/${default_email}/ca/$ACME_CA/dir"
 json_file="${config_path}/account.json"
 conf_file="${config_path}/ca.conf"
-if docker exec "$le_container_name" [[ ! -f "$json_file" ]]; then
+if docker exec "$le_container_name" [[ ! -d "/etc/acme.sh/${default_email}" ]]; then
+  echo "The /etc/acme.sh/${default_email} folder does not exist."
+elif docker exec "$le_container_name" [[ ! -f "$json_file" ]]; then
   echo "The $json_file file does not exist."
 elif ! docker exec "$le_container_name" grep -q "${eab[kid-1]}" "$conf_file"; then
-  echo "There correct EAB HMAC key isn't on ${conf_file}."
+  echo "The correct EAB HMAC key isn't on ${conf_file}."
+elif [[ "$(docker exec "$le_container_name" jq -r '.contact|.[0]' "$json_file")" != "mailto:${default_email}" ]]; then
+  echo "${default_email} is not set on ${json_file}."
+  docker exec "$le_container_name" jq . "$json_file"
 fi
 
 # Wait for a symlink at /etc/nginx/certs/${domains[1]}.crt
@@ -62,10 +71,15 @@ wait_for_symlink "${domains[1]}" "$le_container_name"
 config_path="/etc/acme.sh/${container_email}/ca/$ACME_CA/dir"
 json_file="${config_path}/account.json"
 conf_file="${config_path}/ca.conf"
-if docker exec "$le_container_name" [[ ! -f "$json_file" ]]; then
+if docker exec "$le_container_name" [[ ! -d "/etc/acme.sh/${container_email}" ]]; then
+  echo "The /etc/acme.sh/${container_email} folder does not exist."
+elif docker exec "$le_container_name" [[ ! -f "$json_file" ]]; then
   echo "The $json_file file does not exist."
 elif ! docker exec "$le_container_name" grep -q "${eab[kid-2]}" "$conf_file"; then
-  echo "There correct EAB HMAC key isn't on ${conf_file}."
+  echo "The correct EAB HMAC key isn't on ${conf_file}."
+elif [[ "$(docker exec "$le_container_name" jq -r '.contact|.[0]' "$json_file")" != "mailto:${container_email}" ]]; then
+  echo "${container_email} is not set on ${json_file}."
+  docker exec "$le_container_name" jq . "$json_file"
 fi
 
 # Stop the nginx containers silently.
