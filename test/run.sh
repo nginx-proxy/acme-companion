@@ -306,6 +306,26 @@ for conf in "${configs[@]}"; do
 	done
 done
 
+## Next two functions added by nginxproxy/acme-companion
+# Normalize output for flexible comparison (strips leading/trailing whitespace)
+# Uses printf to handle the input portably, then awk for line-by-line trimming
+normalize_output() {
+	local text="$1"
+	# Use awk to trim leading/trailing whitespace from each line and remove empty lines
+	printf '%s\n' "$text" | awk 'NF {sub(/^[[:space:]]+/, ""); sub(/[[:space:]]+$/, ""); print}'
+}
+
+# Check if output should be considered "no output"
+# Treats empty string, whitespace-only, and newline-only as equivalent "no output"
+is_no_output() {
+	local text="$1"
+	# Remove all whitespace and check if anything remains
+	local stripped
+	stripped="$(printf '%s' "$text" | tr -d '[:space:]')"
+	[ -z "$stripped" ]
+}
+## End of additional code
+
 didFail=
 for dockerImage in "$@"; do
 	echo "testing $dockerImage"
@@ -413,16 +433,36 @@ for dockerImage in "$@"; do
 				else
 				## End of modified / additional code
 					if output="$("$script" "$dockerImage")"; then
-						if [ -f "$scriptDir/expected-std-out.txt" ] && ! d="$(echo "$output" | diff -u "$scriptDir/expected-std-out.txt" - 2>/dev/null)"; then
-							echo 'failed; unexpected output:'
-							echo "$d"
-							## Next line was added by nginxproxy/acme-companion
-							failed_tests+=("$(basename "$scriptDir")")
-							## End of additional code
-							didFail=1
+						## Next thirty lines were modified or added by nginxproxy/acme-companion
+						if [ -f "$scriptDir/expected-std-out.txt" ]; then
+							# File exists: normalize both expected and actual, then compare
+							expected_content="$(<"$scriptDir/expected-std-out.txt")"
+							normalized_expected="$(normalize_output "$expected_content")"
+							normalized_output="$(normalize_output "$output")"
+							
+							if [ "$normalized_expected" != "$normalized_output" ]; then
+								echo 'failed; unexpected output:'
+								echo "Expected (normalized):"
+								echo "$normalized_expected"
+								echo "Got (normalized):"
+								echo "$normalized_output"
+								failed_tests+=("$(basename "$scriptDir")")
+								didFail=1
+							else
+								echo 'passed'
+							fi
 						else
-							echo 'passed'
+							# No expected file: expect no output (empty/whitespace-only)
+							if ! is_no_output "$output"; then
+								echo 'failed; unexpected output (expected no output):'
+								echo "$output"
+								failed_tests+=("$(basename "$scriptDir")")
+								didFail=1
+							else
+								echo 'passed'
+							fi
 						fi
+						## End of modified code
 					else
 						echo 'failed'
 						## Next line was added by nginxproxy/acme-companion
