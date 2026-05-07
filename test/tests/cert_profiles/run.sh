@@ -14,8 +14,7 @@ else
   le_container_name="$(basename "${0%/*}")"
 fi
 run_le_container "${1:?}" "$le_container_name" \
-  --cli-args "--env ACME_CERT_PROFILE=$companion_default_profile" \
-  --cli-args "--env DEFAULT_RENEW=1"
+  --cli-args "--env ACME_CERT_PROFILE=$companion_default_profile"
 
 # Create the $domains array from comma separated domains in TEST_DOMAINS.
 IFS=',' read -r -a domains <<< "$TEST_DOMAINS"
