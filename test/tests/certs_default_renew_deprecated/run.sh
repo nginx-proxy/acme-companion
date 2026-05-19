@@ -1,6 +1,6 @@
 #!/bin/bash
 
-## Test for the DEFAULT_RENEW function.
+## Test for backward compatibility with deprecated DEFAULT_RENEW.
 
 if [[ -z $GITHUB_ACTIONS ]]; then
   le_container_name="$(basename "${0%/*}")_$(date "+%Y-%m-%d_%H.%M.%S")"
@@ -26,6 +26,20 @@ function cleanup {
 }
 trap cleanup EXIT
 
+# Check for deprecation warning in container logs
+deprecation_warning_found=false
+for _ in {1..10}; do
+  if docker logs "$le_container_name" 2>&1 | grep -q "Warning: DEFAULT_RENEW is deprecated. Please use ACME_RENEW_AFTER instead."; then
+    deprecation_warning_found=true
+    break
+  fi
+  sleep 1
+done
+
+if [[ "$deprecation_warning_found" != true ]]; then
+  echo "Deprecation warning not found in container logs"
+fi
+
 container_email="contact@${domains[0]}"
 acme_config_file="/etc/acme.sh/$container_email/${domains[0]}/${domains[0]}.conf"
 
@@ -40,8 +54,8 @@ acme_cert_create_time_key="Le_CertCreateTime="
 acme_renewal_days_key="Le_RenewalDays="
 acme_next_renew_time_key="Le_NextRenewTime="
 
-# Check if the default command is deliverd properly in /etc/acme.sh
-if docker exec "$le_container_name" [[ ! -f "$acme_config_file" ]]; then
+# Check if the default command is delivered properly in /etc/acme.sh
+if ! docker exec "$le_container_name" test -f "$acme_config_file"; then
   echo "The $acme_config_file file does not exist."
 fi
 

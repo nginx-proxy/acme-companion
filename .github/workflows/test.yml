@@ -93,6 +93,8 @@ jobs:
             certs_san,
             certs_single_domain,
             certs_standalone,
+            certs_renew_after,
+            certs_default_renew_deprecated,
             cert_profiles,
             force_renew,
             acme_accounts,

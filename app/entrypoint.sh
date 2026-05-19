@@ -174,6 +174,14 @@ function check_default_account {
     fi
 }
 
+function check_renew_after_env {
+    # Check for deprecated DEFAULT_RENEW variable
+    if [[ -n "${DEFAULT_RENEW:-}" && -z "${ACME_RENEW_AFTER:-}" ]]; then
+        echo "Warning: DEFAULT_RENEW is deprecated. Please use ACME_RENEW_AFTER instead." >&2
+        export ACME_RENEW_AFTER="$DEFAULT_RENEW"
+    fi
+}
+
 if [[ "$*" == "/bin/bash /app/start.sh" ]]; then
     print_version
     check_docker_socket
@@ -203,6 +211,7 @@ if [[ "$*" == "/bin/bash /app/start.sh" ]]; then
     check_dh_group
     reload_nginx
     check_default_account
+    check_renew_after_env
 fi
 
 exec "$@"

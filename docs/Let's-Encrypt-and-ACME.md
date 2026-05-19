@@ -125,7 +125,7 @@ If the ACME CA provides multiple cert chain, you can use the `ACME_PREFERRED_CHA
 
 #### Certificate profile
 
-The `ACME_CERT_PROFILE` environment variable is used to select a specific profile offered by the CA. See for example [the list of profiles offered by Letsencrypt](https://letsencrypt.org/docs/profiles). Note that some profiles might reduce the validity period of the certificate; you might need to adjust the (global) `DEFAULT_RENEW` variable to make sure it gets updated in time.
+The `ACME_CERT_PROFILE` environment variable is used to select a specific profile offered by the CA. See for example [the list of profiles offered by Letsencrypt](https://letsencrypt.org/docs/profiles). Note that some profiles might reduce the validity period of the certificate; you might need to adjust the (global) `ACME_RENEW_AFTER` variable or set it per-container to make sure it gets updated in time.
 
 #### Container restart on cert renewal
 
@@ -134,6 +134,10 @@ The `LETSENCRYPT_RESTART_CONTAINER` environment variable, when set to `true` on 
 #### Pre-Hook and Post-Hook
 
 The `ACME_PRE_HOOK` and `ACME_POST_HOOK` let you use the [`acme.sh` Pre- and Post-Hooks feature](https://github.com/acmesh-official/acme.sh/wiki/Using-pre-hook-post-hook-renew-hook-reloadcmd) to run commands respectively before and after the container's certificate has been issued. For more information see [Pre- and Post-Hook](./Hooks.md)
+
+#### Certificate renewal timing
+
+The `ACME_RENEW_AFTER` environment variable can be set on an application container to override the global renewal timing for that specific container's certificate. This is useful for certificates from CAs with different validity periods. For example, Buypass certificates have a 180-day lifespan, so you might want to set `ACME_RENEW_AFTER=150` on those containers while keeping the default 60 days for Let's Encrypt certificates on others.
 
 
 ### global (set on acme-companion container)

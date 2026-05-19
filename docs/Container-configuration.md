@@ -34,7 +34,9 @@ You can also create test certificates per container (see [Test certificates](./L
 
 * `ACME_POST_HOOK` - The provided command will be run after every certificate issuance. The action is limited to the commands available inside the **acme-companion** container. For example `--env "ACME_POST_HOOK=echo 'end'"`. For more information see [Pre- and Post-Hook](./Hooks.md)
 
-* `DEFAULT_RENEW` - 60 days by default, this defines the number of days between certificate renewals attempts. For certificates issued by certain Certificate Authorities, such as Buypass, which have a lifespan of 180 days, it may be advisable to initiate the renewal process on day 170 rather than the default day 60. See [BuyPass.com CA](https://github.com/acmesh-official/acme.sh/wiki/BuyPass.com-CA) for more detail.
+* `ACME_RENEW_AFTER` - 60 days by default, this defines the number of days between certificate renewals attempts. For certificates issued by certain Certificate Authorities, such as Buypass, which have a lifespan of 180 days, it may be advisable to initiate the renewal process on day 150 rather than the default day 60. See [BuyPass.com CA](https://github.com/acmesh-official/acme.sh/wiki/BuyPass.com-CA) for more detail. This can also be set per-container (see [Certificate renewal timing](./Let's-Encrypt-and-ACME.md#certificate-renewal-timing)).
+
+* `DEFAULT_RENEW` - **DEPRECATED**: This variable is deprecated and replaced by `ACME_RENEW_AFTER`. It still works for backward compatibility, but a warning will be logged on container startup. Please migrate to `ACME_RENEW_AFTER`.
 
 * `ACME_HTTP_CHALLENGE_LOCATION` - Previously **acme-companion** automatically added the ACME HTTP challenge location to the nginx configuration through files generated in `/etc/nginx/vhost.d`. Recent versions of **nginx-proxy** (>= `1.6`) already include the required location configuration, which remove the need for **acme-companion** to attempt to dynamically add them. If you're running and older version of **nginx-proxy** (or **docker-gen** with an older version of the `nginx.tmpl` file), you can re-enable this behaviour by setting `ACME_HTTP_CHALLENGE_LOCATION` to `true`.
 
