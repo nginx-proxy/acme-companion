@@ -8,7 +8,7 @@ ACME_CA_URI="${ACME_CA_URI:-"https://acme-v02.api.letsencrypt.org/directory"}"
 ACME_CA_TEST_URI="https://acme-staging-v02.api.letsencrypt.org/directory"
 DEFAULT_KEY_SIZE="${DEFAULT_KEY_SIZE:-4096}"
 RENEW_PRIVATE_KEYS="$(lc "${RENEW_PRIVATE_KEYS:-true}")"
-DEFAULT_RENEW="${DEFAULT_RENEW:-60}"
+ACME_RENEW_AFTER="${ACME_RENEW_AFTER:-60}"
 
 # Backward compatibility environment variable
 REUSE_PRIVATE_KEYS="$(lc "${REUSE_PRIVATE_KEYS:-false}")"
@@ -456,8 +456,12 @@ function update_cert {
         fi
     done
 
-    # Allow to override day to renew cert
-    params_issue_arr+=(--days "$DEFAULT_RENEW")
+    # Allow to override day to renew cert (per-container or global)
+    local -n renew_after="ACME_${cid}_RENEW_AFTER"
+    if [[ -z "$renew_after" ]] || [[ ! "$renew_after" =~ ^[0-9]+$ ]]; then
+        renew_after="$ACME_RENEW_AFTER"
+    fi
+    params_issue_arr+=(--days "$renew_after")
 
     params_issue_arr=("${params_base_arr[@]}" "${params_issue_arr[@]}")
     [[ "$DEBUG" == 1 ]] && echo "Calling acme.sh --issue with the following parameters : ${params_issue_arr[*]}"

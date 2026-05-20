@@ -17,7 +17,8 @@ globalTests+=(
 	permissions_custom
 	symlinks
 	acme_hooks
-	certs_default_renew
+	certs_renew_after
+	certs_default_renew_deprecated
 	ocsp_must_staple
 )
 

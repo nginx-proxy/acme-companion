@@ -47,6 +47,7 @@ LETSENCRYPT_CONTAINERS=(
         {{ $RESTART_CONTAINER := trim (coalesce $container.Env.LETSENCRYPT_RESTART_CONTAINER "") }}
         {{ $PRE_HOOK := trim (coalesce $container.Env.ACME_PRE_HOOK "") }}
         {{ $POST_HOOK := trim (coalesce $container.Env.ACME_POST_HOOK "") }}
+        {{ $RENEW_AFTER := trim (coalesce $container.Env.ACME_RENEW_AFTER "") }}
         {{ $cid := printf "%.12s" $container.ID }}
         {{- "\n" }}# Container {{ $cid }} ({{ $container.Name }})
         {{ if parseBool (coalesce $container.Env.LETSENCRYPT_SINGLE_DOMAIN_CERTS "false") }}
@@ -77,6 +78,7 @@ LETSENCRYPT_CONTAINERS=(
                 {{- "\n" }}LETSENCRYPT_{{ $cid }}_{{ $hostHash }}_RESTART_CONTAINER="{{ $RESTART_CONTAINER }}"
                 {{- "\n" }}ACME_{{ $cid }}_{{ $hostHash }}_PRE_HOOK="{{ $PRE_HOOK }}"
                 {{- "\n" }}ACME_{{ $cid }}_{{ $hostHash }}_POST_HOOK="{{ $POST_HOOK }}"
+                {{- "\n" }}ACME_{{ $cid }}_{{ $hostHash }}_RENEW_AFTER="{{ $RENEW_AFTER }}"
             {{ end }}
         {{ else }}
             {{/* Default: multi-domain (SAN) certificate */}}
@@ -108,6 +110,7 @@ LETSENCRYPT_CONTAINERS=(
             {{- "\n" }}LETSENCRYPT_{{ $cid }}_RESTART_CONTAINER="{{ $RESTART_CONTAINER }}"
             {{- "\n" }}ACME_{{ $cid }}_PRE_HOOK="{{ $PRE_HOOK }}"
             {{- "\n" }}ACME_{{ $cid }}_POST_HOOK="{{ $POST_HOOK }}"
+            {{- "\n" }}ACME_{{ $cid }}_RENEW_AFTER="{{ $RENEW_AFTER }}"
         {{ end }}
     {{ end }}
 {{ end }}
