@@ -30,8 +30,10 @@ key_types=( \
   ['2048']='Public-Key: (2048 bit)' \
   ['3072']='Public-Key: (3072 bit)' \
   ['4096']='Public-Key: (4096 bit)' \
+  ['8192']='Public-Key: (8192 bit)' \
   ['ec-256']='prime256v1' \
   ['ec-384']='secp384r1' \
+  ['ec-521']='secp521r1' \
 )
 
 for key in "${!key_types[@]}"; do
