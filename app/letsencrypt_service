@@ -232,7 +232,7 @@ function update_cert {
 
     local -n cert_keysize="LETSENCRYPT_${cid}_KEYSIZE"
     if [[ -z "$cert_keysize" ]] || \
-        [[ ! "$cert_keysize" =~ ^('2048'|'3072'|'4096'|'ec-256'|'ec-384')$ ]]; then
+        [[ ! "$cert_keysize" =~ ^('2048'|'3072'|'4096'|'8192'|'ec-256'|'ec-384'|'ec-521')$ ]]; then
         cert_keysize=$DEFAULT_KEY_SIZE
     fi
     params_issue_arr+=(--keylength "$cert_keysize")
