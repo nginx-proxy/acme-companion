@@ -187,6 +187,7 @@ function update_cert {
     elif [[ "$acme_challenge" == "DNS-01" ]]; then
         # DNS-01 challenge
         local acmesh_dns_config_used='none'
+        local acmesh_dns_sleep_value='none'
 
         local default_acmesh_dns_api="${DEFAULT_ACMESH_DNS_API_CONFIG[DNS_API]}"
         [[ -n "$default_acmesh_dns_api" ]] && acmesh_dns_config_used='default'
@@ -202,20 +203,30 @@ function update_cert {
                 params_issue_arr+=(--dns "$default_acmesh_dns_api")
                 # Loop over defined variable for default acme.sh DNS api config
                 for key in "${!DEFAULT_ACMESH_DNS_API_CONFIG[@]}"; do
-                    [[ "$key" == "DNS_API" ]] && continue
-                    dns_api_keys+=("$key")
-                    local value="${DEFAULT_ACMESH_DNS_API_CONFIG[$key]}"
-                    local -x "$key"="$value"
+                    if [[ "$key" == "DNS_API" ]]; then
+                        continue
+                    elif [[ "$key" == "DNS_SLEEP" ]]; then
+                        acmesh_dns_sleep_value="${DEFAULT_ACMESH_DNS_API_CONFIG[$key]}"
+                    else
+                        dns_api_keys+=("$key")
+                        local value="${DEFAULT_ACMESH_DNS_API_CONFIG[$key]}"
+                        local -x "$key"="$value"
+                    fi
                 done
                 ;;
             'container')
                 params_issue_arr+=(--dns "$acmesh_dns_api")
                 # Loop over defined variable for per container acme.sh DNS api config
                 for key in "${!acmesh_dns_config[@]}"; do
-                    [[ "$key" == "DNS_API" ]] && continue
-                    dns_api_keys+=("$key")
-                    local value="${acmesh_dns_config[$key]}"
-                    local -x "$key"="$value"
+                    if [[ "$key" == "DNS_API" ]]; then
+                        continue
+                    elif [[ "$key" == "DNS_SLEEP" ]]; then
+                        acmesh_dns_sleep_value="${acmesh_dns_config[$key]}"
+                    else
+                        dns_api_keys+=("$key")
+                        local value="${acmesh_dns_config[$key]}"
+                        local -x "$key"="$value"
+                    fi
                 done
                 ;;
             *)
@@ -225,6 +236,16 @@ function update_cert {
         esac
 
         echo "Info: DNS challenge using $acmesh_dns_api DNS API with the following keys: ${dns_api_keys[*]} (${acmesh_dns_config_used} config)"
+        
+        if [[ "$acmesh_dns_sleep_value" != 'none' ]]; then
+            if [[ "$acmesh_dns_sleep_value" =~ ^[0-9]+$ ]]; then
+                params_issue_arr+=(--dnssleep "$acmesh_dns_sleep_value")
+                echo "Info: acme.sh will wait for $acmesh_dns_sleep_value seconds for all the txt records to propagate."
+            else
+                echo "Warning: the provided DNS_SLEEP value ($acmesh_dns_sleep_value) is not a valid integer, --dnssleep won't be passed to acme.sh." >&2
+            fi
+            
+        fi
     else 
         echo "Error: unknown ACME challenge method: $acme_challenge"
         return 1
