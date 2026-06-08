@@ -14,6 +14,8 @@ The following environment variables are optional and parametrize the way the Let
 
 In order to switch to the DNS-01 ACME challenge, set the `ACME_CHALLENGE` environment variable to `DNS-01` on your acme-companion container. This will also require you to set the `ACMESH_DNS_API_CONFIG` environment variable to a JSON or YAML string containing the configuration for the DNS provider you are using. Inside the JSON or YAML string, the `DNS_API` property is always required and should be set to the name of the [acme.sh DNS API](https://github.com/acmesh-official/acme.sh/tree/3.1.3/dnsapi) you want to use.
 
+When using the DNS-01 ACME challenge, you can optionally configure the time (in seconds) that acme.sh should wait for DNS TXT records to propagate before attempting validation. This is done by adding the (optional) `DNS_SLEEP` property to the `ACMESH_DNS_API_CONFIG` environment variable.
+
 The other properties required will depend on the DNS provider you are using. For more information on the required properties for each DNS provider, please refer to the [acme.sh documentation](https://github.com/acmesh-official/acme.sh/wiki/dnsapi) (please keep in mind that nginxproxy/acme-companion is using a fixed version of acme.sh, so the documentation might include DNS providers that are not yet available in the version used by this image).
 
 Both `ACME_CHALLENGE` and `ACMESH_DNS_API_CONFIG` environment variables can also be set on the proxied application container, in which case they will override the values set on the acme-companion container, if any.
@@ -29,7 +31,7 @@ docker run --detach \
     --volume /var/run/docker.sock:/var/run/docker.sock:ro \
     --env "DEFAULT_EMAIL=mail@yourdomain.tld" \
     --env "ACME_CHALLENGE=DNS-01" \
-    --env "ACMESH_DNS_API_CONFIG={'DNS_API': 'dns_cf', 'CF_Key': 'yourCloudflareGlobalApiKey', 'CF_Email': 'yourCloudflareAccountEmail'}" \
+    --env "ACMESH_DNS_API_CONFIG={'DNS_API': 'dns_cf', 'DNS_SLEEP': 900, 'CF_Key': 'yourCloudflareGlobalApiKey', 'CF_Email': 'yourCloudflareAccountEmail'}" \
     nginxproxy/acme-companion
 ```
 
@@ -50,6 +52,7 @@ services:
       ACME_CHALLENGE: DNS-01
       ACMESH_DNS_API_CONFIG: |-
         DNS_API: dns_cf
+        DNS_SLEEP: 900
         CF_Key: yourCloudflareGlobalApiKey
         CF_Email: yourCloudflareAccountEmail
     
