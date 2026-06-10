@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 FROM docker.io/nginxproxy/docker-gen:0.16.5 AS docker-gen
 
-FROM docker.io/library/alpine:3.23.4
+FROM docker.io/library/alpine:3.24.0
 
 ARG GIT_DESCRIBE="unknown"
 ARG ACMESH_VERSION=3.1.3
