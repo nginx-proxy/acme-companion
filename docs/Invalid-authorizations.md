@@ -1,6 +1,6 @@
 ## Troubleshooting failing authorizations
 
-The first two things to do in case of failing authorization are to run the **acme-companion** container with the environment variable `DEBUG=1` to enable the more detailed error messages, and to [request test certificates](./Let's-Encrypt-and-ACME.md#test-certificates) while troubleshooting the issue.
+The first two things to do in case of failing authorization are to run the **acme-companion** container with the environment variable `DEBUG=1` to enable the more detailed error messages, and to [request test certificates](./Let's-Encrypt-and-ACME.md#test-certificates) while troubleshooting the issue. With `DEBUG=1`, `acme.sh`'s own detailed log is also written to the container output, so `docker logs <acme-companion container>` will show the full reason behind a failing challenge (this is particularly helpful for DNS-01 challenges).
 
 Common causes of of failing authorizations:
 

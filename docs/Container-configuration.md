@@ -18,7 +18,7 @@ $ docker run --detach \
 ```
 You can also create test certificates per container (see [Test certificates](./Let's-Encrypt-and-ACME.md#test-certificates))
 
-* `DEBUG` - Set it to `1` to enable debugging of the entrypoint script and generation of LetsEncrypt certificates, which could help you pin point any configuration issues.
+* `DEBUG` - Set it to `1` to enable debugging of the entrypoint script and generation of LetsEncrypt certificates, which could help you pin point any configuration issues. When enabled, `acme.sh`'s own detailed log is also sent to the container output (visible through `docker logs`) instead of being discarded, which is especially useful for diagnosing DNS-01 challenge failures.
 
 * `RENEW_PRIVATE_KEYS` - Set it to `false` to make `acme.sh` reuse previously generated private key for each certificate instead of creating a new one on certificate renewal. Reusing private keys can help if you intend to use [HPKP](https://developer.mozilla.org/en-US/docs/Web/HTTP/Public_Key_Pinning), but please note that HPKP has been deprecated by Google's Chrome and that it is therefore strongly discouraged to use it at all.
 
