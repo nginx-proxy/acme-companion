@@ -5,6 +5,7 @@ globalTests+=(
 	docker_api
 	docker_api_legacy
 	location_config
+	debug_acmesh_log
 	certs_single
 	certs_san
 	certs_single_domain

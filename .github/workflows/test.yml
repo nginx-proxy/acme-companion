@@ -115,6 +115,9 @@ jobs:
           - test-name: acme_eab
             setup: 3containers
             pebble-config: pebble-config-eab.json
+          - test-name: debug_acmesh_log
+            setup: 2containers
+            pebble-config: pebble-config.json
     runs-on: ubuntu-latest
 
     steps:
