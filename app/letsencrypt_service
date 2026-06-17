@@ -151,12 +151,8 @@ function update_cert {
 
     # Base CLI parameters array, used for both --register-account and --issue
     local -a params_base_arr
-    # In debug mode, surface acme.sh's own detailed log on the container output
-    # (visible through docker logs) instead of discarding it.
-    # Log to /dev/stderr (not /dev/stdout): acme.sh captures the stdout of its
-    # internal helpers through command substitution (e.g. response="$(_post ...)"),
-    # so writing the log to stdout would pollute those captures and break the ACME
-    # exchange. stderr is never captured that way and still reaches docker logs.
+    # In debug mode, route acme.sh's own log to docker logs instead of discarding it.
+    # Use stderr, not stdout, which acme.sh captures via command substitution.
     if [[ "$DEBUG" == 1 ]]; then
         params_base_arr+=(--log /dev/stderr)
     else
