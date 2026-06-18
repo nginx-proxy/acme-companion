@@ -36,8 +36,7 @@ sleep 5
 # Issue a forced renewal (capture the output so a failure is diagnosable).
 renew_output="$(docker exec "$le_container_name" /app/force_renew 2>&1)"
 
-# A renewal re-issues the cert, so its serial must change. We check the serial rather
-# than the expiration date, which is unreliable here (the Pebble test profiles differ).
+# A renewal re-issues the cert, so its serial must change.
 timeout=$(($(date +%s) + 30))
 second_serial="$first_serial"
 while [[ $(date +%s) -lt $timeout ]]; do

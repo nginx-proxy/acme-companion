@@ -349,9 +349,6 @@ function get_cert_date_epoch {
 export -f get_cert_date_epoch
 
 # Get the serial number of the certificate for domain $1 inside container $2.
-# The serial changes on every (re-)issuance, so it is a reliable signal that a
-# certificate was renewed (unlike the expiration date, which depends on the CA's
-# certificate profile / validity period).
 function get_cert_serial {
   local domain="${1:?}"
   local name="${2:?}"
