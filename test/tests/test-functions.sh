@@ -348,6 +348,14 @@ function get_cert_date_epoch {
 }
 export -f get_cert_date_epoch
 
+# Get the serial number of the certificate for domain $1 inside container $2.
+function get_cert_serial {
+  local domain="${1:?}"
+  local name="${2:?}"
+  docker exec "$name" openssl x509 -noout -serial -in "/etc/nginx/certs/$domain.crt" | cut -d '=' -f 2
+}
+export -f get_cert_serial
+
 # Get the certificate validity period in seconds of domain $1 inside container $2
 function get_cert_validity_seconds {
   local domain="${1:?}"
