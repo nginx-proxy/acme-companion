@@ -46,7 +46,7 @@ You can also create test certificates per container (see [Test certificates](./L
 
 * `DOCKER_CONTAINER_FILTERS` -  You can filter which containers are considered by acme-companion by using the `DOCKER_CONTAINER_FILTERS` environment variable (by default, acme-companion will consider all running containers). It takes a comma separated list of `key=value` pairs. For example, setting `DOCKER_CONTAINER_FILTERS` environment variable to `network=mynetwork` will cause acme-companion to consider only containers connected to the `mynetwork` network. See the [Docker CLI documentation](https://docs.docker.com/reference/cli/docker/container/ls/#filter) for details on available filters.
 
-* `DOCKER_HOST` - The Docker API endpoint acme-companion talks to. Defaults to `unix:///var/run/docker.sock` (the mounted Docker socket). To connect to a remote or TLS-protected Docker daemon over TCP, set it to `tcp://<host>:2376`.
+* `DOCKER_HOST` - The Docker API endpoint acme-companion talks to. Defaults to `unix:///var/run/docker.sock` (the mounted Docker socket). To connect to a remote or TLS-protected Docker daemon over TCP, set it to `tcp://<host>:<port>` (the conventional Docker TLS port is `2376`).
 
 * `DOCKER_TLS_VERIFY` and `DOCKER_CERT_PATH` - Enable TLS client-certificate authentication when connecting to the Docker daemon over `tcp://`. Set `DOCKER_TLS_VERIFY` to `true` and `DOCKER_CERT_PATH` to the **in-container** path of a directory containing `ca.pem`, `cert.pem` and `key.pem`. These variable names and file names match the [Docker CLI convention](https://docs.docker.com/engine/security/protect-access/) and the ones used by **docker-gen**, so the same certificate directory can be shared across containers.
 
