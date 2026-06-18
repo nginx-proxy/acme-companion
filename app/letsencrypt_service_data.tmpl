@@ -48,7 +48,7 @@ LETSENCRYPT_CONTAINERS=(
         {{ $PRE_HOOK := trim (coalesce $container.Env.ACME_PRE_HOOK "") }}
         {{ $POST_HOOK := trim (coalesce $container.Env.ACME_POST_HOOK "") }}
         {{ $RENEW_AFTER := trim (coalesce $container.Env.ACME_RENEW_AFTER "") }}
-        {{ $RENEW_PRIVATE_KEYS := trim (coalesce $container.Env.LETSENCRYPT_RENEW_PRIVATE_KEYS "") }}
+        {{ $RENEW_PRIVATE_KEYS := trim (coalesce $container.Env.ACME_RENEW_PRIVATE_KEYS "") }}
         {{ $cid := printf "%.12s" $container.ID }}
         {{- "\n" }}# Container {{ $cid }} ({{ $container.Name }})
         {{ if parseBool (coalesce $container.Env.LETSENCRYPT_SINGLE_DOMAIN_CERTS "false") }}
@@ -80,7 +80,7 @@ LETSENCRYPT_CONTAINERS=(
                 {{- "\n" }}ACME_{{ $cid }}_{{ $hostHash }}_PRE_HOOK="{{ $PRE_HOOK }}"
                 {{- "\n" }}ACME_{{ $cid }}_{{ $hostHash }}_POST_HOOK="{{ $POST_HOOK }}"
                 {{- "\n" }}ACME_{{ $cid }}_{{ $hostHash }}_RENEW_AFTER="{{ $RENEW_AFTER }}"
-                {{- "\n" }}LETSENCRYPT_{{ $cid }}_{{ $hostHash }}_RENEW_PRIVATE_KEYS="{{ $RENEW_PRIVATE_KEYS }}"
+                {{- "\n" }}ACME_{{ $cid }}_{{ $hostHash }}_RENEW_PRIVATE_KEYS="{{ $RENEW_PRIVATE_KEYS }}"
             {{ end }}
         {{ else }}
             {{/* Default: multi-domain (SAN) certificate */}}
@@ -113,7 +113,7 @@ LETSENCRYPT_CONTAINERS=(
             {{- "\n" }}ACME_{{ $cid }}_PRE_HOOK="{{ $PRE_HOOK }}"
             {{- "\n" }}ACME_{{ $cid }}_POST_HOOK="{{ $POST_HOOK }}"
             {{- "\n" }}ACME_{{ $cid }}_RENEW_AFTER="{{ $RENEW_AFTER }}"
-            {{- "\n" }}LETSENCRYPT_{{ $cid }}_RENEW_PRIVATE_KEYS="{{ $RENEW_PRIVATE_KEYS }}"
+            {{- "\n" }}ACME_{{ $cid }}_RENEW_PRIVATE_KEYS="{{ $RENEW_PRIVATE_KEYS }}"
         {{ end }}
     {{ end }}
 {{ end }}
