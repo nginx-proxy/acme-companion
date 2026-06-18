@@ -1,0 +1,8 @@
+## tls-verify-true-get
+-s --cert /docker-certs/cert.pem --key /docker-certs/key.pem --cacert /docker-certs/ca.pem -X GET https://docker:2376/version
+## tls-verify-true-post
+-s --cert /docker-certs/cert.pem --key /docker-certs/key.pem --cacert /docker-certs/ca.pem -H Content-Type: application/json -X POST https://docker:2376/containers/test/restart
+## tls-verify-false-get
+-s -X GET http://docker:2376/version
+## unix-socket-get
+-s --unix-socket /var/run/docker.sock -X GET http://localhost/version
