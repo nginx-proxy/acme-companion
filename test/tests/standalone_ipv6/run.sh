@@ -1,16 +1,10 @@
 #!/bin/bash
 
-## Test for IPv6 support in standalone challenge configs (ENABLE_IPV6). See issue #710.
-##
-## Deterministic check that add_standalone_configuration emits 'listen [::]:80;' only
-## when ENABLE_IPV6 is enabled. It sources functions.sh and inspects the generated
-## config, so it needs no external ACME daemon and is stable on CI runners.
+## Test that standalone challenge configs listen over IPv6 only when ENABLE_IPV6 is set. See #710.
 
 commands="$(cat <<'EOF'
 source /app/functions.sh
 mkdir -p /etc/nginx/conf.d
-# A pre-existing unrelated vhost so the server_name lookup glob expands cleanly
-# (add_standalone_configuration greps /etc/nginx/conf.d/*.conf).
 printf 'server { server_name other.example.test; }\n' > /etc/nginx/conf.d/other.conf
 
 echo '## ipv6-enabled'

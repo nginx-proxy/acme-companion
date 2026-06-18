@@ -136,7 +136,6 @@ function add_standalone_configuration {
     else
         # Else use the standalone configuration.
         local listen_directives='    listen 80;'
-        # Also listen over IPv6 when ENABLE_IPV6 is set (same toggle as nginx-proxy). See #710.
         if parse_true "${ENABLE_IPV6:-false}"; then
             listen_directives+=$'\n    listen [::]:80;'
         fi
