@@ -232,6 +232,11 @@ function docker_api {
     if [[ $DOCKER_HOST == unix://* ]]; then
         curl_opts+=(--unix-socket "${DOCKER_HOST#unix://}")
         scheme='http://localhost'
+    elif parse_true "${DOCKER_TLS_VERIFY:-}"; then
+        curl_opts+=(--cert "${DOCKER_CERT_PATH}/cert.pem")
+        curl_opts+=(--key "${DOCKER_CERT_PATH}/key.pem")
+        curl_opts+=(--cacert "${DOCKER_CERT_PATH}/ca.pem")
+        scheme="https://${DOCKER_HOST#*://}"
     else
         scheme="http://${DOCKER_HOST#*://}"
     fi

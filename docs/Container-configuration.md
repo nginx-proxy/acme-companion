@@ -45,3 +45,24 @@ You can also create test certificates per container (see [Test certificates](./L
 * `RELOAD_NGINX_ONLY_ONCE` - The companion reload nginx configuration after every new or renewed certificate. Previously this was done only once per service loop, at the end of the loop (this was causing delayed availability of HTTPS enabled application when multiple new certificates where requested at once, see [issue #1147](https://github.com/nginx-proxy/acme-companion/issues/1147)). You can restore the previous behaviour if needed by setting the environment variable `RELOAD_NGINX_ONLY_ONCE` to `true`.
 
 * `DOCKER_CONTAINER_FILTERS` -  You can filter which containers are considered by acme-companion by using the `DOCKER_CONTAINER_FILTERS` environment variable (by default, acme-companion will consider all running containers). It takes a comma separated list of `key=value` pairs. For example, setting `DOCKER_CONTAINER_FILTERS` environment variable to `network=mynetwork` will cause acme-companion to consider only containers connected to the `mynetwork` network. See the [Docker CLI documentation](https://docs.docker.com/reference/cli/docker/container/ls/#filter) for details on available filters.
+
+* `DOCKER_HOST` - The Docker API endpoint acme-companion talks to. Defaults to `unix:///var/run/docker.sock` (the mounted Docker socket). To connect to a remote or TLS-protected Docker daemon over TCP, set it to `tcp://<host>:2376`.
+
+* `DOCKER_TLS_VERIFY` and `DOCKER_CERT_PATH` - Enable TLS client-certificate authentication when connecting to the Docker daemon over `tcp://`. Set `DOCKER_TLS_VERIFY` to `true` and `DOCKER_CERT_PATH` to the **in-container** path of a directory containing `ca.pem`, `cert.pem` and `key.pem`. These variable names and file names match the [Docker CLI convention](https://docs.docker.com/engine/security/protect-access/) and the ones used by **docker-gen**, so the same certificate directory can be shared across containers.
+
+    > **Important:** `DOCKER_CERT_PATH` is a path **inside the container**. You must mount your certificate directory into the container with a volume, otherwise the files will not be found and the container will exit on startup with an error.
+
+    For example, connecting to a TLS-protected Docker daemon over TCP (note that the Docker socket is **not** mounted in this case):
+
+    ```bash
+    $ docker run --detach \
+        --name nginx-proxy-acme \
+        --volumes-from nginx-proxy \
+        --volume certs:/etc/nginx/certs:rw \
+        --volume acme:/etc/acme.sh \
+        --volume /path/to/docker/certs:/docker-certs:ro \
+        --env "DOCKER_HOST=tcp://docker-host.example.com:2376" \
+        --env "DOCKER_TLS_VERIFY=true" \
+        --env "DOCKER_CERT_PATH=/docker-certs" \
+        nginxproxy/acme-companion
+    ```

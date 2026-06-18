@@ -4,6 +4,7 @@ set -e
 globalTests+=(
 	docker_api
 	docker_api_legacy
+	docker_api_tls
 	location_config
 	debug_acmesh_log
 	certs_single

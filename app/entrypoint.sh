@@ -23,6 +23,21 @@ function check_docker_socket {
             echo "Typically you should run your container with: '-v /var/run/docker.sock:$socket_file:ro'" >&2
             exit 1
         fi
+    elif parse_true "${DOCKER_TLS_VERIFY:-}"; then
+        if [[ -z "${DOCKER_CERT_PATH:-}" ]]; then
+            echo "Error: DOCKER_TLS_VERIFY is enabled but DOCKER_CERT_PATH is not set." >&2
+            echo "Set DOCKER_CERT_PATH to the in-container directory holding ca.pem, cert.pem and key.pem." >&2
+            exit 1
+        fi
+        local cert_file
+        for cert_file in ca.pem cert.pem key.pem; do
+            if [[ ! -r "${DOCKER_CERT_PATH}/${cert_file}" ]]; then
+                echo "Error: TLS certificate file ${DOCKER_CERT_PATH}/${cert_file} is missing or not readable." >&2
+                echo "DOCKER_CERT_PATH must point to an in-container directory containing readable ca.pem, cert.pem and key.pem files." >&2
+                echo "Typically you should mount your Docker client certificate directory, e.g.: '-v /path/to/docker/certs:${DOCKER_CERT_PATH}:ro'" >&2
+                exit 1
+            fi
+        done
     fi
 }
 
