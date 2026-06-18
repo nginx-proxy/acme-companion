@@ -154,6 +154,25 @@ function wait_for_standalone_conf {
 }
 export -f wait_for_standalone_conf
 
+# Wait for the standalone conf of domain $1 to be removed inside container $2
+function wait_for_standalone_conf_rm {
+  local domain="${1:?}"
+  local name="${2:?}"
+  local timeout
+  timeout="$(date +%s)"
+  timeout="$((timeout + 120))"
+  until docker exec "$name" [ ! -f "/etc/nginx/conf.d/standalone-cert-$domain.conf" ]; do
+    if [[ "$(date +%s)" -gt "$timeout" ]]; then
+      echo "Standalone configuration file for $domain was not removed under one minute, timing out."
+      return 1
+    fi
+    sleep 0.1
+  done
+  [[ "${DRY_RUN:-}" == 1 ]] && echo "Standalone configuration for $domain has been removed."
+  return 0
+}
+export -f wait_for_standalone_conf_rm
+
 
 # Wait for the /etc/nginx/certs/$1.crt symlink to exist inside container $2
 function wait_for_symlink {
