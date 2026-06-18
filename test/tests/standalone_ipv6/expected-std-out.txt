@@ -1,0 +1,43 @@
+## ipv6-enabled
+server {
+    server_name ipv6.example.test;
+    listen 80;
+    listen [::]:80;
+    access_log /var/log/nginx/access.log vhost;
+    location ^~ /.well-known/acme-challenge/ {
+        auth_basic off;
+        auth_request off;
+        allow all;
+        root /usr/share/nginx/html;
+        try_files $uri =404;
+        break;
+    }
+}
+## ipv6-disabled
+server {
+    server_name plain.example.test;
+    listen 80;
+    access_log /var/log/nginx/access.log vhost;
+    location ^~ /.well-known/acme-challenge/ {
+        auth_basic off;
+        auth_request off;
+        allow all;
+        root /usr/share/nginx/html;
+        try_files $uri =404;
+        break;
+    }
+}
+## ipv6-unset
+server {
+    server_name unset.example.test;
+    listen 80;
+    access_log /var/log/nginx/access.log vhost;
+    location ^~ /.well-known/acme-challenge/ {
+        auth_basic off;
+        auth_request off;
+        allow all;
+        root /usr/share/nginx/html;
+        try_files $uri =404;
+        break;
+    }
+}
