@@ -135,10 +135,14 @@ function add_standalone_configuration {
         add_location_configuration "$domain"
     else
         # Else use the standalone configuration.
+        local listen_directives='    listen 80;'
+        if parse_true "${ENABLE_IPV6:-false}"; then
+            listen_directives+=$'\n    listen [::]:80;'
+        fi
         cat > "/etc/nginx/conf.d/standalone-cert-$domain.conf" << EOF
 server {
     server_name $domain;
-    listen 80;
+${listen_directives}
     access_log /var/log/nginx/access.log vhost;
     location ^~ /.well-known/acme-challenge/ {
         auth_basic off;

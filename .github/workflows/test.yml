@@ -118,6 +118,9 @@ jobs:
           - test-name: debug_acmesh_log
             setup: 2containers
             pebble-config: pebble-config.json
+          - test-name: standalone_ipv6
+            setup: 2containers
+            pebble-config: pebble-config.json
     runs-on: ubuntu-latest
 
     steps:
