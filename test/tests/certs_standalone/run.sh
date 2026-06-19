@@ -74,6 +74,8 @@ elif [[ "${DRY_RUN:-}" == 1 ]]; then
   echo "Domain ${domains[0]} is on certificate."
 fi
 
+# The standalone conf is removed once the certificate is issued; wait for that.
+wait_for_standalone_conf_rm "${domains[0]}" "$le_container_name"
 docker exec "$le_container_name" bash -c "[[ -f /etc/nginx/conf.d/standalone-cert-${domains[0]}.conf ]]" \
   && echo "Standalone configuration for ${domains[0]} wasn't correctly removed."
 
@@ -108,5 +110,6 @@ for domain in "${domains[1]}" "${domains[2]}"; do
   fi
 done
 
+wait_for_standalone_conf_rm "${domains[1]}" "$le_container_name"
 docker exec "$le_container_name" bash -c "[[ ! -f /etc/nginx/conf.d/standalone-cert-${domains[1]}.conf ]]" \
   || echo "Standalone configuration for ${domains[1]} wasn't correctly removed."
