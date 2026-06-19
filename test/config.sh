@@ -15,6 +15,7 @@ globalTests+=(
 	force_renew
 	acme_accounts
 	private_keys
+	renew_private_keys
 	container_restart
 	permissions_default
 	permissions_custom
