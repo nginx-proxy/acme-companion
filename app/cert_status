@@ -48,6 +48,11 @@ for cert in /etc/nginx/certs/*/fullchain.pem; do
             echo "$verify"
             # Print certificate info.
             print_cert_info "$cert"
+        elif openssl x509 -checkend 0 -noout -in "$cert" &> /dev/null; then
+            # Chain failed to verify but the leaf itself is still valid (not expired).
+            echo "${cert}: OK (chain verification failed)"
+            # Print certificate info.
+            print_cert_info "$cert"
         else
             echo "${cert}: EXPIRED"
             # Print certificate info.
