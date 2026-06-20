@@ -6,11 +6,15 @@ As stated by its repository, [Docker Compose](https://github.com/docker/compose)
 
 Be sure to be familiar with both the [basic](./Basic-usage.md) and [advanced](./Advanced-usage.md) non compose setups, and Docker Compose usage.
 
-Please read [getting container IDs](./Getting-containers-IDs.md) and be aware that the `--volumes-from method` is **only** available on compose file version 2.
+The following examples are minimal, clean starting points, not a definitive reference. They follow current Docker Compose conventions:
 
-The following examples are minimal, clean starting points using compose file version 2. Again they are not intended as a definitive reference.
+* The top-level `version:` key is intentionally omitted: it is obsolete in the [Compose Specification](https://docs.docker.com/reference/compose-file/) and ignored by Docker Compose.
+* They do not use `volumes_from` (a compose file version 2 only feature): every volume is mounted explicitly on each container instead.
+* **acme-companion** finds the **nginx**/**nginx-proxy** (and **docker-gen**) container through the `label` method, see [getting container IDs](./Getting-containers-IDs.md). The `NGINX_PROXY_CONTAINER` / `NGINX_DOCKER_GEN_CONTAINER` environment variable method documented there is an equally valid alternative.
 
-The use of named containers and volume is not required but helps keeping everything clear and organized.
+If you still rely on a `volumes_from` based compose file, see [getting container IDs](./Getting-containers-IDs.md) for the `docker run --volumes-from` method (still supported) and this page's git history for the previous examples.
+
+The use of named containers and volumes is not required but helps keeping everything clear and organized.
 
 ### Two containers example
 
@@ -22,91 +26,105 @@ services:
     ports:
       - "80:80"
       - "443:443"
+    labels:
+      - "com.github.nginx-proxy.nginx"
     volumes:
+      - certs:/etc/nginx/certs:ro
+      - html:/usr/share/nginx/html
+      - /var/run/docker.sock:/tmp/docker.sock:ro
       # The vhost and conf volumes are only required
       # if you plan to obtain standalone certificates
       # - vhost:/etc/nginx/vhost.d
       # - conf:/etc/nginx/conf.d
-      - html:/usr/share/nginx/html
-      - certs:/etc/nginx/certs:ro
-      - /var/run/docker.sock:/tmp/docker.sock:ro
 
   acme-companion:
     image: nginxproxy/acme-companion
     container_name: nginx-proxy-acme
     environment:
       - DEFAULT_EMAIL=mail@yourdomain.tld
-    volumes_from:
-      - nginx-proxy
     volumes:
       - certs:/etc/nginx/certs:rw
+      - html:/usr/share/nginx/html:rw
       - acme:/etc/acme.sh
       - /var/run/docker.sock:/var/run/docker.sock:ro
+      # The vhost and conf volumes are only required
+      # if you plan to obtain standalone certificates
+      # - vhost:/etc/nginx/vhost.d
+      # - conf:/etc/nginx/conf.d
 
+# A user-defined network is optional; Compose creates a default one per project.
 #networks:
-#    default:
-#        name: nginx-proxy
+#  default:
+#    name: nginx-proxy
 
 volumes:
+  certs:
+  html:
+  acme:
   # vhost:
   # conf:
-  html:
-  certs:
-  acme:
 ```
 
 ### Three containers example
 
 ```yaml
 services:
-  nginx-proxy:
+  nginx:
     image: nginx:alpine
     container_name: nginx-proxy
     ports:
       - "80:80"
       - "443:443"
+    labels:
+      - "com.github.nginx-proxy.nginx"
     volumes:
+      - conf:/etc/nginx/conf.d:ro
+      - html:/usr/share/nginx/html
+      - certs:/etc/nginx/certs:ro
       # The vhost volume is only required if you
       # plan to obtain standalone certificates
       # - vhost:/etc/nginx/vhost.d
-      - conf:/etc/nginx/conf.d
-      - html:/usr/share/nginx/html
-      - certs:/etc/nginx/certs:ro
 
   docker-gen:
     image: nginxproxy/docker-gen
     container_name: nginx-proxy-gen
     command: -notify-sighup nginx-proxy -watch -wait 5s:30s /etc/docker-gen/templates/nginx.tmpl /etc/nginx/conf.d/default.conf
-    volumes_from:
-      - nginx-proxy
-    volumes:
-      - /path/to/nginx.tmpl:/etc/docker-gen/templates/nginx.tmpl:ro
-      - /var/run/docker.sock:/tmp/docker.sock:ro
     labels:
       - "com.github.nginx-proxy.docker-gen"
+    volumes:
+      - conf:/etc/nginx/conf.d:rw
+      - certs:/etc/nginx/certs:ro
+      - /path/to/nginx.tmpl:/etc/docker-gen/templates/nginx.tmpl:ro
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+      # The vhost volume is only required if you
+      # plan to obtain standalone certificates
+      # - vhost:/etc/nginx/vhost.d
 
   acme-companion:
     image: nginxproxy/acme-companion
     container_name: nginx-proxy-acme
     environment:
       - DEFAULT_EMAIL=mail@yourdomain.tld
-    volumes_from:
-      - nginx-proxy
     volumes:
       - certs:/etc/nginx/certs:rw
+      - html:/usr/share/nginx/html:rw
       - acme:/etc/acme.sh
       - /var/run/docker.sock:/var/run/docker.sock:ro
+      # The vhost and conf volumes are only required
+      # if you plan to obtain standalone certificates
+      # - vhost:/etc/nginx/vhost.d
+      # - conf:/etc/nginx/conf.d
 
 #networks:
-#    default:
-#        name: nginx-proxy
+#  default:
+#    name: nginx-proxy
 
 volumes:
-  # vhost:
   conf:
   html:
   certs:
   acme:
+  # vhost:
 ```
 
 **Note:** don't forget to replace `/path/to/nginx.tmpl` with the actual path to the [`nginx.tmpl`](https://raw.githubusercontent.com/nginx-proxy/nginx-proxy/main/nginx.tmpl) file you downloaded.
