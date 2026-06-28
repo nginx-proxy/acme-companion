@@ -32,18 +32,22 @@ function parse_true() {
  declare -r END_HEADER='## End of configuration add by letsencrypt container'
 
 function check_nginx_proxy_container_run {
-    local _nginx_proxy_container; _nginx_proxy_container=$(get_nginx_proxy_container)
-    if [[ -n "$_nginx_proxy_container" ]]; then
-        if [[ $(docker_api "/containers/${_nginx_proxy_container}/json" | jq -r '.State.Status') = "running" ]];then
-            return 0
-        else
-            echo "$(date "+%Y/%m/%d %T") Error: nginx-proxy container ${_nginx_proxy_container} isn't running." >&2
-            return 1
-        fi
-    else
+    # get_nginx_proxy_container can return several container IDs (one per line)
+    # when the label matches more than one nginx-proxy replica.
+    local -a _nginx_proxy_containers
+    mapfile -t _nginx_proxy_containers < <(get_nginx_proxy_container)
+    if [[ ${#_nginx_proxy_containers[@]} -eq 0 ]]; then
         echo "$(date "+%Y/%m/%d %T") Error: could not get a nginx-proxy container ID." >&2
         return 1
-fi
+    fi
+    local _nginx_proxy_container
+    for _nginx_proxy_container in "${_nginx_proxy_containers[@]}"; do
+        if [[ $(docker_api "/containers/${_nginx_proxy_container}/json" | jq -r '.State.Status') = "running" ]]; then
+            return 0
+        fi
+    done
+    echo "$(date "+%Y/%m/%d %T") Error: no running nginx-proxy container found (${_nginx_proxy_containers[*]})." >&2
+    return 1
 }
 
 function ascending_wildcard_locations {
@@ -325,29 +329,48 @@ function get_nginx_proxy_container {
     [[ -n "$nginx_cid" ]] && echo "$nginx_cid"
 }
 
+function nginx_proxy_is_docker_gen {
+    # Return 0 if at least one nginx-proxy container also runs docker-gen (all-in-one
+    # image). get_nginx_proxy_container can return several IDs when the label matches
+    # multiple replicas, so check each one instead of passing the whole string.
+    local -a _nginx_proxy_containers
+    mapfile -t _nginx_proxy_containers < <(get_nginx_proxy_container)
+    local _cid
+    for _cid in "${_nginx_proxy_containers[@]}"; do
+        is_docker_gen_container "$_cid" && return 0
+    done
+    return 1
+}
+
 ## Nginx
 function reload_nginx {
-    local _docker_gen_container; _docker_gen_container=$(get_docker_gen_container)
-    local _nginx_proxy_container; _nginx_proxy_container=$(get_nginx_proxy_container)
+    # Both getters can return several container IDs (one per line) when the
+    # label matches more than one nginx-proxy / docker-gen replica, so iterate.
+    local -a _docker_gen_containers _nginx_proxy_containers
+    mapfile -t _docker_gen_containers < <(get_docker_gen_container)
+    mapfile -t _nginx_proxy_containers < <(get_nginx_proxy_container)
+    local _cid
 
-    if [[ -n "${_docker_gen_container:-}" ]]; then
-        # Using docker-gen and nginx in separate container
-        echo "Reloading nginx docker-gen (using separate container ${_docker_gen_container})..."
-        docker_kill "${_docker_gen_container}" SIGHUP
+    if [[ ${#_docker_gen_containers[@]} -gt 0 ]]; then
+        # Using docker-gen and nginx in separate containers
+        for _cid in "${_docker_gen_containers[@]}"; do
+            echo "Reloading nginx docker-gen (using separate container ${_cid})..."
+            docker_kill "${_cid}" SIGHUP
+        done
 
-        if [[ -n "${_nginx_proxy_container:-}" ]]; then
-            # Reloading nginx in case only certificates had been renewed
-            echo "Reloading nginx (using separate container ${_nginx_proxy_container})..."
-            docker_kill "${_nginx_proxy_container}" SIGHUP
-        fi
+        # Reloading nginx in case only certificates had been renewed
+        for _cid in "${_nginx_proxy_containers[@]}"; do
+            echo "Reloading nginx (using separate container ${_cid})..."
+            docker_kill "${_cid}" SIGHUP
+        done
     else
-        if [[ -n "${_nginx_proxy_container:-}" ]]; then
-            echo "Reloading nginx proxy (${_nginx_proxy_container})..."
-            docker_exec "${_nginx_proxy_container}" \
+        for _cid in "${_nginx_proxy_containers[@]}"; do
+            echo "Reloading nginx proxy (${_cid})..."
+            docker_exec "${_cid}" \
                 '[ "sh", "-c", "/app/docker-entrypoint.sh /usr/local/bin/docker-gen /app/nginx.tmpl /etc/nginx/conf.d/default.conf; /usr/sbin/nginx -s reload" ]' \
                 | sed -rn 's/^.*([0-9]{4}\/[0-9]{2}\/[0-9]{2}.*$)/\1/p'
             [[ ${PIPESTATUS[0]} -eq 1 ]] && echo "$(date "+%Y/%m/%d %T"), Error: can't reload nginx-proxy." >&2
-        fi
+        done
     fi
 }
 
