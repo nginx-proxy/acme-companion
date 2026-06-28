@@ -40,9 +40,10 @@ fi
 # deterministic.
 
 # Case A: no letsencrypt_user_data present.
-docker exec "$le_container_name" bash -c \
-  'rm -f /app/letsencrypt_service_data /app/letsencrypt_user_data && source /app/letsencrypt_service --source-only && update_certs' \
-  > /dev/null 2>&1
+if ! update_certs_out="$(docker exec "$le_container_name" bash -c \
+  'rm -f /app/letsencrypt_service_data /app/letsencrypt_user_data && source /app/letsencrypt_service --source-only && update_certs' 2>&1)"; then
+  echo "update_certs failed during the data-less run with no user data: $update_certs_out"
+fi
 if ! docker exec "$le_container_name" test -L "/etc/nginx/certs/${domain}.crt"; then
   echo "The $domain symlink was removed by a data-less update_certs run with no user data (issue #956)."
 fi
@@ -52,9 +53,11 @@ fi
 # standalone domains as enabled and remove the proxied container's symlink. An
 # empty user data file is enough to exercise this since the bug is triggered by
 # the file merely existing, not by its content.
-docker exec "$le_container_name" bash -c \
-  'touch /app/letsencrypt_user_data && rm -f /app/letsencrypt_service_data && source /app/letsencrypt_service --source-only && update_certs; rm -f /app/letsencrypt_user_data' \
-  > /dev/null 2>&1
+if ! update_certs_out="$(docker exec "$le_container_name" bash -c \
+  'touch /app/letsencrypt_user_data && rm -f /app/letsencrypt_service_data && source /app/letsencrypt_service --source-only && update_certs' 2>&1)"; then
+  echo "update_certs failed during the data-less run with user data present: $update_certs_out"
+fi
+docker exec "$le_container_name" rm -f /app/letsencrypt_user_data
 if ! docker exec "$le_container_name" test -L "/etc/nginx/certs/${domain}.crt"; then
   echo "The $domain symlink was removed by a data-less update_certs run with user data present (issue #956)."
 fi
