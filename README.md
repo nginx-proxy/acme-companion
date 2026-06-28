@@ -1,3 +1,23 @@
+<a href="https://zerossl.com">
+<picture>
+  <!-- Dark mode -->
+  <source
+    media="(prefers-color-scheme: dark)"
+    srcset="https://github.com/nginx-proxy/acme-companion/blob/main/docs/img/acme-companion_dark_theme.svg" />
+  <!-- Light mode -->
+  <source
+    media="(prefers-color-scheme: light)"
+    srcset="https://github.com/nginx-proxy/acme-companion/blob/main/docs/img/acme-companion_light_theme.svg" />
+  <!-- Fallback for environments without media queries -->
+  <img
+    alt="ZeroSSL"
+    src="https://github.com/nginx-proxy/acme-companion/blob/main/docs/img/acme-companion_light_theme.svg"
+    height="auto" />
+</picture>
+</a>
+
+# acme-companion
+
 [![Tests](https://github.com/nginx-proxy/acme-companion/actions/workflows/test.yml/badge.svg)](https://github.com/nginx-proxy/acme-companion/actions/workflows/test.yml)
 [![GitHub release](https://img.shields.io/github/release/nginx-proxy/acme-companion.svg)](https://github.com/nginx-proxy/acme-companion/releases)
 [![Docker Image Size](https://img.shields.io/docker/image-size/nginxproxy/acme-companion?sort=semver)](https://hub.docker.com/r/nginxproxy/acme-companion "Click to view the image on Docker Hub")
