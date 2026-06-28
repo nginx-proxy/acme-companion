@@ -41,5 +41,8 @@ COPY app LICENSE /app/
 
 WORKDIR /app
 
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
+    CMD [ "/bin/bash", "/app/healthcheck.sh" ]
+
 ENTRYPOINT [ "/bin/bash", "/app/entrypoint.sh" ]
 CMD [ "/bin/bash", "/app/start.sh" ]

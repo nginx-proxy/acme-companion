@@ -105,6 +105,7 @@ jobs:
             symlinks,
             acme_hooks,
             ocsp_must_staple,
+            container_health,
           ]
         setup: [2containers, 3containers]
         pebble-config: [pebble-config.json]
