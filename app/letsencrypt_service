@@ -586,12 +586,8 @@ function update_certs {
         update_cert "$cid" "${1:-}"
     done
 
-    # Only prune disabled symlinks once docker-gen has generated the service
-    # data file. Until then the enabled-domain set is incomplete -- it misses
-    # every proxied container -- and cleanup_links would delete the symlinks of
-    # existing valid certificates, making nginx serve the default certificate
-    # until they are recreated one by one (issue #956). update_certs is
-    # re-triggered via SIGUSR1 once docker-gen writes the file.
+    # Only cleanup once docker-gen has generated the service data file, otherwise
+    # cleanup_links would prune symlinks of still valid certificates (issue #956).
     if [[ -f /app/letsencrypt_service_data ]]; then
         cleanup_links && should_reload_nginx='true'
     fi
