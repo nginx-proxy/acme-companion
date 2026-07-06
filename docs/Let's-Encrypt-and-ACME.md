@@ -10,7 +10,7 @@ As described on [basic usage](./Basic-usage.md), the `ACME_HOST` environment var
 
 The following environment variables are optional and parametrize the way the Let's Encrypt client works.
 
-### per proxyed container
+### per proxied container
 
 #### DNS-01 ACME challenge
 
@@ -85,7 +85,7 @@ Let's Encrypt has a limit of [100 domains per certificate](https://letsencrypt.o
 
 #### Separate certificate for each domain
 
-The example above will issue a single domain certificate for all the domains listed in the `ACME_HOST` environment variable. If you need to have a separate certificate for each of the domains, you can add set the `LETSENCRYPT_SINGLE_DOMAIN_CERTS` environment variable to `true`.
+The example above will issue a single domain certificate for all the domains listed in the `ACME_HOST` environment variable. If you need to have a separate certificate for each of the domains, you can set the `LETSENCRYPT_SINGLE_DOMAIN_CERTS` environment variable to `true`.
 
 Example:
 
@@ -149,7 +149,7 @@ The `ACME_RENEW_AFTER` environment variable can be set on an application contain
 
 #### Default contact address
 
-The `DEFAULT_EMAIL` variable must be a valid email and, when set on the **acme-companion** container, will be used as a fallback when no email address is provided using proxyed container's `LETSENCRYPT_EMAIL` environment variables. It is highly recommended to set this variable to a valid email address that you own.
+The `DEFAULT_EMAIL` variable must be a valid email and, when set on the **acme-companion** container, will be used as a fallback when no email address is provided using proxied container's `LETSENCRYPT_EMAIL` environment variables. It is highly recommended to set this variable to a valid email address that you own.
 
 #### Private key re-utilization
 

@@ -46,11 +46,11 @@ The host docker socket has to be bound inside this container too, this time to `
 
 Albeit **optional**, it is **recommended** to provide a valid default email address through the `DEFAULT_EMAIL` environment variable, so that Let's Encrypt can warn you about expiring certificates and allow you to recover your account.
 
-### Step 3 - proxyed container(s)
+### Step 3 - proxied container(s)
 
-Once both **nginx-proxy** and **acme-companion** containers are up and running, start any container you want proxyed with environment variables `VIRTUAL_HOST` and `ACME_HOST` both set to the domain(s) your proxied container is going to use. Multiple hosts can be separated using commas.
+Once both **nginx-proxy** and **acme-companion** containers are up and running, start any container you want proxied with environment variables `VIRTUAL_HOST` and `ACME_HOST` both set to the domain(s) your proxied container is going to use. Multiple hosts can be separated using commas.
 
-[`VIRTUAL_HOST`](https://github.com/nginx-proxy/nginx-proxy#usage) control proxying by **nginx-proxy** and `ACME_HOST` control certificate creation and SSL enabling by **acme-companion**.
+[`VIRTUAL_HOST`](https://github.com/nginx-proxy/nginx-proxy#usage) controls proxying by **nginx-proxy** and `ACME_HOST` controls certificate creation and SSL enabling by **acme-companion**.
 
 Certificates will only be issued for containers that have both `VIRTUAL_HOST` and `ACME_HOST` variables set to domain(s) that correctly resolve to the host, provided the host is publicly reachable.
 
@@ -66,7 +66,7 @@ $ docker run --detach \
 
 The containers being proxied must expose the port to be proxied, either by using the `EXPOSE` directive in their Dockerfile or by using the `--expose` flag to `docker run` or `docker create`.
 
-If the proxyed container listen on and expose another port than the default `80`, you can force **nginx-proxy** to use this port with the [`VIRTUAL_PORT`](https://github.com/nginx-proxy/nginx-proxy#multiple-ports) environment variable.
+If the proxied container listen on and expose another port than the default `80`, you can force **nginx-proxy** to use this port with the [`VIRTUAL_PORT`](https://github.com/nginx-proxy/nginx-proxy#multiple-ports) environment variable.
 
 Example using [Grafana](https://hub.docker.com/r/grafana/grafana/) (expose and listen on port 3000):
 
