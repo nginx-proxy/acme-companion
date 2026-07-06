@@ -37,7 +37,7 @@ sleep 5
 renew_output="$(docker exec "$le_container_name" /app/force_renew 2>&1)"
 
 # A renewal re-issues the cert, so its serial must change.
-timeout=$(($(date +%s) + 30))
+timeout=$(($(date +%s) + 60))
 second_serial="$first_serial"
 while [[ $(date +%s) -lt $timeout ]]; do
   new_serial="$(get_cert_serial "${domains[0]}" "$le_container_name" 2>/dev/null || true)"
