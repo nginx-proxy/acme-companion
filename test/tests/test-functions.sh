@@ -78,6 +78,7 @@ export -f run_le_container
 # Run an nginx container
 function run_nginx_container {
   local -a cli_args_arr
+  local host_env_var="ACME_HOST"
 
   while [[ $# -gt 0 ]]; do
   local flag="$1"
@@ -87,6 +88,11 @@ function run_nginx_container {
       local le_host="${2:?}"
       local virtual_host="${le_host// /}"; virtual_host="${virtual_host//.,/,}"; virtual_host="${virtual_host%,}"
       shift 2
+      ;;
+
+      --legacy-host-var)
+      host_env_var="LETSENCRYPT_HOST"
+      shift
       ;;
 
       -n|--name)
@@ -116,19 +122,19 @@ function run_nginx_container {
     return 1
   fi
 
-  [[ "${DRY_RUN:-}" == 1 ]] && echo "Starting $container_name nginx container, with VIRTUAL_HOST=$virtual_host, LETSENCRYPT_HOST=$le_host and the following cli arguments : ${cli_args_arr[*]}."
+  [[ "${DRY_RUN:-}" == 1 ]] && echo "Starting $container_name nginx container, with VIRTUAL_HOST=$virtual_host, ${host_env_var}=$le_host and the following cli arguments : ${cli_args_arr[*]}."
   
   if docker run --rm -d \
     --name "${container_name:-$virtual_host}" \
     -e "VIRTUAL_HOST=$virtual_host" \
-    -e "LETSENCRYPT_HOST=$le_host" \
+    -e "${host_env_var}=$le_host" \
     --label com.github.nginx-proxy.acme-companion.test-suite \
     "${cli_args_arr[@]}" \
     nginx:alpine > /dev/null ; \
   then
     [[ "${DRY_RUN:-}" == 1 ]] && echo "Started $container_name nginx container."
   else
-    echo "Failed to start $container_name nginx container, with VIRTUAL_HOST=$virtual_host, LETSENCRYPT_HOST=$le_host and the following cli arguments : ${cli_args_arr[*]}."
+    echo "Failed to start $container_name nginx container, with VIRTUAL_HOST=$virtual_host, ${host_env_var}=$le_host and the following cli arguments : ${cli_args_arr[*]}."
     return 1
   fi
   return 0

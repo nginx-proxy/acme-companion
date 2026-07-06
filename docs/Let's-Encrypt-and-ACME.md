@@ -4,7 +4,9 @@
 
 **NOTE on IPv6**: If the domain or sub domain you want to issue certificate for has an AAAA record set, Let's Encrypt will favor challenge validation over IPv6. [There is an IPv6 to IPv4 fallback in place but Let's Encrypt can't guarantee it'll work in every possible case](https://github.com/letsencrypt/boulder/issues/2770#issuecomment-340489871), so bottom line is **if you are not sure of both your host and your host's Docker reachability over IPv6, do not advertise an AAAA record** or LE challenge validation might fail.
 
-As described on [basic usage](./Basic-usage.md), the `LETSENCRYPT_HOST` environment variables needs to be declared in each to-be-proxied application containers for which you want to enable SSL and create certificate. It most likely needs to be the same as the `VIRTUAL_HOST` variable and must resolve to your host (which has to be publicly reachable).
+As described on [basic usage](./Basic-usage.md), the `ACME_HOST` environment variable needs to be declared in each to-be-proxied application container(s) for which you want to enable SSL and create certificate. It most likely needs to be the same as the `VIRTUAL_HOST` variable and must resolve to your host (which has to be publicly reachable).
+
+`LETSENCRYPT_HOST` is still accepted as an alternative to `ACME_HOST` for backward compatibility reasons.
 
 The following environment variables are optional and parametrize the way the Let's Encrypt client works.
 
@@ -75,7 +77,7 @@ Example:
 $ docker run --detach \
     --name your-proxyed-app \
     --env "VIRTUAL_HOST=yourdomain.tld,www.yourdomain.tld,anotherdomain.tld" \
-    --env "LETSENCRYPT_HOST=yourdomain.tld,www.yourdomain.tld,anotherdomain.tld" \
+    --env "ACME_HOST=yourdomain.tld,www.yourdomain.tld,anotherdomain.tld" \
     nginx
 ```
 
@@ -83,7 +85,7 @@ Let's Encrypt has a limit of [100 domains per certificate](https://letsencrypt.o
 
 #### Separate certificate for each domain
 
-The example above will issue a single domain certificate for all the domains listed in the `LETSENCRYPT_HOST` environment variable. If you need to have a separate certificate for each of the domains, you can add set the `LETSENCRYPT_SINGLE_DOMAIN_CERTS` environment variable to `true`.
+The example above will issue a single domain certificate for all the domains listed in the `ACME_HOST` environment variable. If you need to have a separate certificate for each of the domains, you can add set the `LETSENCRYPT_SINGLE_DOMAIN_CERTS` environment variable to `true`.
 
 Example:
 
@@ -91,7 +93,7 @@ Example:
 $ docker run --detach \
     --name your-proxyed-app \
     --env "VIRTUAL_HOST=yourdomain.tld,www.yourdomain.tld,anotherdomain.tld" \
-    --env "LETSENCRYPT_HOST=yourdomain.tld,www.yourdomain.tld,anotherdomain.tld" \
+    --env "ACME_HOST=yourdomain.tld,www.yourdomain.tld,anotherdomain.tld" \
     --env "LETSENCRYPT_SINGLE_DOMAIN_CERTS=true" \
     nginx
 ```
@@ -132,7 +134,7 @@ The `ACME_CERT_PROFILE` environment variable is used to select a specific profil
 
 #### Container restart on cert renewal
 
-The `LETSENCRYPT_RESTART_CONTAINER` environment variable, when set to `true` on an application container, will restart this container whenever the corresponding cert (`LETSENCRYPT_HOST`) is renewed. This is useful when certificates are directly used inside a container for other purposes than HTTPS (e.g. an FTPS server), to make sure those containers always use an up to date certificate.
+The `LETSENCRYPT_RESTART_CONTAINER` environment variable, when set to `true` on an application container, will restart this container whenever the corresponding cert (`ACME_HOST`) is renewed. This is useful when certificates are directly used inside a container for other purposes than HTTPS (e.g. an FTPS server), to make sure those containers always use an up to date certificate.
 
 #### Pre-Hook and Post-Hook
 

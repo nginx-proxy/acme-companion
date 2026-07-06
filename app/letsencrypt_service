@@ -62,6 +62,24 @@ function create_links {
     return $return_code
 }
 
+function get_hosts_array_var {
+    local cid="${1:?}"
+    local acme_var="ACME_${cid}_HOST"
+    if declare -p "$acme_var" > /dev/null 2>&1; then
+        echo "$acme_var"
+        return 0
+    fi
+
+    local letsencrypt_var="LETSENCRYPT_${cid}_HOST"
+    if declare -p "$letsencrypt_var" > /dev/null 2>&1; then
+        echo "$letsencrypt_var"
+        return 0
+    fi
+
+    echo "Warning: no host array found for ${cid} (expected ${acme_var} or ${letsencrypt_var})." >&2
+    return 1
+}
+
 function cleanup_links {
     local -a LETSENCRYPT_CONTAINERS
     local -a LETSENCRYPT_STANDALONE_CERTS
@@ -86,7 +104,9 @@ function cleanup_links {
     [[ -f /app/letsencrypt_user_data ]] && source /app/letsencrypt_user_data
     LETSENCRYPT_CONTAINERS+=( "${LETSENCRYPT_STANDALONE_CERTS[@]}" )
     for cid in "${LETSENCRYPT_CONTAINERS[@]}"; do
-      local -n hosts_array="LETSENCRYPT_${cid}_HOST"
+      local hosts_var
+      hosts_var="$(get_hosts_array_var "$cid")" || continue
+      local -n hosts_array="$hosts_var"
       for domain in "${hosts_array[@]}"; do
         domain="$(strip_wildcard "$domain")"
         # Add domain to the array storing currently enabled domains.
@@ -96,7 +116,7 @@ function cleanup_links {
     [[ "$DEBUG" == 1 ]] && echo "Enabled domains: ${ENABLED_DOMAINS[*]}"
 
     # Create an array containing only domains for which a symlinked private key exists
-    # in /etc/nginx/certs but that no longer have a corresponding LETSENCRYPT_HOST set
+    # in /etc/nginx/certs but that no longer have a corresponding ACME_HOST/LETSENCRYPT_HOST set
     # on an active container or on /app/letsencrypt_user_data
     if [[ ${#SYMLINKED_DOMAINS[@]} -gt 0 ]]; then
         mapfile -t DISABLED_DOMAINS < <(echo "${SYMLINKED_DOMAINS[@]}" \
@@ -138,7 +158,9 @@ function cleanup_links {
 
 function update_cert {
     local cid="${1:?}"
-    local -n hosts_array="LETSENCRYPT_${cid}_HOST"
+    local hosts_var
+    hosts_var="$(get_hosts_array_var "$cid")" || return 1
+    local -n hosts_array="$hosts_var"
     # First domain will be our base domain
     local base_domain="${hosts_array[0]}"
 
@@ -562,7 +584,9 @@ function update_certs {
     if [[ -f /app/letsencrypt_user_data ]]; then
         if source /app/letsencrypt_user_data; then
             for cid in "${LETSENCRYPT_STANDALONE_CERTS[@]}"; do
-                local -n hosts_array="LETSENCRYPT_${cid}_HOST"
+                local hosts_var
+                hosts_var="$(get_hosts_array_var "$cid")" || continue
+                local -n hosts_array="$hosts_var"
                 
                 local -n acme_challenge="ACME_${cid}_CHALLENGE"
                 acme_challenge="${acme_challenge:-HTTP-01}"

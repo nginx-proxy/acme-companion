@@ -71,7 +71,7 @@ $ docker run --detach \
 $ docker run --detach \
     --name your-proxyed-app \
     --env "VIRTUAL_HOST=subdomain.yourdomain.tld" \
-    --env "LETSENCRYPT_HOST=subdomain.yourdomain.tld" \
+    --env "ACME_HOST=subdomain.yourdomain.tld" \
     nginx
 ```
 

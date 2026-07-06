@@ -35,7 +35,8 @@ function cleanup {
 }
 trap cleanup EXIT
 
-# Create letsencrypt_user_data with a single domain cert
+# Create letsencrypt_user_data with a single domain cert using the legacy host array
+# to verify backward compatibility shim support.
 cat > "${GITHUB_WORKSPACE}/test/tests/certs_standalone/letsencrypt_user_data" <<EOF
 LETSENCRYPT_STANDALONE_CERTS=('single')
 LETSENCRYPT_single_HOST=('${domains[0]}')
@@ -79,11 +80,12 @@ wait_for_standalone_conf_rm "${domains[0]}" "$le_container_name"
 docker exec "$le_container_name" bash -c "[[ -f /etc/nginx/conf.d/standalone-cert-${domains[0]}.conf ]]" \
   && echo "Standalone configuration for ${domains[0]} wasn't correctly removed."
 
-# Add another (SAN) certificate to letsencrypt_user_data
+# Add another (SAN) certificate to letsencrypt_user_data and switch host arrays
+# to ACME_*_HOST to verify the new internal format.
 cat > "${GITHUB_WORKSPACE}/test/tests/certs_standalone/letsencrypt_user_data" <<EOF
 LETSENCRYPT_STANDALONE_CERTS=('single' 'san')
-LETSENCRYPT_single_HOST=('${domains[0]}')
-LETSENCRYPT_san_HOST=('${domains[1]}' '${domains[2]}')
+ACME_single_HOST=('${domains[0]}')
+ACME_san_HOST=('${domains[1]}' '${domains[2]}')
 EOF
 
 # Manually trigger the service loop

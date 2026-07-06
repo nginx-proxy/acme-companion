@@ -100,17 +100,17 @@ Albeit **optional**, it is **recommended** to provide a valid default email addr
 
 ### Step 3 - proxied container(s)
 
-Once both **nginx-proxy** and **acme-companion** containers are up and running, start any container you want proxied with environment variables `VIRTUAL_HOST` and `LETSENCRYPT_HOST` both set to the domain(s) your proxied container is going to use.
+Once both **nginx-proxy** and **acme-companion** containers are up and running, start any container you want proxied with environment variables `VIRTUAL_HOST` and `ACME_HOST` both set to the domain(s) your proxied container is going to use.
 
-[`VIRTUAL_HOST`](https://github.com/nginx-proxy/nginx-proxy#usage) control proxying by **nginx-proxy** and `LETSENCRYPT_HOST` control certificate creation and SSL enabling by **acme-companion**.
+[`VIRTUAL_HOST`](https://github.com/nginx-proxy/nginx-proxy#usage) control proxying by **nginx-proxy** and `ACME_HOST` control certificate creation and SSL enabling by **acme-companion**.
 
-Certificates will only be issued for containers that have both `VIRTUAL_HOST` and `LETSENCRYPT_HOST` variables set to domain(s) that correctly resolve to the host, provided the host is publicly reachable.
+Certificates will only be issued for containers that have both `VIRTUAL_HOST` and `ACME_HOST` variables set to domain(s) that correctly resolve to the host, provided the host is publicly reachable.
 
 ```shell
 $ docker run --detach \
     --name your-proxied-app \
     --env "VIRTUAL_HOST=subdomain.yourdomain.tld" \
-    --env "LETSENCRYPT_HOST=subdomain.yourdomain.tld" \
+    --env "ACME_HOST=subdomain.yourdomain.tld" \
     nginx
 ```
 
@@ -125,7 +125,7 @@ $ docker run --detach \
     --name grafana \
     --env "VIRTUAL_HOST=othersubdomain.yourdomain.tld" \
     --env "VIRTUAL_PORT=3000" \
-    --env "LETSENCRYPT_HOST=othersubdomain.yourdomain.tld" \
+    --env "ACME_HOST=othersubdomain.yourdomain.tld" \
     --env "LETSENCRYPT_EMAIL=mail@yourdomain.tld" \
     grafana/grafana
 ```

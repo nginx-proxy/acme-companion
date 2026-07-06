@@ -48,9 +48,9 @@ Review [basic usage](./Basic-usage.md) or [advanced usage](./Advanced-usage.md),
 
 Pay special attention to the fact that the volumes **MUST** be shared between the different containers.
 
-#### you forgot to set both `VIRTUAL_HOST` and `LETSENCRYPT_HOST` on the proxyed container.
+#### you forgot to set both `VIRTUAL_HOST` and `ACME_HOST` on the proxied container.
 
-Both are required. Every domain on `LETSENCRYPT_HOST`**must** be on `VIRTUAL_HOST`too.
+Both are required. Every domain on `ACME_HOST`**must** be on `VIRTUAL_HOST`too.
 
 #### you are using an outdated version of either **acme-companion** or the nginx.tmpl file (if running a 3 containers setup)
 

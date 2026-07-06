@@ -45,7 +45,7 @@ for hosts in "${letsencrypt_hosts[@]}"; do
   base_domain="$(get_base_domain "$hosts")"
   container="test$i"
 
-  # Run an Nginx container passing one of the comma separated list as LETSENCRYPT_HOST env var.
+  # Run an Nginx container passing one of the comma separated lists as ACME_HOST env var.
   run_nginx_container --hosts "$hosts" --name "$container"
 
   # Wait for a symlink at /etc/nginx/certs/$base_domain.crt

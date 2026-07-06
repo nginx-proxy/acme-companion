@@ -26,7 +26,7 @@ And on a proxied container (setting a per-container Pre-Hook):
 $ docker run --detach \
     --name your-proxyed-app \
     --env "VIRTUAL_HOST=yourdomain.tld" \
-    --env "LETSENCRYPT_HOST=yourdomain.tld" \
+    --env "ACME_HOST=yourdomain.tld" \
     --env "ACME_PRE_HOOK=echo 'start'" \
     nginx
 ```
@@ -51,7 +51,7 @@ And on a proxied container (setting a per-container Post-Hook):
 $ docker run --detach \
     --name your-proxyed-app \
     --env "VIRTUAL_HOST=yourdomain.tld" \
-    --env "LETSENCRYPT_HOST=yourdomain.tld" \
+    --env "ACME_HOST=yourdomain.tld" \
     --env "ACME_POST_HOOK=echo 'start'" \
     nginx
 ```
