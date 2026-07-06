@@ -13,13 +13,17 @@
 LETSENCRYPT_CONTAINERS=(
 {{ $orderedContainers := sortObjectsByKeysDesc $ "Created" }}
 {{ range $_, $container := $orderedContainers }}
-    {{ $hosts := trim (coalesce $container.Env.ACME_HOST $container.Env.LETSENCRYPT_HOST "") }}
+    {{ $rawHosts := trim (coalesce $container.Env.ACME_HOST $container.Env.LETSENCRYPT_HOST "") }}
+    {{ $hosts := trimSuffix "," $rawHosts }}
     {{ if $hosts }}
         {{ if parseBool (coalesce $container.Env.LETSENCRYPT_SINGLE_DOMAIN_CERTS "false") }}
             {{/* Explicit per-domain splitting of the certificate */}}
             {{ range $host := split $hosts "," }}
                 {{ $host := trim $host }}
-                {{- "\n\t" }}'{{ printf "%.12s" $container.ID }}_{{ sha1 $host }}' # {{ $container.Name }}, created at {{ $container.Created }}
+                {{ $host := trimSuffix "." $host }}
+                {{- if $host }}
+                    {{- "\n\t" }}'{{ printf "%.12s" $container.ID }}_{{ sha1 $host }}' # {{ $container.Name }}, created at {{ $container.Created }}
+                {{- end }}
             {{ end }}
         {{ else }}
             {{/* Default: multi-domain (SAN) certificate */}}
@@ -91,7 +95,9 @@ LETSENCRYPT_CONTAINERS=(
                     {{- range $host := split $hosts "," }}
                         {{- $host := trim $host }}
                         {{- $host := trimSuffix "." $host }}
-                        {{- "\n\t" }}'{{ $host }}'
+                        {{- if $host }}
+                            {{- "\n\t" }}'{{ $host }}'
+                        {{- end }}
                     {{- end }}
             {{- "\n" }})
             {{- "\n" }}LETSENCRYPT_{{ $cid }}_KEYSIZE="{{ $KEYSIZE }}"
