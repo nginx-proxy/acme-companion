@@ -586,7 +586,11 @@ function update_certs {
         update_cert "$cid" "${1:-}"
     done
 
-    cleanup_links && should_reload_nginx='true'
+    # Only cleanup once docker-gen has generated the service data file, otherwise
+    # cleanup_links would prune symlinks of still valid certificates (issue #956).
+    if [[ -f /app/letsencrypt_service_data ]]; then
+        cleanup_links && should_reload_nginx='true'
+    fi
 
     [[ "$should_reload_nginx" == 'true' ]] && reload_nginx
 

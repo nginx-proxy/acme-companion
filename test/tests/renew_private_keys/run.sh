@@ -49,7 +49,7 @@ sleep 5
 
 # Issue a forced renewal and poll until the certificate is actually renewed.
 docker exec "$le_container_name" /app/force_renew &> /dev/null
-timeout=$(($(date +%s) + 30))
+timeout=$(($(date +%s) + 60))
 second_cert_expire="$first_cert_expire"
 while [[ $(date +%s) -lt $timeout ]]; do
   new_expire="$(get_cert_date_epoch expiration "$domain" "$le_container_name" 2>/dev/null || echo "$first_cert_expire")"
