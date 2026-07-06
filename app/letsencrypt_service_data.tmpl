@@ -12,13 +12,18 @@
 
 LETSENCRYPT_CONTAINERS=(
 {{ $orderedContainers := sortObjectsByKeysDesc $ "Created" }}
-{{ range $_, $container := whereExist $orderedContainers "Env.LETSENCRYPT_HOST" }}
-    {{ if trim $container.Env.LETSENCRYPT_HOST }}
+{{ range $_, $container := $orderedContainers }}
+    {{ $rawHosts := trim (coalesce $container.Env.ACME_HOST $container.Env.LETSENCRYPT_HOST "") }}
+    {{ $hosts := trimSuffix "," $rawHosts }}
+    {{ if $hosts }}
         {{ if parseBool (coalesce $container.Env.LETSENCRYPT_SINGLE_DOMAIN_CERTS "false") }}
             {{/* Explicit per-domain splitting of the certificate */}}
-            {{ range $host := split $container.Env.LETSENCRYPT_HOST "," }}
+            {{ range $host := split $hosts "," }}
                 {{ $host := trim $host }}
-                {{- "\n\t" }}'{{ printf "%.12s" $container.ID }}_{{ sha1 $host }}' # {{ $container.Name }}, created at {{ $container.Created }}
+                {{ $host := trimSuffix "." $host }}
+                {{- if $host }}
+                    {{- "\n\t" }}'{{ printf "%.12s" $container.ID }}_{{ sha1 $host }}' # {{ $container.Name }}, created at {{ $container.Created }}
+                {{- end }}
             {{ end }}
         {{ else }}
             {{/* Default: multi-domain (SAN) certificate */}}
@@ -28,9 +33,11 @@ LETSENCRYPT_CONTAINERS=(
 {{ end }}
 )
 
-{{ range $hosts, $containers := groupBy $ "Env.LETSENCRYPT_HOST" }}
-    {{ $hosts := trimSuffix "," $hosts }}
-    {{ range $container := $containers }}
+{{ range $_, $container := $orderedContainers }}
+    {{/* ACME_HOST is preferred, LETSENCRYPT_HOST kept for backward compatibility. */}}
+    {{ $rawHosts := trim (coalesce $container.Env.ACME_HOST $container.Env.LETSENCRYPT_HOST "") }}
+    {{ $hosts := trimSuffix "," $rawHosts }}
+    {{ if $hosts }}
         {{/* Trim spaces and set empty values on per-container environment variables */}}
         {{ $KEYSIZE := trim (coalesce $container.Env.LETSENCRYPT_KEYSIZE "") }}
         {{ $STAGING := trim (coalesce $container.Env.LETSENCRYPT_TEST "") }}
@@ -57,7 +64,7 @@ LETSENCRYPT_CONTAINERS=(
                 {{ $host := trim $host }}
                 {{ $host := trimSuffix "." $host }}
                 {{ $hostHash := sha1 $host }}
-                {{- "\n" }}LETSENCRYPT_{{ $cid }}_{{ $hostHash }}_HOST=('{{ $host }}')
+                {{- "\n" }}ACME_{{ $cid }}_{{ $hostHash }}_HOST=('{{ $host }}')
                 {{- "\n" }}LETSENCRYPT_{{ $cid }}_{{ $hostHash }}_KEYSIZE="{{ $KEYSIZE }}"
                 {{- "\n" }}LETSENCRYPT_{{ $cid }}_{{ $hostHash }}_TEST="{{ $STAGING }}"
                 {{- "\n" }}LETSENCRYPT_{{ $cid }}_{{ $hostHash }}_EMAIL="{{ $EMAIL }}"
@@ -84,11 +91,13 @@ LETSENCRYPT_CONTAINERS=(
             {{ end }}
         {{ else }}
             {{/* Default: multi-domain (SAN) certificate */}}
-            {{- "\n" }}LETSENCRYPT_{{ $cid }}_HOST=( 
+            {{- "\n" }}ACME_{{ $cid }}_HOST=( 
                     {{- range $host := split $hosts "," }}
                         {{- $host := trim $host }}
                         {{- $host := trimSuffix "." $host }}
-                        {{- "\n\t" }}'{{ $host }}'
+                        {{- if $host }}
+                            {{- "\n\t" }}'{{ $host }}'
+                        {{- end }}
                     {{- end }}
             {{- "\n" }})
             {{- "\n" }}LETSENCRYPT_{{ $cid }}_KEYSIZE="{{ $KEYSIZE }}"

@@ -27,7 +27,9 @@ trap cleanup EXIT
 
 # Run a separate nginx container for each domain in the $domains array.
 # Start all the containers in a row so that docker-gen debounce timers fire only once.
-for domain in "${domains[@]}"; do
+# Keep one container on legacy LETSENCRYPT_HOST to ensure backward compatibility.
+run_nginx_container --hosts "${domains[0]}" --legacy-host-var
+for domain in "${domains[@]:1}"; do
   run_nginx_container --hosts "$domain"
 done
 

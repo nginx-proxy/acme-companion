@@ -41,7 +41,7 @@ for hosts in "${letsencrypt_hosts[@]}"; do
 
   container="test$i"
 
-  # Run an Nginx container passing one of the comma separated list as LETSENCRYPT_HOST env var.
+  # Run an Nginx container passing one of the comma separated lists as ACME_HOST env var.
   run_nginx_container --hosts "${hosts}" --name "$container" --cli-args "--env LETSENCRYPT_SINGLE_DOMAIN_CERTS=true"
 
   for domain in "${domains[@]}"; do

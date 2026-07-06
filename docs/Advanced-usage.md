@@ -63,7 +63,7 @@ $ docker run --detach \
     nginxproxy/acme-companion
 ```
 
-### Step 4 - proxyed container(s)
+### Step 4 - proxied container(s)
 
 * Once the three containers are up, start any containers to be proxied as described in [basic usage](./Basic-usage.md).
 
@@ -71,7 +71,7 @@ $ docker run --detach \
 $ docker run --detach \
     --name your-proxyed-app \
     --env "VIRTUAL_HOST=subdomain.yourdomain.tld" \
-    --env "LETSENCRYPT_HOST=subdomain.yourdomain.tld" \
+    --env "ACME_HOST=subdomain.yourdomain.tld" \
     nginx
 ```
 
