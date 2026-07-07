@@ -552,8 +552,10 @@ function update_cert {
     fi
 
     # Restart container if certs are updated and the respective environmental variable is set
-    local -n restart_container="LETSENCRYPT_${cid}_RESTART_CONTAINER"
-    if [[ $(lc "$restart_container") == true ]] && [[ "$should_restart_container" == 'true' ]]; then
+    local -n legacy_restart_container_on_cert_update="LETSENCRYPT_${cid}_RESTART_CONTAINER"
+    local -n restart_container_on_cert_update="ACME_${cid}_RESTART_CONTAINER"
+    restart_container_on_cert_update="${restart_container_on_cert_update:-${legacy_restart_container_on_cert_update:-false}}"
+    if parse_true "$restart_container_on_cert_update" && parse_true "$should_restart_container"; then
         echo "Restarting container (${cid})..."
         docker_restart "${cid}"
     fi
