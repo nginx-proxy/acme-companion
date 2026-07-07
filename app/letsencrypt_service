@@ -279,9 +279,9 @@ function update_cert {
         return 1
     fi
 
-    local -n legacy_cert_keysize="LETSENCRYPT_${cid}_KEYSIZE"
-    local -n cert_keysize="ACME_${cid}_KEYSIZE"
-    cert_keysize="${cert_keysize:-${legacy_cert_keysize}}"
+    local -n legacy_cert_keysize_ref="LETSENCRYPT_${cid}_KEYSIZE"
+    local -n cert_keysize_ref="ACME_${cid}_KEYSIZE"
+    cert_keysize="${cert_keysize_ref:-${legacy_cert_keysize_ref}}"
     if [[ -z "$cert_keysize" ]] || \
         [[ ! "$cert_keysize" =~ ^('2048'|'3072'|'4096'|'8192'|'ec-256'|'ec-384'|'ec-521')$ ]]; then
         cert_keysize=$DEFAULT_KEY_SIZE
@@ -294,9 +294,9 @@ function update_cert {
         params_issue_arr+=(--ocsp-must-staple)
     fi
 
-    local -n legacy_accountemail="LETSENCRYPT_${cid}_EMAIL"
-    local -n accountemail="ACME_${cid}_EMAIL"
-    accountemail="${accountemail:-${legacy_accountemail}}"
+    local -n legacy_accountemail_ref="LETSENCRYPT_${cid}_EMAIL"
+    local -n accountemail_ref="ACME_${cid}_EMAIL"
+    accountemail="${accountemail_ref:-${legacy_accountemail_ref}}"
     local config_home
     # If we don't have an ACME_EMAIL from the proxied container
     # and DEFAULT_EMAIL is set to a non empty value, use the latter.
@@ -552,8 +552,10 @@ function update_cert {
     fi
 
     # Restart container if certs are updated and the respective environmental variable is set
-    local -n restart_container="LETSENCRYPT_${cid}_RESTART_CONTAINER"
-    if [[ $(lc "$restart_container") == true ]] && [[ "$should_restart_container" == 'true' ]]; then
+    local -n legacy_restart_container_on_cert_update="LETSENCRYPT_${cid}_RESTART_CONTAINER"
+    local -n restart_container_on_cert_update="ACME_${cid}_RESTART_CONTAINER"
+    restart_container_on_cert_update="${restart_container_on_cert_update:-${legacy_restart_container_on_cert_update:-false}}"
+    if parse_true "$restart_container_on_cert_update" && parse_true "$should_restart_container"; then
         echo "Restarting container (${cid})..."
         docker_restart "${cid}"
     fi

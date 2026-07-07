@@ -134,7 +134,7 @@ The `ACME_CERT_PROFILE` environment variable is used to select a specific profil
 
 #### Container restart on cert renewal
 
-The `LETSENCRYPT_RESTART_CONTAINER` environment variable, when set to `true` on an application container, will restart this container whenever the corresponding cert (`ACME_HOST`) is renewed. This is useful when certificates are directly used inside a container for other purposes than HTTPS (e.g. an FTPS server), to make sure those containers always use an up to date certificate.
+The `ACME_RESTART_CONTAINER` environment variable, when set to `true` on an application container, will restart this container whenever the corresponding cert (`ACME_HOST`) is renewed. This is useful when certificates are directly used inside a container for other purposes than HTTPS (e.g. an FTPS server), to make sure those containers always use an up to date certificate.
 
 #### Pre-Hook and Post-Hook
 

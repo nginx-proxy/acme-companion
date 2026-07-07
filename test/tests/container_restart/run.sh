@@ -1,6 +1,6 @@
 #!/bin/bash
 
-## Test for LETSENCRYPT_RESTART_CONTAINER variable.
+## Test for ACME_RESTART_CONTAINER variable, with backward compatibility for LETSENCRYPT_RESTART_CONTAINER.
 
 if [[ -z $GITHUB_ACTIONS ]]; then
   le_container_name="$(basename "${0%/*}")_$(date "+%Y-%m-%d_%H.%M.%S")"
@@ -37,7 +37,14 @@ trap cleanup EXIT
 
 # Run a separate nginx container for each domain in the $domains array.
 for domain in "${domains[@]}"; do
-  run_nginx_container --hosts "$domain" --cli-args "--env LETSENCRYPT_RESTART_CONTAINER=true"
+  if [[ "$domain" == "${domains[0]}" ]]; then
+    # Use the legacy environment variable name for the first domain to test backward compatibility.
+    restart_container_env_var="LETSENCRYPT_RESTART_CONTAINER"
+  else
+    restart_container_env_var="ACME_RESTART_CONTAINER"
+  fi
+
+  run_nginx_container --hosts "$domain" --cli-args "--env ${restart_container_env_var}=true"
 
   # Check if container restarted
   timeout="$(date +%s)"
