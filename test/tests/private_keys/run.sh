@@ -39,20 +39,25 @@ key_types=( \
 for key in "${!key_types[@]}"; do
 
   # Run an Nginx container with the wanted key type.
-  run_nginx_container --hosts "${domains[0]}" --name "${key}" --cli-args "--env LETSENCRYPT_KEYSIZE=${key}"
+  run_nginx_container --hosts "${domains[0]}" --name "${key}" --cli-args "--env ACME_KEYSIZE=${key}"
+
+  # Run an Nginx container with the wanted key type and the legacy environment variable name.
+  run_nginx_container --hosts "${domains[1]}" --name "${key}-legacy" --cli-args "--env LETSENCRYPT_KEYSIZE=${key}"
 
   # Grep the expected string from the public key in text form.
-  if wait_for_symlink "${domains[0]}" "$le_container_name"; then
-    public_key=$(docker exec "$le_container_name" openssl pkey -in "/etc/nginx/certs/${domains[0]}.key" -noout -text_pub)
-    if ! grep -q "${key_types[$key]}" <<< "$public_key"; then
-      echo "Keys for test $key were not of the correct type, expected ${key_types[$key]} and got the following:"
-      echo "$public_key"
+  for domain in "${domains[@]:0:2}"; do
+    if wait_for_symlink "$domain" "$le_container_name"; then
+      public_key=$(docker exec "$le_container_name" openssl pkey -in "/etc/nginx/certs/${domain}.key" -noout -text_pub)
+      if ! grep -q "${key_types[$key]}" <<< "$public_key"; then
+        echo "Private key for test $key and domain $domain was not of the correct type, expected ${key_types[$key]} and got the following:"
+        echo "$public_key"
+      fi
+    else
+      echo "${key_types[$key]} key test timed out for domain $domain"
     fi
-  else
-    echo "${key_types[$key]} key test timed out"
-  fi
+  done
 
-  docker stop "${key}" &> /dev/null
+  docker stop "${key}" "${key}-legacy" &> /dev/null
   docker exec "$le_container_name" /app/cleanup_test_artifacts
 
 done
