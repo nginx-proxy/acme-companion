@@ -126,7 +126,7 @@ $ docker run --detach \
     --env "VIRTUAL_HOST=othersubdomain.yourdomain.tld" \
     --env "VIRTUAL_PORT=3000" \
     --env "ACME_HOST=othersubdomain.yourdomain.tld" \
-    --env "LETSENCRYPT_EMAIL=mail@yourdomain.tld" \
+    --env "ACME_EMAIL=mail@yourdomain.tld" \
     grafana/grafana
 ```
 

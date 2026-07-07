@@ -294,9 +294,11 @@ function update_cert {
         params_issue_arr+=(--ocsp-must-staple)
     fi
 
-    local -n accountemail="LETSENCRYPT_${cid}_EMAIL"
+    local -n legacy_accountemail="LETSENCRYPT_${cid}_EMAIL"
+    local -n accountemail="ACME_${cid}_EMAIL"
+    accountemail="${accountemail:-${legacy_accountemail}}"
     local config_home
-    # If we don't have a LETSENCRYPT_EMAIL from the proxied container
+    # If we don't have an ACME_EMAIL from the proxied container
     # and DEFAULT_EMAIL is set to a non empty value, use the latter.
     if [[ -z "$accountemail" ]]; then
         if [[ -n "${DEFAULT_EMAIL// }" ]]; then
@@ -318,7 +320,7 @@ function update_cert {
         # Use default or user provided ACME end point
         acme_ca_uri="$ACME_CA_URI"
     fi
-    # LETSENCRYPT_TEST overrides LETSENCRYPT_ACME_CA_URI
+    # LETSENCRYPT_TEST overrides ACME_CA_URI
     local -n test_certificate="LETSENCRYPT_${cid}_TEST"
     if [[ $(lc "$test_certificate") == true ]]; then
         # Use Let's Encrypt ACME V2 staging end point
@@ -389,7 +391,7 @@ function update_cert {
             else
                 echo "Warning: registering a new ACME account with EAB but no contact email." \
                     "Some ACME CAs require one, so registration may fail." \
-                    "Set LETSENCRYPT_EMAIL or DEFAULT_EMAIL to provide it."
+                    "Set ACME_EMAIL or DEFAULT_EMAIL to provide it."
             fi
         fi
     fi

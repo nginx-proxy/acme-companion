@@ -36,11 +36,11 @@ container_email="contact@${domains[0]}"
 
 # Run an nginx container inheriting the companion container profile.
 run_nginx_container --hosts "${domains[0]}" \
-  --cli-args "--env LETSENCRYPT_EMAIL=${container_email}"
+  --cli-args "--env ACME_EMAIL=${container_email}"
 
 # Run an nginx container overriding the companion container profile.
 run_nginx_container --hosts "${domains[1]}" \
-  --cli-args "--env LETSENCRYPT_EMAIL=${container_email}" \
+  --cli-args "--env ACME_EMAIL=${container_email}" \
   --cli-args "--env ACME_CERT_PROFILE=${shortlived_profile}"
 
 # Wait for issuance of both certificates.

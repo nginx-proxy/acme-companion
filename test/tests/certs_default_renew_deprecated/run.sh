@@ -43,9 +43,9 @@ fi
 container_email="contact@${domains[0]}"
 acme_config_file="/etc/acme.sh/$container_email/${domains[0]}/${domains[0]}.conf"
 
-# Run a nginx container for ${domains[0]} with LETSENCRYPT_EMAIL set.
+# Run a nginx container for ${domains[0]} with ACME_EMAIL set.
 run_nginx_container --hosts "${domains[0]}" \
-  --cli-args "--env LETSENCRYPT_EMAIL=${container_email}"
+  --cli-args "--env ACME_EMAIL=${container_email}"
 
 # Wait for a symlink at /etc/nginx/certs/${domains[0]}.crt
 wait_for_symlink "${domains[0]}" "$le_container_name"

@@ -70,7 +70,7 @@ default_email="contact@${domains[1]}"
 le_container_name="${le_container_name}_default"
 run_le_container "${1:?}" "$le_container_name" "--env DEFAULT_EMAIL=${default_email}"
 
-# Run an nginx container for ${domains[1]} without LETSENCRYPT_EMAIL set.
+# Run an nginx container for ${domains[1]} without ACME_EMAIL set.
 run_nginx_container --hosts "${domains[1]}"
 
 # Wait for a symlink at /etc/nginx/certs/${domains[1]}.crt
@@ -87,9 +87,9 @@ elif [[ "$(docker exec "$le_container_name" jq -r '.contact|.[0]' "$json_file")"
   docker exec "$le_container_name" jq . "$json_file"
 fi
 
-# Run an nginx container for ${domains[2]} with LETSENCRYPT_EMAIL set.
+# Run an nginx container for ${domains[2]} with ACME_EMAIL set.
 container_email="contact@${domains[2]}"
-run_nginx_container --hosts "${domains[2]}" --cli-args "--env LETSENCRYPT_EMAIL=${container_email}"
+run_nginx_container --hosts "${domains[2]}" --cli-args "--env ACME_EMAIL=${container_email}"
 
 # Wait for a symlink at /etc/nginx/certs/${domains[2]}.crt
 wait_for_symlink "${domains[2]}" "$le_container_name"
@@ -102,6 +102,28 @@ elif docker exec "$le_container_name" [[ ! -f "$json_file" ]]; then
   echo "The $json_file file does not exist."
 elif [[ "$(docker exec "$le_container_name" jq -r '.contact|.[0]' "$json_file")" != "mailto:${container_email}" ]]; then
   echo "$default_email is not set on ${json_file}."
+  docker exec "$le_container_name" jq . "$json_file"
+fi
+
+# Stop ${domains[2]} then cleanup test artifacts to force a fresh account registration.
+docker stop "${domains[2]}" &> /dev/null
+docker exec "$le_container_name" /app/cleanup_test_artifacts
+
+# Run an nginx container for ${domains[2]} with legacy LETSENCRYPT_EMAIL set.
+legacy_container_email="legacy-contact@${domains[2]}"
+run_nginx_container --hosts "${domains[2]}" --cli-args "--env LETSENCRYPT_EMAIL=${legacy_container_email}"
+
+# Wait for a symlink at /etc/nginx/certs/${domains[2]}.crt
+wait_for_symlink "${domains[2]}" "$le_container_name"
+
+# Test if the expected folder / file / content are there.
+json_file="/etc/acme.sh/${legacy_container_email}/ca/$account_dir/account.json"
+if docker exec "$le_container_name" [[ ! -d "/etc/acme.sh/$legacy_container_email" ]]; then
+  echo "The /etc/acme.sh/$legacy_container_email folder does not exist."
+elif docker exec "$le_container_name" [[ ! -f "$json_file" ]]; then
+  echo "The $json_file file does not exist."
+elif [[ "$(docker exec "$le_container_name" jq -r '.contact|.[0]' "$json_file")" != "mailto:${legacy_container_email}" ]]; then
+  echo "$legacy_container_email is not set on ${json_file}."
   docker exec "$le_container_name" jq . "$json_file"
 fi
 

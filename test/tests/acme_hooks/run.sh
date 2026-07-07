@@ -37,13 +37,13 @@ trap cleanup EXIT
 
 container_email="contact@${domains[0]}"
 
-# Run an nginx container for ${domains[0]} with LETSENCRYPT_EMAIL set.
+# Run an nginx container for ${domains[0]} with ACME_EMAIL set.
 run_nginx_container --hosts "${domains[0]}" \
-  --cli-args "--env LETSENCRYPT_EMAIL=${container_email}"
+  --cli-args "--env ACME_EMAIL=${container_email}"
 
-# Run an nginx container for ${domains[1]} with LETSENCRYPT_EMAIL, ACME_PRE_HOOK and ACME_POST_HOOK set.
+# Run an nginx container for ${domains[1]} with ACME_EMAIL, ACME_PRE_HOOK and ACME_POST_HOOK set.
 run_nginx_container --hosts "${domains[1]}" \
-  --cli-args "--env LETSENCRYPT_EMAIL=${container_email}" \
+  --cli-args "--env ACME_EMAIL=${container_email}" \
   --cli-args "--env ACME_PRE_HOOK=$percontainer_pre_hook_command" \
   --cli-args "--env ACME_POST_HOOK=$percontainer_post_hook_command"
 
