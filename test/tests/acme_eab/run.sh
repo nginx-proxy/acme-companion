@@ -39,10 +39,10 @@ trap cleanup EXIT
 # Run an nginx container for ${domains[0]}.
 run_nginx_container --hosts "${domains[0]}"
 
-# Run an nginx container for ${domains[1]} with LETSENCRYPT_EMAIL and ACME_EAB_* set.
+# Run an nginx container for ${domains[1]} with ACME_EMAIL and ACME_EAB_* set.
 container_email="contact@${domains[1]}"
 run_nginx_container --hosts "${domains[1]}"  \
-  --cli-args "--env LETSENCRYPT_EMAIL=${container_email}" \
+  --cli-args "--env ACME_EMAIL=${container_email}" \
   --cli-args "--env ACME_EAB_KID=kid-2" \
   --cli-args "--env ACME_EAB_HMAC_KEY=${eab[kid-2]}"
 

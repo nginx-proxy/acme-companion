@@ -34,9 +34,9 @@ acme_next_renew_time_key="Le_NextRenewTime="
 container_email="contact@${domains[0]}"
 acme_config_file="/etc/acme.sh/$container_email/${domains[0]}/${domains[0]}.conf"
 
-# Run a nginx container for ${domains[0]} with LETSENCRYPT_EMAIL set.
+# Run a nginx container for ${domains[0]} with ACME_EMAIL set.
 run_nginx_container --hosts "${domains[0]}" \
-  --cli-args "--env LETSENCRYPT_EMAIL=${container_email}"
+  --cli-args "--env ACME_EMAIL=${container_email}"
 
 # Wait for a symlink at /etc/nginx/certs/${domains[0]}.crt
 wait_for_symlink "${domains[0]}" "$le_container_name"
@@ -63,9 +63,9 @@ container_renew=30
 container_email_2="contact@${domains[1]}"
 acme_config_file_2="/etc/acme.sh/$container_email_2/${domains[1]}/${domains[1]}.conf"
 
-# Run a nginx container for ${domains[0]} with LETSENCRYPT_EMAIL and ACME_RENEW_AFTER set.
+# Run a nginx container for ${domains[1]} with ACME_EMAIL and ACME_RENEW_AFTER set.
 run_nginx_container --hosts "${domains[1]}" \
-  --cli-args "--env LETSENCRYPT_EMAIL=${container_email_2}" \
+  --cli-args "--env ACME_EMAIL=${container_email_2}" \
   --cli-args "--env ACME_RENEW_AFTER=$container_renew"
 
 # Wait for a symlink at /etc/nginx/certs/${domains[1]}.crt

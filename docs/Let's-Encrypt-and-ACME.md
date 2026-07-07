@@ -103,7 +103,7 @@ Every hour (3600 seconds) the certificates are checked and per default every cer
 
 #### Contact address
 
-The `LETSENCRYPT_EMAIL` environment variable must be a valid email and can be used to recover an account.
+The `ACME_EMAIL` environment variable must be a valid email and can be used to recover an account.
 
 #### Private key size
 
@@ -149,7 +149,7 @@ The `ACME_RENEW_AFTER` environment variable can be set on an application contain
 
 #### Default contact address
 
-The `DEFAULT_EMAIL` variable must be a valid email and, when set on the **acme-companion** container, will be used as a fallback when no email address is provided using proxied container's `LETSENCRYPT_EMAIL` environment variables. It is highly recommended to set this variable to a valid email address that you own.
+The `DEFAULT_EMAIL` variable must be a valid email and, when set on the **acme-companion** container, will be used as a fallback when no email address is provided using proxied container's `ACME_EMAIL` environment variables. It is highly recommended to set this variable to a valid email address that you own.
 
 #### Private key re-utilization
 
@@ -165,7 +165,7 @@ Reusing private keys can help if you intend to use [HPKP](https://developer.mozi
 - When in testing mode (`LETSENCRYPT_TEST=true`):
     1. The container will use the special purpose `staging` configuration directory.
     1. The directory URI is forced to The Let's Encrypt v2 staging one (`ACME_CA_URI` is ignored)
-    2. The account email address is forced empty (`DEFAULT_EMAIL` and `LETSENCRYPT_EMAIL` are ignored)
+    2. The account email address is forced empty (`DEFAULT_EMAIL` and `ACME_EMAIL` are ignored)
 
 #### Default certificate profile
 

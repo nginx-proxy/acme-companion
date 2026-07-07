@@ -41,7 +41,7 @@ LETSENCRYPT_CONTAINERS=(
         {{/* Trim spaces and set empty values on per-container environment variables */}}
         {{ $KEYSIZE := trim (coalesce $container.Env.ACME_KEYSIZE $container.Env.LETSENCRYPT_KEYSIZE "") }}
         {{ $STAGING := trim (coalesce $container.Env.LETSENCRYPT_TEST "") }}
-        {{ $EMAIL := trim (coalesce $container.Env.LETSENCRYPT_EMAIL "") }}
+        {{ $EMAIL := trim (coalesce $container.Env.ACME_EMAIL $container.Env.LETSENCRYPT_EMAIL "") }}
         {{ $CA_URI := trim (coalesce $container.Env.ACME_CA_URI "") }}
         {{ $ACME_CHALLENGE := trim (coalesce $container.Env.ACME_CHALLENGE "") }}
         {{ $ACME_CERT_PROFILE := trim (coalesce $container.Env.ACME_CERT_PROFILE "") }}
@@ -67,7 +67,7 @@ LETSENCRYPT_CONTAINERS=(
                 {{- "\n" }}ACME_{{ $cid }}_{{ $hostHash }}_HOST=('{{ $host }}')
                 {{- "\n" }}ACME_{{ $cid }}_{{ $hostHash }}_KEYSIZE="{{ $KEYSIZE }}"
                 {{- "\n" }}LETSENCRYPT_{{ $cid }}_{{ $hostHash }}_TEST="{{ $STAGING }}"
-                {{- "\n" }}LETSENCRYPT_{{ $cid }}_{{ $hostHash }}_EMAIL="{{ $EMAIL }}"
+                {{- "\n" }}ACME_{{ $cid }}_{{ $hostHash }}_EMAIL="{{ $EMAIL }}"
                 {{- "\n" }}ACME_{{ $cid }}_{{ $hostHash }}_CA_URI="{{ $CA_URI }}"
                 {{- "\n" }}ACME_{{ $cid }}_{{ $hostHash }}_CHALLENGE="{{ $ACME_CHALLENGE }}"
                 {{- "\n" }}ACME_{{ $cid }}_{{ $hostHash }}_CERT_PROFILE="{{ $ACME_CERT_PROFILE }}"
@@ -102,7 +102,7 @@ LETSENCRYPT_CONTAINERS=(
             {{- "\n" }})
             {{- "\n" }}ACME_{{ $cid }}_KEYSIZE="{{ $KEYSIZE }}"
             {{- "\n" }}LETSENCRYPT_{{ $cid }}_TEST="{{ $STAGING }}"
-            {{- "\n" }}LETSENCRYPT_{{ $cid }}_EMAIL="{{ $EMAIL }}"
+            {{- "\n" }}ACME_{{ $cid }}_EMAIL="{{ $EMAIL }}"
             {{- "\n" }}ACME_{{ $cid }}_CA_URI="{{ $CA_URI }}"
             {{- "\n" }}ACME_{{ $cid }}_CHALLENGE="{{ $ACME_CHALLENGE }}"
             {{- "\n" }}ACME_{{ $cid }}_CERT_PROFILE="{{ $ACME_CERT_PROFILE }}"
