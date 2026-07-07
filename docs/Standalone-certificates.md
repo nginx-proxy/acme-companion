@@ -78,7 +78,7 @@ Single bash variables:
 
 `LETSENCRYPT_uniqueidentifier_EMAIL` : must be a valid email and will be used by Let's Encrypt to warn you of impeding certificate expiration (should the automated renewal fail).
 
-`LETSENCRYPT_uniqueidentifier_KEYSIZE` : determines the size of the requested private key. See [private key size](./Let's-Encrypt-and-ACME.md#private-key-size) for accepted values.
+`ACME_uniqueidentifier_KEYSIZE` : determines the size of the requested private key. See [private key size](./Let's-Encrypt-and-ACME.md#private-key-size) for accepted values.
 
 `LETSENCRYPT_uniqueidentifier_TEST` : if set to true, the corresponding certificate will be a test certificates: it won't have the 5 certs/week/domain limits and will be signed by an untrusted intermediate (ie it won't be trusted by browsers).
 

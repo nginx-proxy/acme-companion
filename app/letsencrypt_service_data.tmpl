@@ -39,7 +39,7 @@ LETSENCRYPT_CONTAINERS=(
     {{ $hosts := trimSuffix "," $rawHosts }}
     {{ if $hosts }}
         {{/* Trim spaces and set empty values on per-container environment variables */}}
-        {{ $KEYSIZE := trim (coalesce $container.Env.LETSENCRYPT_KEYSIZE "") }}
+        {{ $KEYSIZE := trim (coalesce $container.Env.ACME_KEYSIZE $container.Env.LETSENCRYPT_KEYSIZE "") }}
         {{ $STAGING := trim (coalesce $container.Env.LETSENCRYPT_TEST "") }}
         {{ $EMAIL := trim (coalesce $container.Env.LETSENCRYPT_EMAIL "") }}
         {{ $CA_URI := trim (coalesce $container.Env.ACME_CA_URI "") }}
@@ -65,7 +65,7 @@ LETSENCRYPT_CONTAINERS=(
                 {{ $host := trimSuffix "." $host }}
                 {{ $hostHash := sha1 $host }}
                 {{- "\n" }}ACME_{{ $cid }}_{{ $hostHash }}_HOST=('{{ $host }}')
-                {{- "\n" }}LETSENCRYPT_{{ $cid }}_{{ $hostHash }}_KEYSIZE="{{ $KEYSIZE }}"
+                {{- "\n" }}ACME_{{ $cid }}_{{ $hostHash }}_KEYSIZE="{{ $KEYSIZE }}"
                 {{- "\n" }}LETSENCRYPT_{{ $cid }}_{{ $hostHash }}_TEST="{{ $STAGING }}"
                 {{- "\n" }}LETSENCRYPT_{{ $cid }}_{{ $hostHash }}_EMAIL="{{ $EMAIL }}"
                 {{- "\n" }}ACME_{{ $cid }}_{{ $hostHash }}_CA_URI="{{ $CA_URI }}"
@@ -100,7 +100,7 @@ LETSENCRYPT_CONTAINERS=(
                         {{- end }}
                     {{- end }}
             {{- "\n" }})
-            {{- "\n" }}LETSENCRYPT_{{ $cid }}_KEYSIZE="{{ $KEYSIZE }}"
+            {{- "\n" }}ACME_{{ $cid }}_KEYSIZE="{{ $KEYSIZE }}"
             {{- "\n" }}LETSENCRYPT_{{ $cid }}_TEST="{{ $STAGING }}"
             {{- "\n" }}LETSENCRYPT_{{ $cid }}_EMAIL="{{ $EMAIL }}"
             {{- "\n" }}ACME_{{ $cid }}_CA_URI="{{ $CA_URI }}"

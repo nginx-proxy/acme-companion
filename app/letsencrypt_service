@@ -279,7 +279,9 @@ function update_cert {
         return 1
     fi
 
-    local -n cert_keysize="LETSENCRYPT_${cid}_KEYSIZE"
+    local -n legacy_cert_keysize="LETSENCRYPT_${cid}_KEYSIZE"
+    local -n cert_keysize="ACME_${cid}_KEYSIZE"
+    cert_keysize="${cert_keysize:-${legacy_cert_keysize}}"
     if [[ -z "$cert_keysize" ]] || \
         [[ ! "$cert_keysize" =~ ^('2048'|'3072'|'4096'|'8192'|'ec-256'|'ec-384'|'ec-521')$ ]]; then
         cert_keysize=$DEFAULT_KEY_SIZE
