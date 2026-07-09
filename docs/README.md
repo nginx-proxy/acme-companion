@@ -10,6 +10,8 @@
 
 [Container utilities](./Container-utilities.md)
 
+[Environment variables reference](./Environment-variables-reference.md)
+
 #### Additional configuration:
 
 [Let's Encrypt / ACME](./Let's-Encrypt-and-ACME.md)

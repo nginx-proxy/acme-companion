@@ -54,8 +54,6 @@ Once both **nginx-proxy** and **acme-companion** containers are up and running, 
 
 Certificates will only be issued for containers that have both `VIRTUAL_HOST` and `ACME_HOST` variables set to domain(s) that correctly resolve to the host, provided the host is publicly reachable.
 
-For backward compatibility, `LETSENCRYPT_HOST` is still supported as an alternative to `ACME_HOST`.
-
 ```shell
 $ docker run --detach \
     --name your-proxyed-app \
