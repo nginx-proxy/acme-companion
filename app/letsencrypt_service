@@ -82,6 +82,7 @@ function get_hosts_array_var {
 
 function cleanup_links {
     local -a LETSENCRYPT_CONTAINERS
+    local -a ACME_STANDALONE_CERTS
     local -a LETSENCRYPT_STANDALONE_CERTS
     local -a ENABLED_DOMAINS
     local -a SYMLINKED_DOMAINS
@@ -102,7 +103,11 @@ function cleanup_links {
     # enabled (ie present on /app/letsencrypt_service_data or /app/letsencrypt_user_data).
     [[ -f /app/letsencrypt_service_data ]] && source /app/letsencrypt_service_data
     [[ -f /app/letsencrypt_user_data ]] && source /app/letsencrypt_user_data
-    LETSENCRYPT_CONTAINERS+=( "${LETSENCRYPT_STANDALONE_CERTS[@]}" )
+
+    # Backward compatibility: fall back to LETSENCRYPT_STANDALONE_CERTS if ACME_STANDALONE_CERTS is unset
+    [[ ${#ACME_STANDALONE_CERTS[@]} -eq 0 ]] && ACME_STANDALONE_CERTS=( "${LETSENCRYPT_STANDALONE_CERTS[@]}" )
+    LETSENCRYPT_CONTAINERS+=( "${ACME_STANDALONE_CERTS[@]}" )
+
     for cid in "${LETSENCRYPT_CONTAINERS[@]}"; do
       local hosts_var
       hosts_var="$(get_hosts_array_var "$cid")" || continue
@@ -574,6 +579,7 @@ function update_cert {
 
 function update_certs {
     local -a LETSENCRYPT_CONTAINERS
+    local -a ACME_STANDALONE_CERTS
     local -a LETSENCRYPT_STANDALONE_CERTS
 
     pushd /etc/nginx/certs > /dev/null || return
@@ -589,7 +595,10 @@ function update_certs {
     # Load settings for standalone certs
     if [[ -f /app/letsencrypt_user_data ]]; then
         if source /app/letsencrypt_user_data; then
-            for cid in "${LETSENCRYPT_STANDALONE_CERTS[@]}"; do
+            # Backward compatibility: fall back to LETSENCRYPT_STANDALONE_CERTS if ACME_STANDALONE_CERTS is unset
+            [[ ${#ACME_STANDALONE_CERTS[@]} -eq 0 ]] && ACME_STANDALONE_CERTS=( "${LETSENCRYPT_STANDALONE_CERTS[@]}" )
+
+            for cid in "${ACME_STANDALONE_CERTS[@]}"; do
                 local hosts_var
                 hosts_var="$(get_hosts_array_var "$cid")" || continue
                 local -n hosts_array="$hosts_var"
@@ -603,8 +612,9 @@ function update_certs {
                     done
                 fi
             done
+
             reload_nginx
-            LETSENCRYPT_CONTAINERS+=( "${LETSENCRYPT_STANDALONE_CERTS[@]}" )
+            LETSENCRYPT_CONTAINERS+=( "${ACME_STANDALONE_CERTS[@]}" )
         else
             echo "Warning: could not source /app/letsencrypt_user_data, skipping user data"
         fi

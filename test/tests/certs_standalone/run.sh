@@ -80,10 +80,10 @@ wait_for_standalone_conf_rm "${domains[0]}" "$le_container_name"
 docker exec "$le_container_name" bash -c "[[ -f /etc/nginx/conf.d/standalone-cert-${domains[0]}.conf ]]" \
   && echo "Standalone configuration for ${domains[0]} wasn't correctly removed."
 
-# Add another (SAN) certificate to letsencrypt_user_data and switch host arrays
-# to ACME_*_HOST to verify the new internal format.
+# Add another (SAN) certificate to letsencrypt_user_data and switch to the new
+# ACME_STANDALONE_CERTS variable to verify the new format.
 cat > "${GITHUB_WORKSPACE}/test/tests/certs_standalone/letsencrypt_user_data" <<EOF
-LETSENCRYPT_STANDALONE_CERTS=('single' 'san')
+ACME_STANDALONE_CERTS=('single' 'san')
 ACME_single_HOST=('${domains[0]}')
 ACME_san_HOST=('${domains[1]}' '${domains[2]}')
 EOF
