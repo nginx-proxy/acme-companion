@@ -10,7 +10,7 @@
 {{- end }}
 
 
-LETSENCRYPT_CONTAINERS=(
+ACME_CONTAINERS=(
 {{ $orderedContainers := sortObjectsByKeysDesc $ "Created" }}
 {{ range $_, $container := $orderedContainers }}
     {{ $rawHosts := trim (coalesce $container.Env.ACME_HOST $container.Env.LETSENCRYPT_HOST "") }}
