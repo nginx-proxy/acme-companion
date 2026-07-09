@@ -35,7 +35,7 @@ The user configuration file is a collection of bash variables and array, and fol
 
 Each identifier in `ACME_STANDALONE_CERTS` must have its own corresponding `ACME_uniqueidentifier_HOST` array, where the string `uniqueidentifier` has to be identical to that identifier.
 
-For backward compatibility, `LETSENCRYPT_STANDALONE_CERTS` is still supported as an alternative to `ACME_STANDALONE_CERTS`, and `LETSENCRYPT_uniqueidentifier_HOST` is still supported as an alternative to `ACME_uniqueidentifier_HOST`.
+For backward compatibility, `LETSENCRYPT_STANDALONE_CERTS` is still supported as an alternative to `ACME_STANDALONE_CERTS`. For other variables that have a `LETSENCRYPT_` legacy equivalent, see the [environment variables reference](./Environment-variables-reference.md).
 
 **Minimal example generating a single certificate for a single domain:**
 

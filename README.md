@@ -134,7 +134,7 @@ Repeat [Step 3](#step-3---proxied-containers) for any other container you want t
 
 ## Additional documentation
 
-Please check the [docs section](https://github.com/nginx-proxy/acme-companion/tree/main/docs).
+Please check the [docs section](https://github.com/nginx-proxy/acme-companion/tree/main/docs) and the [environment variables reference](https://github.com/nginx-proxy/acme-companion/blob/main/docs/Environment-variables-reference.md) for more information about the available configuration options.
 
 ## About this repository
 

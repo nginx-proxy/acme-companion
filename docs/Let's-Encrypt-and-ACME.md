@@ -6,8 +6,6 @@
 
 As described on [basic usage](./Basic-usage.md), the `ACME_HOST` environment variable needs to be declared in each to-be-proxied application container(s) for which you want to enable SSL and create certificate. It most likely needs to be the same as the `VIRTUAL_HOST` variable and must resolve to your host (which has to be publicly reachable).
 
-`LETSENCRYPT_HOST` is still accepted as an alternative to `ACME_HOST` for backward compatibility reasons.
-
 The following environment variables are optional and parametrize the way the Let's Encrypt client works.
 
 ### per proxied container
