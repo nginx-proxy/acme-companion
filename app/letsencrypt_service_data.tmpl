@@ -16,7 +16,7 @@ LETSENCRYPT_CONTAINERS=(
     {{ $rawHosts := trim (coalesce $container.Env.ACME_HOST $container.Env.LETSENCRYPT_HOST "") }}
     {{ $hosts := trimSuffix "," $rawHosts }}
     {{ if $hosts }}
-        {{ if parseBool (coalesce $container.Env.LETSENCRYPT_SINGLE_DOMAIN_CERTS "false") }}
+        {{ if parseBool (coalesce $container.Env.ACME_SINGLE_DOMAIN_CERTS $container.Env.LETSENCRYPT_SINGLE_DOMAIN_CERTS "false") }}
             {{/* Explicit per-domain splitting of the certificate */}}
             {{ range $host := split $hosts "," }}
                 {{ $host := trim $host }}
@@ -58,7 +58,7 @@ LETSENCRYPT_CONTAINERS=(
         {{ $RENEW_PRIVATE_KEYS := trim (coalesce $container.Env.ACME_RENEW_PRIVATE_KEYS "") }}
         {{ $cid := printf "%.12s" $container.ID }}
         {{- "\n" }}# Container {{ $cid }} ({{ $container.Name }})
-        {{ if parseBool (coalesce $container.Env.LETSENCRYPT_SINGLE_DOMAIN_CERTS "false") }}
+        {{ if parseBool (coalesce $container.Env.ACME_SINGLE_DOMAIN_CERTS $container.Env.LETSENCRYPT_SINGLE_DOMAIN_CERTS "false") }}
             {{/* Explicit per-domain splitting of the certificate */}}
             {{ range $host := split $hosts "," }}
                 {{ $host := trim $host }}

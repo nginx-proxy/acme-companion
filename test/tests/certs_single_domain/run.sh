@@ -1,6 +1,7 @@
 #!/bin/bash
 
-## Test for spliting SAN certificates into single domain certificates by NGINX container env variables
+## Test for splitting SAN certificates into single domain certificates by NGINX container env variables
+## Tests both ACME_SINGLE_DOMAIN_CERTS (current) and LETSENCRYPT_SINGLE_DOMAIN_CERTS (legacy) env vars.
 
 if [[ -z $GITHUB_ACTIONS ]]; then
   le_container_name="$(basename "${0%/*}")_$(date "+%Y-%m-%d_%H.%M.%S")"
@@ -35,14 +36,22 @@ letsencrypt_hosts=( \
   [1]="${domains[1]}, ${domains[2]}, ${domains[0]}" \   #comma separated list with spaces
   [2]="${domains[2]}, ${domains[0]}, ${domains[1]}," )  #comma separated list with spaces and a trailing comma
 
+# Alternate between the current and legacy single domain certs env var to test both.
+single_domain_env_vars=( \
+  [0]="ACME_SINGLE_DOMAIN_CERTS" \
+  [1]="LETSENCRYPT_SINGLE_DOMAIN_CERTS" \
+  [2]="ACME_SINGLE_DOMAIN_CERTS" )
+
 i=1
 
 for hosts in "${letsencrypt_hosts[@]}"; do
 
   container="test$i"
+  single_domain_env_var="${single_domain_env_vars[$((i - 1))]}"
 
-  # Run an Nginx container passing one of the comma separated lists as ACME_HOST env var.
-  run_nginx_container --hosts "${hosts}" --name "$container" --cli-args "--env LETSENCRYPT_SINGLE_DOMAIN_CERTS=true"
+  # Run an Nginx container passing one of the comma separated lists as ACME_HOST env var,
+  # alternating between ACME_SINGLE_DOMAIN_CERTS and LETSENCRYPT_SINGLE_DOMAIN_CERTS.
+  run_nginx_container --hosts "${hosts}" --name "$container" --cli-args "--env ${single_domain_env_var}=true"
 
   for domain in "${domains[@]}"; do
       ## For all the domains in the $domains array ...

@@ -85,7 +85,7 @@ Let's Encrypt has a limit of [100 domains per certificate](https://letsencrypt.o
 
 #### Separate certificate for each domain
 
-The example above will issue a single domain certificate for all the domains listed in the `ACME_HOST` environment variable. If you need to have a separate certificate for each of the domains, you can set the `LETSENCRYPT_SINGLE_DOMAIN_CERTS` environment variable to `true`.
+The example above will issue a single domain certificate for all the domains listed in the `ACME_HOST` environment variable. If you need to have a separate certificate for each of the domains, you can set the `ACME_SINGLE_DOMAIN_CERTS` environment variable to `true`.
 
 Example:
 
@@ -94,7 +94,7 @@ $ docker run --detach \
     --name your-proxyed-app \
     --env "VIRTUAL_HOST=yourdomain.tld,www.yourdomain.tld,anotherdomain.tld" \
     --env "ACME_HOST=yourdomain.tld,www.yourdomain.tld,anotherdomain.tld" \
-    --env "LETSENCRYPT_SINGLE_DOMAIN_CERTS=true" \
+    --env "ACME_SINGLE_DOMAIN_CERTS=true" \
     nginx
 ```
 
