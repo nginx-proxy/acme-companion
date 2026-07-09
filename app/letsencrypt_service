@@ -81,7 +81,7 @@ function get_hosts_array_var {
 }
 
 function cleanup_links {
-    local -a LETSENCRYPT_CONTAINERS
+    local -a ACME_CONTAINERS
     local -a ACME_STANDALONE_CERTS
     local -a LETSENCRYPT_STANDALONE_CERTS
     local -a ENABLED_DOMAINS
@@ -106,9 +106,9 @@ function cleanup_links {
 
     # Backward compatibility: fall back to LETSENCRYPT_STANDALONE_CERTS if ACME_STANDALONE_CERTS is unset
     [[ ${#ACME_STANDALONE_CERTS[@]} -eq 0 ]] && ACME_STANDALONE_CERTS=( "${LETSENCRYPT_STANDALONE_CERTS[@]}" )
-    LETSENCRYPT_CONTAINERS+=( "${ACME_STANDALONE_CERTS[@]}" )
+    ACME_CONTAINERS+=( "${ACME_STANDALONE_CERTS[@]}" )
 
-    for cid in "${LETSENCRYPT_CONTAINERS[@]}"; do
+    for cid in "${ACME_CONTAINERS[@]}"; do
       local hosts_var
       hosts_var="$(get_hosts_array_var "$cid")" || continue
       local -n hosts_array="$hosts_var"
@@ -578,7 +578,7 @@ function update_cert {
 }
 
 function update_certs {
-    local -a LETSENCRYPT_CONTAINERS
+    local -a ACME_CONTAINERS
     local -a ACME_STANDALONE_CERTS
     local -a LETSENCRYPT_STANDALONE_CERTS
 
@@ -614,14 +614,14 @@ function update_certs {
             done
 
             reload_nginx
-            LETSENCRYPT_CONTAINERS+=( "${ACME_STANDALONE_CERTS[@]}" )
+            ACME_CONTAINERS+=( "${ACME_STANDALONE_CERTS[@]}" )
         else
             echo "Warning: could not source /app/letsencrypt_user_data, skipping user data"
         fi
     fi
 
     should_reload_nginx='false'
-    for cid in "${LETSENCRYPT_CONTAINERS[@]}"; do
+    for cid in "${ACME_CONTAINERS[@]}"; do
         # Pass the eventual --force-renew arg to update_cert() as second arg
         update_cert "$cid" "${1:-}"
     done
