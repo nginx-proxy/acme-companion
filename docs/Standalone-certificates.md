@@ -29,25 +29,25 @@ The user configuration file is a collection of bash variables and array, and fol
 
 ### Required configuration parameters:
 
-`LETSENCRYPT_STANDALONE_CERTS` : a bash array containing identifier(s) for you standalone certificate(s). Each element in the array has to be unique. Those identifiers are internal to the container process and won't ever be visible to the outside world or appear on your certificate.
+`ACME_STANDALONE_CERTS` : a bash array containing identifier(s) for your standalone certificate(s). Each element in the array has to be unique. Those identifiers are internal to the container process and won't ever be visible to the outside world or appear on your certificate.
 
 `ACME_uniqueidentifier_HOST` : a bash array containing domain(s) that will be covered by the certificate corresponding to `uniqueidentifier`.
 
-Each identifier in `LETSENCRYPT_STANDALONE_CERTS` must have its own corresponding `ACME_uniqueidentifier_HOST` array, where the string `uniqueidentifier` has to be identical to that identifier.
+Each identifier in `ACME_STANDALONE_CERTS` must have its own corresponding `ACME_uniqueidentifier_HOST` array, where the string `uniqueidentifier` has to be identical to that identifier.
 
-For backward compatibility, `LETSENCRYPT_uniqueidentifier_HOST` is still supported as an alternative to `ACME_uniqueidentifier_HOST`.
+For backward compatibility, `LETSENCRYPT_STANDALONE_CERTS` is still supported as an alternative to `ACME_STANDALONE_CERTS`, and `LETSENCRYPT_uniqueidentifier_HOST` is still supported as an alternative to `ACME_uniqueidentifier_HOST`.
 
 **Minimal example generating a single certificate for a single domain:**
 
 ```bash
-LETSENCRYPT_STANDALONE_CERTS=('uniqueidentifier')
+ACME_STANDALONE_CERTS=('uniqueidentifier')
 ACME_uniqueidentifier_HOST=('yourdomain.tld')
 ```
 
 **Example with multiple certificates and domains:**
 
 ```bash
-LETSENCRYPT_STANDALONE_CERTS=('web' 'app' 'othersite')
+ACME_STANDALONE_CERTS=('web' 'app' 'othersite')
 ACME_web_HOST=('yourdomain.tld' 'www.yourdomain.tld')
 ACME_app_HOST=('myapp.yourdomain.tld' 'myapp.yourotherdomain.tld' 'service.yourotherdomain.tld')
 ACME_othersite_HOST=('yetanotherdomain.tld')
@@ -58,7 +58,7 @@ ACME_othersite_HOST=('yetanotherdomain.tld')
 In this example: `web` and `app` generate a certificate using the global/default configuration. However `othersite` will perform it's certificate verification using a specific DNS-01 API configuration.
 
 ```bash
-LETSENCRYPT_STANDALONE_CERTS=('web' 'app' 'othersite')
+ACME_STANDALONE_CERTS=('web' 'app' 'othersite')
 ACME_web_HOST=('yourdomain.tld' 'www.yourdomain.tld')
 ACME_app_HOST=('myapp.yourdomain.tld' 'myapp.yourotherdomain.tld' 'service.yourotherdomain.tld')
 ACME_othersite_HOST=('yetanotherdomain.tld')
