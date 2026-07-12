@@ -5,11 +5,12 @@
 
 check_pid_file() {
     local name="$1" file="$2" pid
-    if [[ ! -s "$file" ]]; then
-        echo "unhealthy: $name PID file $file is missing or empty" >&2
+    # Read a single line and require a numeric PID so a malformed file is unambiguous.
+    read -r pid 2>/dev/null < "$file"
+    if [[ ! "$pid" =~ ^[0-9]+$ ]]; then
+        echo "unhealthy: $name PID file $file is missing or invalid" >&2
         return 1
     fi
-    pid="$(cat "$file")"
     if ! kill -0 "$pid" 2>/dev/null; then
         echo "unhealthy: $name (PID $pid) is not running" >&2
         return 1

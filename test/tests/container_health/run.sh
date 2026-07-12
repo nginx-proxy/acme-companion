@@ -11,6 +11,9 @@ fi
 run_le_container "${1:?}" "$le_container_name"
 
 function cleanup {
+  # Cleanup the files created by this run of the test to avoid foiling following test(s).
+  docker exec "$le_container_name" /app/cleanup_test_artifacts
+  # Stop the LE container
   docker stop "$le_container_name" > /dev/null
 }
 trap cleanup EXIT
