@@ -291,7 +291,7 @@ export -f check_cert_subj
 # If domain can't be reached return 1
 function check_cert_fingerprint {
   while [[ $# -gt 0 ]]; do
-  local flag="$1"
+    local flag="$1"
 
     case $flag in
       -d|--domain)
