@@ -53,15 +53,10 @@ for domain in "${domains[@]}"; do
     echo "Domain $domain is on certificate."
   fi
 
-  # Wait for a connection to https://domain then grab the served certificate fingerprint.
-  wait_for_conn --domain "$domain"
-  served_cert_fingerprint="$(echo \
-    | openssl s_client -showcerts -servername "$domain" -connect "$domain:443" 2>/dev/null \
-    | openssl x509 -fingerprint -noout)"
-
-  # Compare fingerprints from the cert on file and what we got from the https connection.
-  # If not identical, display a full diff.
-  if [ "$created_cert_fingerprint" != "$served_cert_fingerprint" ]; then
+  # Wait for a connection to https://domain and for the served
+  # certificate to match the created certificate.
+  # If it does not, display a full diff.
+  if ! wait_for_conn --domain "$domain" --cert-match "$created_cert_fingerprint"; then
     echo "Nginx served an incorrect certificate for $domain."
     served_cert="$(echo \
       | openssl s_client -showcerts -servername "$domain" -connect "$domain:443" 2>/dev/null \

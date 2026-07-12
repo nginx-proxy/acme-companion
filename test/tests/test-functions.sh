@@ -286,13 +286,55 @@ function check_cert_subj {
 export -f check_cert_subj
 
 
+# Attempt to grab the certificate from domain passed with -d/--domain
+# then check if its fingerprint matches the one passed with -f/--fingerprint
+# If domain can't be reached return 1
+function check_cert_fingerprint {
+  while [[ $# -gt 0 ]]; do
+    local flag="$1"
+
+    case $flag in
+      -d|--domain)
+      local domain="${2:?}"
+      shift
+      shift
+      ;;
+
+      -f|--fingerprint)
+      local expected_fingerprint="${2:?}"
+      shift
+      shift
+      ;;
+
+      *) #Unknown option
+      shift
+      ;;
+    esac
+  done
+
+  local served_fingerprint
+  if curl -k https://"$domain" &> /dev/null; then
+    served_fingerprint="$(echo \
+      | openssl s_client -showcerts -servername "$domain" -connect "$domain:443" 2>/dev/null \
+      | openssl x509 -fingerprint -noout 2>/dev/null)"
+  else
+    return 1
+  fi
+
+  [[ -n "$served_fingerprint" && "$served_fingerprint" == "$expected_fingerprint" ]]
+}
+export -f check_cert_fingerprint
+
+
 # Wait for a successful https connection to domain passed with -d/--domain then wait
 #   - until the served certificate isn't the default one (default behavior)
 #   - until the served certificate subject match a string (--subject-match)
+#   - until the served certificate fingerprint match a string (--cert-match)
 function wait_for_conn {
   local action
   local domain
   local string
+  local fingerprint
 
   while [[ $# -gt 0 ]]; do
   local flag="$1"
@@ -311,6 +353,12 @@ function wait_for_conn {
       shift
       ;;
 
+      --cert-match)
+      fingerprint="${2:?}"
+      shift
+      shift
+      ;;
+
       *) #Unknown option
       shift
       ;;
@@ -322,6 +370,18 @@ function wait_for_conn {
   timeout="$((timeout + 120))"
   action="${action:---no-match}"
   string="${string:-letsencrypt-nginx-proxy-companion}"
+
+  if [[ -n "${fingerprint:-}" ]]; then
+    until check_cert_fingerprint --domain "$domain" --fingerprint "$fingerprint"; do
+      if [[ "$(date +%s)" -gt "$timeout" ]]; then
+        echo "The certificate served by $domain did not match the expected certificate under two minutes, timing out."
+        return 1
+      fi
+      sleep 0.1
+    done
+    [[ "${DRY_RUN:-}" == 1 ]] && echo "Connection to $domain using https was successful."
+    return 0
+  fi
 
   until check_cert_subj --domain "$domain" "$action" "$string"; do
     if [[ "$(date +%s)" -gt "$timeout" ]]; then
