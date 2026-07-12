@@ -313,9 +313,13 @@ function check_cert_fingerprint {
   done
 
   local served_fingerprint
-  served_fingerprint="$(echo \
-    | openssl s_client -showcerts -servername "$domain" -connect "$domain:443" 2>/dev/null \
-    | openssl x509 -fingerprint -noout 2>/dev/null)"
+  if curl -k https://"$domain" &> /dev/null; then
+    served_fingerprint="$(echo \
+      | openssl s_client -showcerts -servername "$domain" -connect "$domain:443" 2>/dev/null \
+      | openssl x509 -fingerprint -noout 2>/dev/null)"
+  else
+    return 1
+  fi
 
   [[ -n "$served_fingerprint" && "$served_fingerprint" == "$expected_fingerprint" ]]
 }
