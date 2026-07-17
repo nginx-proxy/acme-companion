@@ -129,6 +129,27 @@ volumes:
 
 **Note:** don't forget to replace `/path/to/nginx.tmpl` with the actual path to the [`nginx.tmpl`](https://raw.githubusercontent.com/nginx-proxy/nginx-proxy/main/nginx.tmpl) file you downloaded.
 
+### Health check
+
+The **acme-companion** image ships with a Docker [`HEALTHCHECK`](https://docs.docker.com/reference/dockerfile/#healthcheck) that reports the container as healthy while both of its background services (the certificates service and the bundled docker-gen) are running.
+
+This lets you gate startup on the companion being up, for example with `docker compose up --wait`, or by having another service wait for it:
+
+```yaml
+services:
+  acme-companion:
+    image: nginxproxy/acme-companion
+    # ...
+
+  myapp:
+    image: myapp
+    depends_on:
+      acme-companion:
+        condition: service_healthy
+```
+
+You can override or disable the check per container with the [`healthcheck`](https://docs.docker.com/reference/compose-file/services/#healthcheck) key in your Compose file.
+
 ### Other (external) examples
 
 **Warning:** some of those examples might be outdated and not working properly with version >= `2.0` of this project.

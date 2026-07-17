@@ -17,11 +17,13 @@ trap 'term_handler' INT QUIT TERM
 
 /app/letsencrypt_service &
 letsencrypt_service_pid=$!
+echo "$letsencrypt_service_pid" > /var/run/letsencrypt_service.pid
 
 wait_default="5s:20s"
 DOCKER_GEN_WAIT="${DOCKER_GEN_WAIT:-$wait_default}"
 docker-gen -watch -notify '/app/signal_le_service' -wait "$DOCKER_GEN_WAIT" /app/letsencrypt_service_data.tmpl /app/letsencrypt_service_data &
 docker_gen_pid=$!
+echo "$docker_gen_pid" > /var/run/docker-gen.pid
 
 # wait "indefinitely"
 while [[ -e /proc/$docker_gen_pid ]]; do
