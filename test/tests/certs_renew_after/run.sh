@@ -49,7 +49,7 @@ fi
 
 cert_create_time="$(docker exec "$le_container_name" grep "$acme_cert_create_time_key" "$acme_config_file" | cut -f2 -d\')"
 expected_renewal_days="${acme_renewal_days_key}'$global_renew'"
-expected_next_renew_time="${acme_next_renew_time_key}'$(($cert_create_time + $global_renew * 24 * 60 * 60 - 86400))'"
+expected_next_renew_time="${acme_next_renew_time_key}'$((cert_create_time + global_renew * 24 * 60 * 60 - 86400))'"
 actual_renewal_days="$(docker exec "$le_container_name" grep "$acme_renewal_days_key" "$acme_config_file")"
 actual_next_renew_time="$(docker exec "$le_container_name" grep "$acme_next_renew_time_key" "$acme_config_file")"
 
@@ -79,7 +79,7 @@ fi
 
 cert_create_time_2="$(docker exec "$le_container_name" grep "$acme_cert_create_time_key" "$acme_config_file_2" | cut -f2 -d\')"
 expected_renewal_days_2="${acme_renewal_days_key}'$container_renew'"
-expected_next_renew_time_2="${acme_next_renew_time_key}'$(($cert_create_time_2 + $container_renew * 24 * 60 * 60 - 86400))'"
+expected_next_renew_time_2="${acme_next_renew_time_key}'$((cert_create_time_2 + container_renew * 24 * 60 * 60 - 86400))'"
 actual_renewal_days_2="$(docker exec "$le_container_name" grep "$acme_renewal_days_key" "$acme_config_file_2")"
 actual_next_renew_time_2="$(docker exec "$le_container_name" grep "$acme_next_renew_time_key" "$acme_config_file_2")"
 

@@ -63,7 +63,7 @@ fi
 
 cert_create_time="$(docker exec "$le_container_name" grep "$acme_cert_create_time_key" "$acme_config_file" | cut -f2 -d\')"
 expected_renewal_days="${acme_renewal_days_key}'$default_renew'"
-expected_next_renew_time="${acme_next_renew_time_key}'$(($cert_create_time + $default_renew * 24 * 60 * 60 - 86400))'"
+expected_next_renew_time="${acme_next_renew_time_key}'$((cert_create_time + default_renew * 24 * 60 * 60 - 86400))'"
 actual_renewal_days="$(docker exec "$le_container_name" grep "$acme_renewal_days_key" "$acme_config_file")"
 actual_next_renew_time="$(docker exec "$le_container_name" grep "$acme_next_renew_time_key" "$acme_config_file")"
 
