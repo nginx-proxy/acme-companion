@@ -10,7 +10,9 @@ fi
 
 default_renew=170
 run_le_container "${1:?}" "$le_container_name" \
-  --cli-args "--env DEFAULT_RENEW=$default_renew"
+  --cli-args "--env DEFAULT_RENEW=$default_renew" \
+  --cli-args "--env ACME_CERT_PROFILE=default" \
+  --cli-args "--env NO_ARI=1"
 
 # Create the $domains array from comma separated domains in TEST_DOMAINS.
 IFS=',' read -r -a domains <<< "$TEST_DOMAINS"
@@ -66,8 +68,8 @@ actual_renewal_days="$(docker exec "$le_container_name" grep "$acme_renewal_days
 actual_next_renew_time="$(docker exec "$le_container_name" grep "$acme_next_renew_time_key" "$acme_config_file")"
 
 if [[ "$expected_renewal_days" != "$actual_renewal_days" ]]; then
-  echo "Renewal days is not correct"
+  echo "Renewal days is not correct, expected: $expected_renewal_days, actual: $actual_renewal_days"
 fi
 if [[ "$expected_next_renew_time" != "$actual_next_renew_time" ]]; then
-  echo "Next renewal time is not correct"
+  echo "Next renewal time is not correct, expected: $expected_next_renew_time, actual: $actual_next_renew_time"
 fi

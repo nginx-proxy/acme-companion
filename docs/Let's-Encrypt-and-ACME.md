@@ -12,7 +12,7 @@ The following environment variables are optional and parametrize the way the Let
 
 #### DNS-01 ACME challenge
 
-In order to switch to the DNS-01 ACME challenge, set the `ACME_CHALLENGE` environment variable to `DNS-01` on your acme-companion container. This will also require you to set the `ACMESH_DNS_API_CONFIG` environment variable to a JSON or YAML string containing the configuration for the DNS provider you are using. Inside the JSON or YAML string, the `DNS_API` property is always required and should be set to the name of the [acme.sh DNS API](https://github.com/acmesh-official/acme.sh/tree/3.1.3/dnsapi) you want to use.
+In order to switch to the DNS-01 ACME challenge, set the `ACME_CHALLENGE` environment variable to `DNS-01` on your acme-companion container. This will also require you to set the `ACMESH_DNS_API_CONFIG` environment variable to a JSON or YAML string containing the configuration for the DNS provider you are using. Inside the JSON or YAML string, the `DNS_API` property is always required and should be set to the name of the [acme.sh DNS API](https://github.com/acmesh-official/acme.sh/tree/3.1.4/dnsapi) you want to use.
 
 When using the DNS-01 ACME challenge, you can optionally configure the time (in seconds) that acme.sh should wait for DNS TXT records to propagate before attempting validation. This is done by adding the (optional) `DNS_SLEEP` property to the `ACMESH_DNS_API_CONFIG` environment variable.
 
