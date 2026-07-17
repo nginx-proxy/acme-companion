@@ -59,7 +59,7 @@ function create_links {
         create_link "./$base_domain/chain.pem" "/etc/nginx/certs/$domain.chain.pem"
         return_code=$(( return_code & $? ))
     fi
-    return $return_code
+    return "$return_code"
 }
 
 function get_hosts_array_var {

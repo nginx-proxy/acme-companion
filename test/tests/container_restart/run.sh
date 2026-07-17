@@ -21,7 +21,7 @@ docker_events_pid=$!
 # Cleanup function with EXIT trap
 function cleanup {
   # Kill the Docker events listener
-  kill $docker_events_pid && wait $docker_events_pid 2>/dev/null
+  kill "$docker_events_pid" && wait "$docker_events_pid" 2>/dev/null
   # Remove temporary files
   rm -f "${GITHUB_WORKSPACE}/test/tests/container_restart/docker_event_out.txt"
   # Remove any remaining Nginx container(s) silently.

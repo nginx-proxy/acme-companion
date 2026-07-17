@@ -25,7 +25,7 @@ docker_gen_pid=$!
 
 # wait "indefinitely"
 while [[ -e /proc/$docker_gen_pid ]]; do
-    wait $docker_gen_pid # Wait for any signals or end of execution of docker-gen
+    wait "$docker_gen_pid" # Wait for any signals or end of execution of docker-gen
 done
 
 # Stop container properly
