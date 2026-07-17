@@ -4,14 +4,14 @@ The container provide the following utilities (replace `nginx-proxy-acme` with t
 If needed, you can force a running **acme-companion** container to renew all certificates that are currently in use with the following command:
 
 ```bash
-$ docker exec nginx-proxy-acme /app/force_renew
+$ docker exec nginx-proxy-acme force_renew
 ```
 
 ### Manually trigger the service loop
 You can trigger the execution of the service loop before the hourly execution with:
 
 ```bash
-$ docker exec nginx-proxy-acme /app/signal_le_service
+$ docker exec nginx-proxy-acme signal_le_service
 ```
 Unlike the previous command, this won't force renewal of certificates that don't need to be renewed.
 
@@ -19,5 +19,5 @@ Unlike the previous command, this won't force renewal of certificates that don't
 To display informations about your existing certificates, use the following command:
 
 ```bash
-$ docker exec nginx-proxy-acme /app/cert_status
+$ docker exec nginx-proxy-acme cert_status
 ```

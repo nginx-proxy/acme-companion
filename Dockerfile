@@ -39,6 +39,9 @@ RUN chmod +rx /app/install_acme.sh \
 
 COPY app LICENSE /app/
 
+# Create symlinks for scripts in /app to /usr/local/bin
+RUN /app/install_scripts.sh
+
 WORKDIR /app
 
 ENTRYPOINT [ "/bin/bash", "/app/entrypoint.sh" ]

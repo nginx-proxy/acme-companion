@@ -20,7 +20,7 @@ function cleanup {
   # Remove the Nginx container silently.
   docker rm --force "${domain}" &> /dev/null
   # Cleanup the files created by this run of the test to avoid foiling following test(s).
-  docker exec "${le_container_name}" /app/cleanup_test_artifacts
+  docker exec "${le_container_name}" cleanup_test_artifacts
   # Stop the LE container
   docker stop "${le_container_name}" > /dev/null
 }
@@ -48,7 +48,7 @@ first_serial="$(get_cert_serial "${domain}" "${le_container_name}")"
 sleep 5
 
 # Issue a forced renewal and poll until the certificate is actually renewed.
-renew_output="$(docker exec "${le_container_name}" /app/force_renew 2>&1)"
+renew_output="$(docker exec "${le_container_name}" force_renew 2>&1)"
 timeout=$(($(date +%s) + 60))
 second_serial="${first_serial}"
 while [[ $(date +%s) -lt ${timeout} ]]; do

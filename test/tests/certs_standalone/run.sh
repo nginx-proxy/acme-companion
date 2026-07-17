@@ -29,7 +29,7 @@ function cleanup {
   # Remove the Nginx container silently.
   docker rm --force "${subdomain}" &> /dev/null
   # Cleanup the files created by this run of the test to avoid foiling following test(s).
-  docker exec "${le_container_name}" /app/cleanup_test_artifacts
+  docker exec "${le_container_name}" cleanup_test_artifacts
   # Stop the LE container
   docker stop "${le_container_name}" > /dev/null
 }
@@ -89,7 +89,7 @@ ACME_san_HOST=('${domains[1]}' '${domains[2]}')
 EOF
 
 # Manually trigger the service loop
-docker exec "${le_container_name}" /app/signal_le_service > /dev/null
+docker exec "${le_container_name}" signal_le_service > /dev/null
 
 for domain in "${domains[1]}" "${domains[2]}"; do
   # Wait for a file at /etc/nginx/conf.d/standalone-cert-${domain}.conf

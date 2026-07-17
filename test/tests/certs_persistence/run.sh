@@ -19,7 +19,7 @@ function cleanup {
   # Remove the Nginx container silently.
   docker rm --force "${domain}" &> /dev/null
   # Cleanup the files created by this run of the test to avoid foiling following test(s).
-  docker exec "${le_container_name}" /app/cleanup_test_artifacts
+  docker exec "${le_container_name}" cleanup_test_artifacts
   # Stop the LE container
   docker stop "${le_container_name}" > /dev/null
 }
@@ -35,7 +35,7 @@ fi
 # remove service and user data files
 docker exec "${le_container_name}" bash -c 'rm -f /app/letsencrypt_service_data /app/letsencrypt_user_data' 2>&1
 # manually trigger cert update loop
-if ! update_certs_out="$(docker exec "${le_container_name}" bash -c 'source /app/letsencrypt_service --source-only && update_certs' 2>&1)"; then
+if ! update_certs_out="$(docker exec "${le_container_name}" bash -c 'source /app/letsencrypt_service.sh --source-only && update_certs' 2>&1)"; then
   echo "update_certs failed during the data-less run with no user data: ${update_certs_out}"
 fi
 if ! docker exec "${le_container_name}" test -L "/etc/nginx/certs/${domain}.crt"; then
@@ -46,7 +46,7 @@ fi
 # create an empty user data file and remove service data file
 docker exec "${le_container_name}" bash -c 'touch /app/letsencrypt_user_data && rm -f /app/letsencrypt_service_data' 2>&1
 # manually trigger cert update loop
-if ! update_certs_out="$(docker exec "${le_container_name}" bash -c 'source /app/letsencrypt_service --source-only && update_certs' 2>&1)"; then
+if ! update_certs_out="$(docker exec "${le_container_name}" bash -c 'source /app/letsencrypt_service.sh --source-only && update_certs' 2>&1)"; then
   echo "update_certs failed during the data-less run with user data present: ${update_certs_out}"
 fi
 if ! docker exec "${le_container_name}" test -L "/etc/nginx/certs/${domain}.crt"; then

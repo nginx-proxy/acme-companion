@@ -19,7 +19,7 @@ function cleanup {
     docker rm --force "${domain}" &> /dev/null
   done
   # Cleanup the files created by this run of the test to avoid foiling following test(s).
-  docker exec "${le_container_name}" /app/cleanup_test_artifacts
+  docker exec "${le_container_name}" cleanup_test_artifacts
   # Stop the LE container
   docker stop "${le_container_name}" > /dev/null
 }
@@ -107,7 +107,7 @@ fi
 
 # Stop ${domains[2]} then cleanup test artifacts to force a fresh account registration.
 docker stop "${domains[2]}" &> /dev/null
-docker exec "${le_container_name}" /app/cleanup_test_artifacts
+docker exec "${le_container_name}" cleanup_test_artifacts
 
 # Run an nginx container for ${domains[2]} with legacy LETSENCRYPT_EMAIL set.
 legacy_container_email="legacy-contact@${domains[2]}"

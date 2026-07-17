@@ -1,4 +1,5 @@
 #!/bin/bash
+
 function print_cert_info {
   local enddate
   local subject

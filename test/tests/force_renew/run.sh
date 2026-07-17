@@ -1,6 +1,6 @@
 #!/bin/bash
 
-## Test for the /app/force_renew script.
+## Test for the force_renew script.
 
 if [[ -z ${GITHUB_ACTIONS} ]]; then
   le_container_name="$(basename "${0%/*}")_$(date "+%Y-%m-%d_%H.%M.%S")"
@@ -17,7 +17,7 @@ function cleanup {
   # Remove the Nginx container silently.
   docker rm --force "${domains[0]}" &> /dev/null
   # Cleanup the files created by this run of the test to avoid foiling following test(s).
-  docker exec "${le_container_name}" /app/cleanup_test_artifacts
+  docker exec "${le_container_name}" cleanup_test_artifacts
   # Stop the LE container
   docker stop "${le_container_name}" > /dev/null
 }
@@ -34,7 +34,7 @@ first_serial="$(get_cert_serial "${domains[0]}" "${le_container_name}")"
 sleep 5
 
 # Issue a forced renewal (capture the output so a failure is diagnosable).
-renew_output="$(docker exec "${le_container_name}" /app/force_renew 2>&1)"
+renew_output="$(docker exec "${le_container_name}" force_renew 2>&1)"
 
 # A renewal re-issues the cert, so its serial must change.
 timeout=$(($(date +%s) + 60))

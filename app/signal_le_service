@@ -1,4 +1,0 @@
-#!/bin/bash
-
-# Using busybox pkill
-pkill -USR1 -f /app/letsencrypt_service
