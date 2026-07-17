@@ -17,9 +17,9 @@ function run_le_container {
   local -a cli_args_arr
   
   while [[ $# -gt 0 ]]; do
-  local flag="$1"
+  local flag="${1}"
 
-    case $flag in
+    case ${flag} in
       -c|--cli-args) #only one value per flag. Multiple args = use flag multiple times 
       local cli_args_arr_tmp
       IFS=' ' read -r -a cli_args_arr_tmp <<< "${2:?}"
@@ -30,8 +30,8 @@ function run_le_container {
 
       *) #Legacy Option
       local cli_args_str="${1:?}"
-      for arg in $cli_args_str; do
-        cli_args_arr+=("$arg")
+      for arg in ${cli_args_str}; do
+        cli_args_arr+=("${arg}")
       done
       shift
       ;;
@@ -39,14 +39,14 @@ function run_le_container {
 
   done
 
-  if [[ "$SETUP" == '3containers' ]]; then
-    cli_args_arr+=(--env "NGINX_DOCKER_GEN_CONTAINER=$DOCKER_GEN_CONTAINER_NAME")
+  if [[ "${SETUP}" == '3containers' ]]; then
+    cli_args_arr+=(--env "NGINX_DOCKER_GEN_CONTAINER=${DOCKER_GEN_CONTAINER_NAME}")
   fi
 
-  if [[ "$ACME_CA" == 'boulder' ]]; then
+  if [[ "${ACME_CA}" == 'boulder' ]]; then
     cli_args_arr+=(--env "ACME_CA_URI=http://boulder:4001/directory")
     cli_args_arr+=(--network boulder_bluenet)
-  elif [[ "$ACME_CA" == 'pebble' ]]; then
+  elif [[ "${ACME_CA}" == 'pebble' ]]; then
     cli_args_arr+=(--env "ACME_CA_URI=https://pebble:14000/dir")
     cli_args_arr+=(--env "CA_BUNDLE=/pebble.minica.pem")
     cli_args_arr+=(--network acme_net)
@@ -56,15 +56,15 @@ function run_le_container {
   fi
 
   if docker run -d \
-    --name "$name" \
-    --volumes-from "$NGINX_CONTAINER_NAME" \
+    --name "${name}" \
+    --volumes-from "${NGINX_CONTAINER_NAME}" \
     --volume /var/run/docker.sock:/var/run/docker.sock:ro \
     "${cli_args_arr[@]}" \
     --env "DOCKER_GEN_WAIT=500ms:2s" \
     --env "TEST_MODE=true" \
     --env "DEBUG=1" \
     --label com.github.nginx-proxy.acme-companion.test-suite \
-    "$image" > /dev/null; \
+    "${image}" > /dev/null; \
   then
     [[ "${DRY_RUN:-}" == 1 ]] && echo "Started letsencrypt container for test ${name%%_2*}"
   else
@@ -81,9 +81,9 @@ function run_nginx_container {
   local host_env_var="ACME_HOST"
 
   while [[ $# -gt 0 ]]; do
-  local flag="$1"
+  local flag="${1}"
 
-    case $flag in
+    case ${flag} in
       -h|--hosts)
       local le_host="${2:?}"
       local virtual_host="${le_host// /}"; virtual_host="${virtual_host//.,/,}"; virtual_host="${virtual_host%,}"
@@ -114,27 +114,27 @@ function run_nginx_container {
     esac
   done
 
-  if [[ "$ACME_CA" == 'boulder' ]]; then
+  if [[ "${ACME_CA}" == 'boulder' ]]; then
     cli_args_arr+=(--network boulder_bluenet)
-  elif [[ "$ACME_CA" == 'pebble' ]]; then
+  elif [[ "${ACME_CA}" == 'pebble' ]]; then
     cli_args_arr+=(--network acme_net)
   else
     return 1
   fi
 
-  [[ "${DRY_RUN:-}" == 1 ]] && echo "Starting $container_name nginx container, with VIRTUAL_HOST=$virtual_host, ${host_env_var}=$le_host and the following cli arguments : ${cli_args_arr[*]}."
+  [[ "${DRY_RUN:-}" == 1 ]] && echo "Starting ${container_name} nginx container, with VIRTUAL_HOST=${virtual_host}, ${host_env_var}=${le_host} and the following cli arguments : ${cli_args_arr[*]}."
   
   if docker run --rm -d \
-    --name "${container_name:-$virtual_host}" \
-    -e "VIRTUAL_HOST=$virtual_host" \
-    -e "${host_env_var}=$le_host" \
+    --name "${container_name:-${virtual_host}}" \
+    -e "VIRTUAL_HOST=${virtual_host}" \
+    -e "${host_env_var}=${le_host}" \
     --label com.github.nginx-proxy.acme-companion.test-suite \
     "${cli_args_arr[@]}" \
     nginx:alpine > /dev/null ; \
   then
-    [[ "${DRY_RUN:-}" == 1 ]] && echo "Started $container_name nginx container."
+    [[ "${DRY_RUN:-}" == 1 ]] && echo "Started ${container_name} nginx container."
   else
-    echo "Failed to start $container_name nginx container, with VIRTUAL_HOST=$virtual_host, ${host_env_var}=$le_host and the following cli arguments : ${cli_args_arr[*]}."
+    echo "Failed to start ${container_name} nginx container, with VIRTUAL_HOST=${virtual_host}, ${host_env_var}=${le_host} and the following cli arguments : ${cli_args_arr[*]}."
     return 1
   fi
   return 0
@@ -150,9 +150,9 @@ function wait_for_standalone_conf {
   timeout="$(date +%s)"
   timeout="$((timeout + 120))"
   local target
-  until docker exec "$name" [ -f "/etc/nginx/conf.d/standalone-cert-$domain.conf" ]; do
-    if [[ "$(date +%s)" -gt "$timeout" ]]; then
-      echo "Standalone configuration file for $domain was not generated under one minute, timing out."
+  until docker exec "${name}" [ -f "/etc/nginx/conf.d/standalone-cert-${domain}.conf" ]; do
+    if [[ "$(date +%s)" -gt "${timeout}" ]]; then
+      echo "Standalone configuration file for ${domain} was not generated under one minute, timing out."
       return 1
     fi
     sleep 0.1
@@ -167,14 +167,14 @@ function wait_for_standalone_conf_rm {
   local timeout
   timeout="$(date +%s)"
   timeout="$((timeout + 120))"
-  until docker exec "$name" [ ! -f "/etc/nginx/conf.d/standalone-cert-$domain.conf" ]; do
-    if [[ "$(date +%s)" -gt "$timeout" ]]; then
-      echo "Standalone configuration file for $domain was not removed under one minute, timing out."
+  until docker exec "${name}" [ ! -f "/etc/nginx/conf.d/standalone-cert-${domain}.conf" ]; do
+    if [[ "$(date +%s)" -gt "${timeout}" ]]; then
+      echo "Standalone configuration file for ${domain} was not removed under one minute, timing out."
       return 1
     fi
     sleep 0.1
   done
-  [[ "${DRY_RUN:-}" == 1 ]] && echo "Standalone configuration for $domain has been removed."
+  [[ "${DRY_RUN:-}" == 1 ]] && echo "Standalone configuration for ${domain} has been removed."
   return 0
 }
 export -f wait_for_standalone_conf_rm
@@ -189,21 +189,21 @@ function wait_for_symlink {
   timeout="$(date +%s)"
   timeout="$((timeout + 120))"
   local target
-  until docker exec "$name" [ -L "/etc/nginx/certs/$domain.crt" ]; do
-    if [[ "$(date +%s)" -gt "$timeout" ]]; then
-      echo "Symlink for $domain certificate was not generated under one minute, timing out."
+  until docker exec "${name}" [ -L "/etc/nginx/certs/${domain}.crt" ]; do
+    if [[ "$(date +%s)" -gt "${timeout}" ]]; then
+      echo "Symlink for ${domain} certificate was not generated under one minute, timing out."
       return 1
     fi
     sleep 0.1
   done
-  [[ "${DRY_RUN:-}" == 1 ]] && echo "Symlink to $domain certificate has been generated."
-  if [[ -n "$expected_target" ]]; then
-    target="$(docker exec "$name" readlink "/etc/nginx/certs/$domain.crt")"
-    if [[ "$target" != "$expected_target" ]]; then
-      echo "The symlink to the $domain certificate is expected to point to $expected_target but point to $target instead."
+  [[ "${DRY_RUN:-}" == 1 ]] && echo "Symlink to ${domain} certificate has been generated."
+  if [[ -n "${expected_target}" ]]; then
+    target="$(docker exec "${name}" readlink "/etc/nginx/certs/${domain}.crt")"
+    if [[ "${target}" != "${expected_target}" ]]; then
+      echo "The symlink to the ${domain} certificate is expected to point to ${expected_target} but point to ${target} instead."
       return 1
     elif [[ "${DRY_RUN:-}" == 1 ]]; then
-      echo "The symlink is pointing to the file $target"
+      echo "The symlink is pointing to the file ${target}"
     fi
   fi
   return 0
@@ -218,14 +218,14 @@ function wait_for_symlink_rm {
   local timeout
   timeout="$(date +%s)"
   timeout="$((timeout + 120))"
-  until docker exec "$name" [ ! -L "/etc/nginx/certs/$domain.crt" ]; do
-    if [[ "$(date +%s)" -gt "$timeout" ]]; then
-      echo "Certificate symlink for $domain was not removed under one minute, timing out."
+  until docker exec "${name}" [ ! -L "/etc/nginx/certs/${domain}.crt" ]; do
+    if [[ "$(date +%s)" -gt "${timeout}" ]]; then
+      echo "Certificate symlink for ${domain} was not removed under one minute, timing out."
       return 1
     fi
     sleep 0.1
   done
-  [[ "${DRY_RUN:-}" == 1 ]] && echo "Symlink to $domain certificate has been removed."
+  [[ "${DRY_RUN:-}" == 1 ]] && echo "Symlink to ${domain} certificate has been removed."
   return 0
 }
 export -f wait_for_symlink_rm
@@ -237,9 +237,9 @@ export -f wait_for_symlink_rm
 # If domain can't be reached return 1
 function check_cert_subj {
   while [[ $# -gt 0 ]]; do
-  local flag="$1"
+  local flag="${1}"
 
-    case $flag in
+    case ${flag} in
       -d|--domain)
       local domain="${2:?}"
       shift
@@ -268,19 +268,19 @@ function check_cert_subj {
     esac
   done
 
-  if curl -k https://"$domain" &> /dev/null; then
+  if curl -k https://"${domain}" &> /dev/null; then
     local cert_subject
     cert_subject="$(echo \
-      | openssl s_client -showcerts -servername "$domain" -connect "$domain:443" 2>/dev/null \
+      | openssl s_client -showcerts -servername "${domain}" -connect "${domain}:443" 2>/dev/null \
       | openssl x509 -subject -noout)"
   else
     return 1
   fi
 
-  if [[ "$cert_subject" =~ $re ]]; then
-    return "$match_rc"
+  if [[ "${cert_subject}" =~ ${re} ]]; then
+    return "${match_rc}"
   else
-    return "$no_match_rc"
+    return "${no_match_rc}"
   fi
 }
 export -f check_cert_subj
@@ -291,9 +291,9 @@ export -f check_cert_subj
 # If domain can't be reached return 1
 function check_cert_fingerprint {
   while [[ $# -gt 0 ]]; do
-    local flag="$1"
+    local flag="${1}"
 
-    case $flag in
+    case ${flag} in
       -d|--domain)
       local domain="${2:?}"
       shift
@@ -313,15 +313,15 @@ function check_cert_fingerprint {
   done
 
   local served_fingerprint
-  if curl -k https://"$domain" &> /dev/null; then
+  if curl -k https://"${domain}" &> /dev/null; then
     served_fingerprint="$(echo \
-      | openssl s_client -showcerts -servername "$domain" -connect "$domain:443" 2>/dev/null \
+      | openssl s_client -showcerts -servername "${domain}" -connect "${domain}:443" 2>/dev/null \
       | openssl x509 -fingerprint -noout 2>/dev/null)"
   else
     return 1
   fi
 
-  [[ -n "$served_fingerprint" && "$served_fingerprint" == "$expected_fingerprint" ]]
+  [[ -n "${served_fingerprint}" && "${served_fingerprint}" == "${expected_fingerprint}" ]]
 }
 export -f check_cert_fingerprint
 
@@ -337,9 +337,9 @@ function wait_for_conn {
   local fingerprint
 
   while [[ $# -gt 0 ]]; do
-  local flag="$1"
+  local flag="${1}"
 
-    case $flag in
+    case ${flag} in
       -d|--domain)
       domain="${2:?}"
       shift
@@ -348,7 +348,7 @@ function wait_for_conn {
 
       --subject-match)
       action='--match'
-      string="$2"
+      string="${2}"
       shift
       shift
       ;;
@@ -372,25 +372,25 @@ function wait_for_conn {
   string="${string:-letsencrypt-nginx-proxy-companion}"
 
   if [[ -n "${fingerprint:-}" ]]; then
-    until check_cert_fingerprint --domain "$domain" --fingerprint "$fingerprint"; do
-      if [[ "$(date +%s)" -gt "$timeout" ]]; then
-        echo "The certificate served by $domain did not match the expected certificate under two minutes, timing out."
+    until check_cert_fingerprint --domain "${domain}" --fingerprint "${fingerprint}"; do
+      if [[ "$(date +%s)" -gt "${timeout}" ]]; then
+        echo "The certificate served by ${domain} did not match the expected certificate under two minutes, timing out."
         return 1
       fi
       sleep 0.1
     done
-    [[ "${DRY_RUN:-}" == 1 ]] && echo "Connection to $domain using https was successful."
+    [[ "${DRY_RUN:-}" == 1 ]] && echo "Connection to ${domain} using https was successful."
     return 0
   fi
 
-  until check_cert_subj --domain "$domain" "$action" "$string"; do
-    if [[ "$(date +%s)" -gt "$timeout" ]]; then
-      echo "Could not connect to $domain using https under two minutes, timing out."
+  until check_cert_subj --domain "${domain}" "${action}" "${string}"; do
+    if [[ "$(date +%s)" -gt "${timeout}" ]]; then
+      echo "Could not connect to ${domain} using https under two minutes, timing out."
       return 1
     fi
     sleep 0.1
   done
-  [[ "${DRY_RUN:-}" == 1 ]] && echo "Connection to $domain using https was successful."
+  [[ "${DRY_RUN:-}" == 1 ]] && echo "Connection to ${domain} using https was successful."
   return 0
 }
 export -f wait_for_conn
@@ -400,9 +400,9 @@ export -f wait_for_conn
 function cert_date_to_epoch {
   local cert_date="${1:?}"
   if [[ "$(uname)" == 'Darwin' ]]; then
-    date -j -f "%b %d %T %Y %Z" "$cert_date" "+%s"
+    date -j -f "%b %d %T %Y %Z" "${cert_date}" "+%s"
   else
-    date -d "$cert_date" "+%s"
+    date -d "${cert_date}" "+%s"
   fi
 }
 export -f cert_date_to_epoch
@@ -414,22 +414,22 @@ function get_cert_date_epoch {
   local name="${3:?}"
   local _date
 
-  case "$date_type" in
+  case "${date_type}" in
     start|issue)
-      _date="$(docker exec "$name" openssl x509 -noout -startdate -in "/etc/nginx/certs/$domain.crt")"
+      _date="$(docker exec "${name}" openssl x509 -noout -startdate -in "/etc/nginx/certs/${domain}.crt")"
       ;;
     end|expiration)
-      _date="$(docker exec "$name" openssl x509 -noout -enddate -in "/etc/nginx/certs/$domain.crt")"
+      _date="$(docker exec "${name}" openssl x509 -noout -enddate -in "/etc/nginx/certs/${domain}.crt")"
       ;;
     *)
-      echo "Invalid date type $date_type, expected 'start', 'issue', 'end', or 'expiration'."
+      echo "Invalid date type ${date_type}, expected 'start', 'issue', 'end', or 'expiration'."
       return 1
       ;;
   esac
 
-  _date="$(echo "$_date" | cut -d "=" -f 2)"
-  _date="$(cert_date_to_epoch "$_date")"
-  echo "$_date"
+  _date="$(echo "${_date}" | cut -d "=" -f 2)"
+  _date="$(cert_date_to_epoch "${_date}")"
+  echo "${_date}"
 }
 export -f get_cert_date_epoch
 
@@ -437,7 +437,7 @@ export -f get_cert_date_epoch
 function get_cert_serial {
   local domain="${1:?}"
   local name="${2:?}"
-  docker exec "$name" openssl x509 -noout -serial -in "/etc/nginx/certs/$domain.crt" | cut -d '=' -f 2
+  docker exec "${name}" openssl x509 -noout -serial -in "/etc/nginx/certs/${domain}.crt" | cut -d '=' -f 2
 }
 export -f get_cert_serial
 
@@ -447,8 +447,8 @@ function get_cert_validity_seconds {
   local name="${2:?}"
   local cert_issue
   local cert_expiration
-  cert_issue="$(get_cert_date_epoch issue "$domain" "$name")"
-  cert_expiration="$(get_cert_date_epoch expiration "$domain" "$name")"
+  cert_issue="$(get_cert_date_epoch issue "${domain}" "${name}")"
+  cert_expiration="$(get_cert_date_epoch expiration "${domain}" "${name}")"
   echo "$(( cert_expiration - cert_issue ))"
 }
 export -f get_cert_validity_seconds

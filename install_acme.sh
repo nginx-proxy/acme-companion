@@ -9,8 +9,8 @@ apk --no-cache --virtual .acmesh-deps add git
 mkdir /src
 git -C /src clone https://github.com/acmesh-official/acme.sh.git
 cd /src/acme.sh
-if [[ "$ACMESH_VERSION" != "master" ]]; then
-  git -c advice.detachedHead=false checkout "$ACMESH_VERSION"
+if [[ "${ACMESH_VERSION}" != "master" ]]; then
+  git -c advice.detachedHead=false checkout "${ACMESH_VERSION}"
 fi
 
 # Install acme.sh in /app

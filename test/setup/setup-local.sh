@@ -5,8 +5,8 @@ set -e
 function get_environment {
   dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-  LOCAL_BUILD_DIR="$(cd "$dir/../.." && pwd)"
-  export GITHUB_WORKSPACE="$LOCAL_BUILD_DIR"
+  LOCAL_BUILD_DIR="$(cd "${dir}/../.." && pwd)"
+  export GITHUB_WORKSPACE="${LOCAL_BUILD_DIR}"
 
   # shellcheck source=/dev/null
   [[ -f "${GITHUB_WORKSPACE}/test/local_test_env.sh" ]] && \
@@ -14,9 +14,9 @@ function get_environment {
 
   # Get the environment variables from the .github/workflows/test.yml file with sed
   declare -a ci_test_yml
-  ci_test_yml[0]="$(sed -n 's/.* NGINX_CONTAINER_NAME: //p' "$LOCAL_BUILD_DIR/.github/workflows/test.yml")"
-  ci_test_yml[1]="$(sed -n 's/.* DOCKER_GEN_CONTAINER_NAME: //p' "$LOCAL_BUILD_DIR/.github/workflows/test.yml")"
-  ci_test_yml[2]="$(sed -n 's/.* TEST_DOMAINS: //p' "$LOCAL_BUILD_DIR/.github/workflows/test.yml")"
+  ci_test_yml[0]="$(sed -n 's/.* NGINX_CONTAINER_NAME: //p' "${LOCAL_BUILD_DIR}/.github/workflows/test.yml")"
+  ci_test_yml[1]="$(sed -n 's/.* DOCKER_GEN_CONTAINER_NAME: //p' "${LOCAL_BUILD_DIR}/.github/workflows/test.yml")"
+  ci_test_yml[2]="$(sed -n 's/.* TEST_DOMAINS: //p' "${LOCAL_BUILD_DIR}/.github/workflows/test.yml")"
 
   # If environment variable where sourced or manually set use them, else use those from 
   # .github/workflows/test.yml
@@ -25,16 +25,16 @@ function get_environment {
   export TEST_DOMAINS="${TEST_DOMAINS:-${ci_test_yml[2]}}"
 
   # Build the array containing domains to add to /etc/hosts
-  IFS=',' read -r -a domains <<< "$TEST_DOMAINS"
+  IFS=',' read -r -a domains <<< "${TEST_DOMAINS}"
 
-  if [[ -z $SETUP ]]; then
+  if [[ -z ${SETUP} ]]; then
     while true; do
       echo "Which nginx-proxy setup do you want to test or remove ?"
       echo ""
       echo "    1) Two containers setup (nginx-proxy + le-companion)"
       echo "    2) Three containers setup (nginx + docker-gen + le-companion)"
       read -re -p "Select an option [1-2]: " option
-      case $option in
+      case ${option} in
         1)
         setup="2containers"
         break
@@ -49,9 +49,9 @@ function get_environment {
       esac
     done
   fi
-  export SETUP="${SETUP:-$setup}"
+  export SETUP="${SETUP:-${setup}}"
 
-  if [[ -z $ACME_CA ]]; then
+  if [[ -z ${ACME_CA} ]]; then
     while true; do
       echo "Which ACME CA do you want to use or remove ?"
       echo ""
@@ -59,7 +59,7 @@ function get_environment {
       echo "    2) Pebble with base configuration https://github.com/letsencrypt/pebble"
       echo "    3) Pebble with EAB configuration  https://github.com/letsencrypt/pebble"
       read -re -p "Select an option [1-3]: " option
-      case $option in
+      case ${option} in
         1)
         acme_ca="boulder"
         break
@@ -80,8 +80,8 @@ function get_environment {
       esac
     done
   fi
-  export ACME_CA="${ACME_CA:-$acme_ca}"
-  export PEBBLE_CONFIG="${PEBBLE_CONFIG:-$pebble_config}"
+  export ACME_CA="${ACME_CA:-${acme_ca}}"
+  export PEBBLE_CONFIG="${PEBBLE_CONFIG:-${pebble_config}}"
 }
 
 case $1 in
@@ -90,24 +90,24 @@ case $1 in
 
     # Prepare the env file that run.sh will source
     cat > "${GITHUB_WORKSPACE}/test/local_test_env.sh" <<EOF
-export GITHUB_WORKSPACE="$LOCAL_BUILD_DIR"
-export NGINX_CONTAINER_NAME="$NGINX_CONTAINER_NAME"
-export DOCKER_GEN_CONTAINER_NAME="$DOCKER_GEN_CONTAINER_NAME"
-export TEST_DOMAINS="$TEST_DOMAINS"
-export SETUP="$SETUP"
-export ACME_CA="$ACME_CA"
-export PEBBLE_CONFIG="$PEBBLE_CONFIG"
+export GITHUB_WORKSPACE="${LOCAL_BUILD_DIR}"
+export NGINX_CONTAINER_NAME="${NGINX_CONTAINER_NAME}"
+export DOCKER_GEN_CONTAINER_NAME="${DOCKER_GEN_CONTAINER_NAME}"
+export TEST_DOMAINS="${TEST_DOMAINS}"
+export SETUP="${SETUP}"
+export ACME_CA="${ACME_CA}"
+export PEBBLE_CONFIG="${PEBBLE_CONFIG}"
 EOF
 
     # Add the required custom entries to /etc/hosts
     echo "Adding custom entries to /etc/hosts (requires sudo)."
     declare -a hosts=("${domains[@]}")
-    if [[ "$ACME_CA" == 'pebble' ]]; then
+    if [[ "${ACME_CA}" == 'pebble' ]]; then
       hosts+=(pebble pebble-challtestsrv)
     fi
     for host in "${hosts[@]}"; do
-      grep -q "127.0.0.1 $host # le-companion test suite" /etc/hosts \
-        || echo "127.0.0.1 $host # le-companion test suite" \
+      grep -q "127.0.0.1 ${host} # le-companion test suite" /etc/hosts \
+        || echo "127.0.0.1 ${host} # le-companion test suite" \
         | sudo tee -a /etc/hosts
     done
 
@@ -115,9 +115,9 @@ EOF
     docker pull nginx:alpine
 
     # Prepare the test setup using the setup scripts
-    if [[ "$ACME_CA" == 'boulder' ]]; then
+    if [[ "${ACME_CA}" == 'boulder' ]]; then
       "${GITHUB_WORKSPACE}/test/setup/setup-boulder.sh"
-    elif [[ "$ACME_CA" == 'pebble' ]]; then
+    elif [[ "${ACME_CA}" == 'pebble' ]]; then
       "${GITHUB_WORKSPACE}/test/setup/pebble/setup-pebble.sh"
     else
       echo "ACME_CA is not set, aborting."
@@ -131,18 +131,18 @@ EOF
 
     # Stop and remove nginx-proxy and (if required) docker-gen
     for cid in $(docker ps -a --filter "label=com.github.nginx-proxy.acme-companion.test-suite" --format "{{.ID}}"); do
-      docker stop "$cid"
-      docker rm --volumes "$cid"
+      docker stop "${cid}"
+      docker rm --volumes "${cid}"
     done
 
-    if [[ "$ACME_CA" == 'boulder' ]]; then
+    if [[ "${ACME_CA}" == 'boulder' ]]; then
       # Stop and remove Boulder
       docker stop boulder
       docker compose --project-name 'boulder' \
         --file "${GITHUB_WORKSPACE}/go/src/github.com/letsencrypt/boulder/docker-compose.yml" \
         down --volumes
       docker rm boulder
-    elif [[ "$ACME_CA" == 'pebble' ]]; then
+    elif [[ "${ACME_CA}" == 'pebble' ]]; then
       # Stop and remove Pebble
       docker compose --file "${GITHUB_WORKSPACE}/test/setup/pebble/compose.yaml" down
       [[ -f "${GITHUB_WORKSPACE}/pebble.minica.pem" ]] && rm "${GITHUB_WORKSPACE}/pebble.minica.pem"
@@ -159,14 +159,14 @@ EOF
     # Remove custom entries to /etc/hosts
     echo "Removing custom entries from /etc/hosts (requires sudo)."
     declare -a hosts=("${domains[@]}")
-    if [[ "$ACME_CA" == 'pebble' ]]; then
+    if [[ "${ACME_CA}" == 'pebble' ]]; then
       hosts+=(pebble pebble-challtestsrv)
     fi
     for host in "${hosts[@]}"; do
       if [[ "$(uname)" == 'Darwin' ]]; then
-        sudo sed -i '' "/127\.0\.0\.1 $host # le-companion test suite/d" /etc/hosts
+        sudo sed -i '' "/127\.0\.0\.1 ${host} # le-companion test suite/d" /etc/hosts
       else
-        sudo sed --in-place "/127\.0\.0\.1 $host # le-companion test suite/d" /etc/hosts
+        sudo sed --in-place "/127\.0\.0\.1 ${host} # le-companion test suite/d" /etc/hosts
       fi
     done
     ;;

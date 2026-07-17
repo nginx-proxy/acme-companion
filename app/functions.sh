@@ -6,7 +6,7 @@ function lc {
 }
 
 DEBUG="$(lc "${DEBUG:-}")"
-if [[ "$DEBUG" == true ]]; then
+if [[ "${DEBUG}" == true ]]; then
   DEBUG=1 && export DEBUG
 fi
 
@@ -33,7 +33,7 @@ function parse_true() {
 
 function check_nginx_proxy_container_run {
     local _nginx_proxy_container; _nginx_proxy_container=$(get_nginx_proxy_container)
-    if [[ -n "$_nginx_proxy_container" ]]; then
+    if [[ -n "${_nginx_proxy_container}" ]]; then
         if [[ $(docker_api "/containers/${_nginx_proxy_container}/json" | jq -r '.State.Status') = "running" ]];then
             return 0
         else
@@ -55,10 +55,10 @@ function ascending_wildcard_locations {
     local first_label
     tld_regex="^[[:alpha:]]+$"
     regex="^[^.]+\..+$"
-    while [[ "$domain" =~ $regex ]]; do
+    while [[ "${domain}" =~ ${regex} ]]; do
       first_label="${domain%%.*}"
       domain="${domain/#"${first_label}."/}"
-      if [[ "$domain" == "*" || "$domain" =~ $tld_regex ]]; then
+      if [[ "${domain}" == "*" || "${domain}" =~ ${tld_regex} ]]; then
         return
       else
         echo "*.${domain}"
@@ -75,10 +75,10 @@ function descending_wildcard_locations {
     local domain="${1:?}"
     local last_label
     regex="^.+\.[^.]+$"
-    while [[ "$domain" =~ $regex ]]; do
+    while [[ "${domain}" =~ ${regex} ]]; do
       last_label="${domain##*.}"
       domain="${domain/%".${last_label}"/}"
-      if [[ "$domain" == "*" ]]; then
+      if [[ "${domain}" == "*" ]]; then
         return
       else
         echo "${domain}.*"
@@ -89,36 +89,36 @@ function descending_wildcard_locations {
 function enumerate_wildcard_locations {
     # Goes through ascending then descending wildcard locations for a given FQDN
     local domain="${1:?}"
-    ascending_wildcard_locations "$domain"
-    descending_wildcard_locations "$domain"
+    ascending_wildcard_locations "${domain}"
+    descending_wildcard_locations "${domain}"
 }
 
 function add_location_configuration {
     local domain="${1:-}"
     local wildcard_domain
     # If no domain was passed use default instead
-    [[ -z "$domain" ]] && domain='default'
+    [[ -z "${domain}" ]] && domain='default'
 
     # If the domain does not have an exact matching location file, test the possible
     # wildcard locations files. Use default is no location file is present at all.
     if [[ ! -f "${VHOST_DIR}/${domain}" ]]; then
       while read -r wildcard_domain; do
         if [[ -f "${VHOST_DIR}/${wildcard_domain}" ]]; then
-          domain="$wildcard_domain"
+          domain="${wildcard_domain}"
           break
         fi
         domain='default'
-      done <<< "$(enumerate_wildcard_locations "$domain")"
+      done <<< "$(enumerate_wildcard_locations "${domain}")"
     fi
 
-    if [[ -f "${VHOST_DIR}/${domain}" && -n $(sed -n "/$START_HEADER/,/$END_HEADER/p" "${VHOST_DIR}/${domain}") ]]; then
+    if [[ -f "${VHOST_DIR}/${domain}" && -n $(sed -n "/${START_HEADER}/,/${END_HEADER}/p" "${VHOST_DIR}/${domain}") ]]; then
         # If the config file exist and already have the location configuration, end with exit code 0
         return 0
     else
         # Else write the location configuration to a temp file ...
-        echo "$START_HEADER" > "${VHOST_DIR}/${domain}".new
+        echo "${START_HEADER}" > "${VHOST_DIR}/${domain}".new
         cat /app/nginx_location.conf >> "${VHOST_DIR}/${domain}".new
-        echo "$END_HEADER" >> "${VHOST_DIR}/${domain}".new
+        echo "${END_HEADER}" >> "${VHOST_DIR}/${domain}".new
         # ... append the existing file content to the temp one ...
         [[ -f "${VHOST_DIR}/${domain}" ]] && cat "${VHOST_DIR}/${domain}" >> "${VHOST_DIR}/${domain}".new
         # ... and copy the temp file to the old one (if the destination file is bind mounted, you can't change
@@ -132,16 +132,16 @@ function add_standalone_configuration {
     local domain="${1:?}"
     if grep -q "server_name ${domain};" /etc/nginx/conf.d/*.conf; then
         # If the domain is already present in nginx's conf, use the location configuration.
-        add_location_configuration "$domain"
+        add_location_configuration "${domain}"
     else
         # Else use the standalone configuration.
         local listen_directives='    listen 80;'
         if parse_true "${ENABLE_IPV6:-false}"; then
             listen_directives+=$'\n    listen [::]:80;'
         fi
-        cat > "/etc/nginx/conf.d/standalone-cert-$domain.conf" << EOF
+        cat > "/etc/nginx/conf.d/standalone-cert-${domain}.conf" << EOF
 server {
-    server_name $domain;
+    server_name ${domain};
 ${listen_directives}
     access_log /var/log/nginx/access.log vhost;
     location ^~ /.well-known/acme-challenge/ {
@@ -161,17 +161,17 @@ function remove_all_standalone_configurations {
     local old_shopt_options; old_shopt_options=$(shopt -p) # Backup shopt options
     shopt -s nullglob
     for file in "/etc/nginx/conf.d/standalone-cert-"*".conf"; do
-      rm -f "$file"
+      rm -f "${file}"
     done
-    eval "$old_shopt_options" # Restore shopt options
+    eval "${old_shopt_options}" # Restore shopt options
 }
 
 function remove_all_location_configurations {
     for file in "${VHOST_DIR}"/*; do
-        [[ -e "$file" ]] || continue
-        if [[ -n $(sed -n "/$START_HEADER/,/$END_HEADER/p" "$file") ]]; then
-            sed "/$START_HEADER/,/$END_HEADER/d" "$file" > "$file".new
-            cp -f "$file".new "$file" && rm -f "$file".new
+        [[ -e "${file}" ]] || continue
+        if [[ -n $(sed -n "/${START_HEADER}/,/${END_HEADER}/p" "${file}") ]]; then
+            sed "/${START_HEADER}/,/${END_HEADER}/d" "${file}" > "${file}".new
+            cp -f "${file}".new "${file}" && rm -f "${file}".new
         fi
     done
 }
@@ -183,10 +183,10 @@ function check_cert_min_validity {
     local min_validity="$(( $(date "+%s") + $2 ))"
 
     local cert_expiration
-    cert_expiration="$(openssl x509 -noout -enddate -in "$cert_path" | cut -d "=" -f 2)"
+    cert_expiration="$(openssl x509 -noout -enddate -in "${cert_path}" | cut -d "=" -f 2)"
     cert_expiration="$(date --utc --date "${cert_expiration% GMT}" "+%s")"
 
-    [[ $cert_expiration -gt $min_validity ]] || return 1
+    [[ ${cert_expiration} -gt ${min_validity} ]] || return 1
 }
 
 function get_self_cid {
@@ -209,7 +209,7 @@ function get_self_cid {
 
     # If it's not 64 characters long, then it's probably not a container ID.
     if [[ ${#self_cid} == 64 ]]; then
-        echo "$self_cid"
+        echo "${self_cid}"
     else
         echo "$(date "+%Y/%m/%d %T"), Error: can't get my container ID !" >&2
         return 1
@@ -225,11 +225,11 @@ function docker_api {
     if [[ -n "${3:-}" ]]; then
         curl_opts+=(-d "$3")
     fi
-    if [[ -z "$DOCKER_HOST" ]];then
+    if [[ -z "${DOCKER_HOST}" ]];then
         echo "Error DOCKER_HOST variable not set" >&2
         return 1
     fi
-    if [[ $DOCKER_HOST == unix://* ]]; then
+    if [[ ${DOCKER_HOST} == unix://* ]]; then
         curl_opts+=(--unix-socket "${DOCKER_HOST#unix://}")
         scheme='http://localhost'
     elif parse_true "${DOCKER_TLS_VERIFY:-}"; then
@@ -240,16 +240,16 @@ function docker_api {
     else
         scheme="http://${DOCKER_HOST#*://}"
     fi
-    [[ $method = "POST" ]] && curl_opts+=(-H 'Content-Type: application/json')
+    [[ ${method} = "POST" ]] && curl_opts+=(-H 'Content-Type: application/json')
     curl "${curl_opts[@]}" -X "${method}" "${scheme}$1"
 }
 
 function docker_exec {
     local id="${1?missing id}"
     local cmd="${2?missing command}"
-    local data; data=$(printf '{ "AttachStdin": false, "AttachStdout": true, "AttachStderr": true, "Tty":false,"Cmd": %s }' "$cmd")
-    exec_id=$(docker_api "/containers/$id/exec" "POST" "$data" | jq -r .Id)
-    if [[ -n "$exec_id" && "$exec_id" != "null" ]]; then
+    local data; data=$(printf '{ "AttachStdin": false, "AttachStdout": true, "AttachStderr": true, "Tty":false,"Cmd": %s }' "${cmd}")
+    exec_id=$(docker_api "/containers/${id}/exec" "POST" "${data}" | jq -r .Id)
+    if [[ -n "${exec_id}" && "${exec_id}" != "null" ]]; then
         docker_api "/exec/${exec_id}/start" "POST" '{"Detach": false, "Tty":false}'
     else
         echo "$(date "+%Y/%m/%d %T"), Error: can't exec command ${cmd} in container ${id}. Check if the container is running." >&2
@@ -259,13 +259,13 @@ function docker_exec {
 
 function docker_restart {
     local id="${1?missing id}"
-    docker_api "/containers/$id/restart" "POST"
+    docker_api "/containers/${id}/restart" "POST"
 }
 
 function docker_kill {
     local id="${1?missing id}"
     local signal="${2?missing signal}"
-    docker_api "/containers/$id/kill?signal=$signal" "POST"
+    docker_api "/containers/${id}/kill?signal=${signal}" "POST"
 }
 
 function labeled_cid {
@@ -274,7 +274,7 @@ function labeled_cid {
 
 function is_docker_gen_container {
     local id="${1?missing id}"
-    if [[ $(docker_api "/containers/$id/json" | jq -r '.Config.Env[]' | grep -c -E '^DOCKER_GEN_VERSION=') = "1" ]]; then
+    if [[ $(docker_api "/containers/${id}/json" | jq -r '.Config.Env[]' | grep -c -E '^DOCKER_GEN_VERSION=') = "1" ]]; then
         return 0
     else
         return 1
@@ -285,15 +285,15 @@ function get_docker_gen_container {
     # First try to get the docker-gen container ID from the container label.
     local legacy_docker_gen_cid; legacy_docker_gen_cid="$(labeled_cid com.github.jrcs.letsencrypt_nginx_proxy_companion.docker_gen)"
     local new_docker_gen_cid; new_docker_gen_cid="$(labeled_cid com.github.nginx-proxy.docker-gen)"
-    local docker_gen_cid; docker_gen_cid="${new_docker_gen_cid:-$legacy_docker_gen_cid}"
+    local docker_gen_cid; docker_gen_cid="${new_docker_gen_cid:-${legacy_docker_gen_cid}}"
 
     # If the labeled_cid function dit not return anything and the env var is set, use it.
-    if [[ -z "$docker_gen_cid" ]] && [[ -n "${NGINX_DOCKER_GEN_CONTAINER:-}" ]]; then
-        docker_gen_cid="$NGINX_DOCKER_GEN_CONTAINER"
+    if [[ -z "${docker_gen_cid}" ]] && [[ -n "${NGINX_DOCKER_GEN_CONTAINER:-}" ]]; then
+        docker_gen_cid="${NGINX_DOCKER_GEN_CONTAINER}"
     fi
 
     # If a container ID was found, output it. The function will return 1 otherwise.
-    [[ -n "$docker_gen_cid" ]] && echo "$docker_gen_cid"
+    [[ -n "${docker_gen_cid}" ]] && echo "${docker_gen_cid}"
 }
 
 function get_nginx_proxy_container {
@@ -301,20 +301,20 @@ function get_nginx_proxy_container {
     # First try to get the nginx container ID from the container label.
     local legacy_nginx_cid; legacy_nginx_cid="$(labeled_cid com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy)"
     local new_nginx_cid; new_nginx_cid="$(labeled_cid com.github.nginx-proxy.nginx)"
-    local nginx_cid; nginx_cid="${new_nginx_cid:-$legacy_nginx_cid}"
+    local nginx_cid; nginx_cid="${new_nginx_cid:-${legacy_nginx_cid}}"
 
     # If the labeled_cid function dit not return anything ...
     if [[ -z "${nginx_cid}" ]]; then
         # ... and the env var is set, use it ...
         if [[ -n "${NGINX_PROXY_CONTAINER:-}" ]]; then
-            nginx_cid="$NGINX_PROXY_CONTAINER"
+            nginx_cid="${NGINX_PROXY_CONTAINER}"
         # ... else try to get the container ID with the volumes_from method.
         elif [[ -n $(get_self_cid) ]]; then
             volumes_from=$(docker_api "/containers/$(get_self_cid)/json" | jq -r '.HostConfig.VolumesFrom[]' 2>/dev/null)
-            for cid in $volumes_from; do
+            for cid in ${volumes_from}; do
                 cid="${cid%:*}" # Remove leading :ro or :rw set by remote docker-compose (thx anoopr)
-                if [[ $(docker_api "/containers/$cid/json" | jq -r '.Config.Env[]' | grep -c -E '^NGINX_VERSION=') = "1" ]];then
-                    nginx_cid="$cid"
+                if [[ $(docker_api "/containers/${cid}/json" | jq -r '.Config.Env[]' | grep -c -E '^NGINX_VERSION=') = "1" ]];then
+                    nginx_cid="${cid}"
                     break
                 fi
             done
@@ -322,7 +322,7 @@ function get_nginx_proxy_container {
     fi
 
     # If a container ID was found, output it. The function will return 1 otherwise.
-    [[ -n "$nginx_cid" ]] && echo "$nginx_cid"
+    [[ -n "${nginx_cid}" ]] && echo "${nginx_cid}"
 }
 
 ## Nginx
@@ -355,81 +355,81 @@ function set_ownership_and_permissions {
   local path="${1:?}"
   # The default ownership is root:root, with 755 permissions for folders and 600 for private files.
   local user="${FILES_UID:-root}"
-  local group="${FILES_GID:-$user}"
+  local group="${FILES_GID:-${user}}"
   local f_perms="${FILES_PERMS:-600}"
   local d_perms="${FOLDERS_PERMS:-755}"
 
-  if [[ ! "$f_perms" =~ ^[0-7]{3,4}$ ]]; then
-    echo "Warning : the provided files permission octal ($f_perms) is incorrect. Skipping ownership and permissions check."
+  if [[ ! "${f_perms}" =~ ^[0-7]{3,4}$ ]]; then
+    echo "Warning : the provided files permission octal (${f_perms}) is incorrect. Skipping ownership and permissions check."
     return 1
   fi
-  if [[ ! "$d_perms" =~ ^[0-7]{3,4}$ ]]; then
-    echo "Warning : the provided folders permission octal ($d_perms) is incorrect. Skipping ownership and permissions check."
+  if [[ ! "${d_perms}" =~ ^[0-7]{3,4}$ ]]; then
+    echo "Warning : the provided folders permission octal (${d_perms}) is incorrect. Skipping ownership and permissions check."
     return 1
   fi
 
-  [[ "$DEBUG" == 1 ]] && echo "Debug: checking $path ownership and permissions."
+  [[ "${DEBUG}" == 1 ]] && echo "Debug: checking ${path} ownership and permissions."
 
   # Find the user numeric ID if the FILES_UID environment variable isn't numeric.
-  if [[ "$user" =~ ^[0-9]+$ ]]; then
-    user_num="$user"
+  if [[ "${user}" =~ ^[0-9]+$ ]]; then
+    user_num="${user}"
   # Check if this user exist inside the container
-  elif id -u "$user" > /dev/null 2>&1; then
+  elif id -u "${user}" > /dev/null 2>&1; then
     # Convert the user name to numeric ID
-    local user_num; user_num="$(id -u "$user")"
-    [[ "$DEBUG" == 1 ]] && echo "Debug: numeric ID of user $user is $user_num."
+    local user_num; user_num="$(id -u "${user}")"
+    [[ "${DEBUG}" == 1 ]] && echo "Debug: numeric ID of user ${user} is ${user_num}."
   else
-    echo "Warning: user $user not found in the container, please use a numeric user ID instead of a user name. Skipping ownership and permissions check."
+    echo "Warning: user ${user} not found in the container, please use a numeric user ID instead of a user name. Skipping ownership and permissions check."
     return 1
   fi
 
   # Find the group numeric ID if the FILES_GID environment variable isn't numeric.
-  if [[ "$group" =~ ^[0-9]+$ ]]; then
-    group_num="$group"
+  if [[ "${group}" =~ ^[0-9]+$ ]]; then
+    group_num="${group}"
   # Check if this group exist inside the container
-  elif getent group "$group" > /dev/null 2>&1; then
+  elif getent group "${group}" > /dev/null 2>&1; then
     # Convert the group name to numeric ID
-    local group_num; group_num="$(getent group "$group" | awk -F ':' '{print $3}')"
-    [[ "$DEBUG" == 1 ]] && echo "Debug: numeric ID of group $group is $group_num."
+    local group_num; group_num="$(getent group "${group}" | awk -F ':' '{print $3}')"
+    [[ "${DEBUG}" == 1 ]] && echo "Debug: numeric ID of group ${group} is ${group_num}."
   else
-    echo "Warning: group $group not found in the container, please use a numeric group ID instead of a group name. Skipping ownership and permissions check."
+    echo "Warning: group ${group} not found in the container, please use a numeric group ID instead of a group name. Skipping ownership and permissions check."
     return 1
   fi
 
   # Check and modify ownership if required.
-  if [[ -e "$path" ]]; then
-    if [[ "$(stat -c %u:%g "$path" )" != "$user_num:$group_num" ]]; then
-      [[ "$DEBUG" == 1 ]] && echo "Debug: setting $path ownership to $user:$group."
-      if [[ -L "$path" ]]; then
-        chown -h "$user_num:$group_num" "$path"
+  if [[ -e "${path}" ]]; then
+    if [[ "$(stat -c %u:%g "${path}" )" != "${user_num}:${group_num}" ]]; then
+      [[ "${DEBUG}" == 1 ]] && echo "Debug: setting ${path} ownership to ${user}:${group}."
+      if [[ -L "${path}" ]]; then
+        chown -h "${user_num}:${group_num}" "${path}"
       else
-        chown "$user_num:$group_num" "$path"
+        chown "${user_num}:${group_num}" "${path}"
       fi
     fi
     # If the path is a folder, check and modify permissions if required.
-    if [[ -d "$path" ]]; then
-      if [[ "$(stat -c %a "$path")" != "$d_perms" ]]; then
-        [[ "$DEBUG" == 1 ]] && echo "Debug: setting $path permissions to $d_perms."
-        chmod "$d_perms" "$path"
+    if [[ -d "${path}" ]]; then
+      if [[ "$(stat -c %a "${path}")" != "${d_perms}" ]]; then
+        [[ "${DEBUG}" == 1 ]] && echo "Debug: setting ${path} permissions to ${d_perms}."
+        chmod "${d_perms}" "${path}"
       fi
     # If the path is a file, check and modify permissions if required.
-    elif [[ -f "$path" ]]; then
+    elif [[ -f "${path}" ]]; then
       # Use different permissions for private files (private keys and ACME account files) ...
-      if [[ "$path" =~ ^.*(key\.pem|\.key)$ ]]; then
-        if [[ "$(stat -c %a "$path")" != "$f_perms" ]]; then
-          [[ "$DEBUG" == 1 ]] && echo "Debug: setting $path permissions to $f_perms."
-          chmod "$f_perms" "$path"
+      if [[ "${path}" =~ ^.*(key\.pem|\.key)$ ]]; then
+        if [[ "$(stat -c %a "${path}")" != "${f_perms}" ]]; then
+          [[ "${DEBUG}" == 1 ]] && echo "Debug: setting ${path} permissions to ${f_perms}."
+          chmod "${f_perms}" "${path}"
         fi
       # ... and for public files (certificates, chains, fullchains, DH parameters).
       else
-        if [[ "$(stat -c %a "$path")" != "644" ]]; then
-          [[ "$DEBUG" == 1 ]] && echo "Debug: setting $path permissions to 644."
-          chmod "644" "$path"
+        if [[ "$(stat -c %a "${path}")" != "644" ]]; then
+          [[ "${DEBUG}" == 1 ]] && echo "Debug: setting ${path} permissions to 644."
+          chmod "644" "${path}"
         fi
       fi
     fi
   else
-    echo "Warning: $path does not exist. Skipping ownership and permissions check."
+    echo "Warning: ${path} does not exist. Skipping ownership and permissions check."
     return 1
   fi
 }

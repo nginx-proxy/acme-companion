@@ -2,7 +2,7 @@
 
 set -e
 
-case $ACME_CA in
+case ${ACME_CA} in
 
   pebble)
     test_net='acme_net'
@@ -13,23 +13,23 @@ case $ACME_CA in
   ;;
 
   *)
-    echo "$0 $ACME_CA: invalid option."
+    echo "$0 ${ACME_CA}: invalid option."
     exit 1
 
 esac
 
-case $SETUP in
+case ${SETUP} in
 
   2containers)
     docker run -d -p 80:80 -p 443:443 \
-      --name "$NGINX_CONTAINER_NAME" \
+      --name "${NGINX_CONTAINER_NAME}" \
       -v /etc/nginx/certs \
       -v /etc/nginx/conf.d \
       -v /etc/nginx/vhost.d \
       -v /usr/share/nginx/html \
       -v /var/run/docker.sock:/tmp/docker.sock:ro \
       --label com.github.nginx-proxy.acme-companion.test-suite \
-      --network "$test_net" \
+      --network "${test_net}" \
       nginxproxy/nginx-proxy
     ;;
 
@@ -37,28 +37,28 @@ case $SETUP in
     curl https://raw.githubusercontent.com/nginx-proxy/nginx-proxy/main/nginx.tmpl > "${GITHUB_WORKSPACE}/nginx.tmpl"
 
     docker run -d -p 80:80 -p 443:443 \
-      --name "$NGINX_CONTAINER_NAME" \
+      --name "${NGINX_CONTAINER_NAME}" \
       -v /etc/nginx/certs \
       -v /etc/nginx/conf.d \
       -v /etc/nginx/vhost.d \
       -v /usr/share/nginx/html \
       --label com.github.nginx-proxy.acme-companion.test-suite \
-      --network "$test_net" \
+      --network "${test_net}" \
       nginx:alpine
 
     docker run -d \
-      --name "$DOCKER_GEN_CONTAINER_NAME" \
-      --volumes-from "$NGINX_CONTAINER_NAME" \
+      --name "${DOCKER_GEN_CONTAINER_NAME}" \
+      --volumes-from "${NGINX_CONTAINER_NAME}" \
       -v "${GITHUB_WORKSPACE}/nginx.tmpl:/etc/docker-gen/templates/nginx.tmpl:ro" \
       -v /var/run/docker.sock:/tmp/docker.sock:ro \
       --label com.github.nginx-proxy.acme-companion.test-suite \
-      --network "$test_net" \
+      --network "${test_net}" \
       nginxproxy/docker-gen \
-      -notify-sighup "$NGINX_CONTAINER_NAME" -watch /etc/docker-gen/templates/nginx.tmpl /etc/nginx/conf.d/default.conf
+      -notify-sighup "${NGINX_CONTAINER_NAME}" -watch /etc/docker-gen/templates/nginx.tmpl /etc/nginx/conf.d/default.conf
     ;;
 
   *)
-    echo "$0 $SETUP: invalid option."
+    echo "$0 ${SETUP}: invalid option."
     exit 1
 
 esac

@@ -10,9 +10,9 @@ setup_pebble() {
 
 wait_for_pebble() {
     for endpoint in 'https://pebble:14000/dir' 'http://pebble-challtestsrv:8055'; do
-        while ! curl --cacert "${GITHUB_WORKSPACE}/pebble.minica.pem" "$endpoint" >/dev/null 2>&1; do
+        while ! curl --cacert "${GITHUB_WORKSPACE}/pebble.minica.pem" "${endpoint}" >/dev/null 2>&1; do
             if [[ $((i * 5)) -gt $((5 * 60)) ]]; then
-                echo "$endpoint was not available under 5 minutes, timing out."
+                echo "${endpoint} was not available under 5 minutes, timing out."
                 exit 1
             fi
             i=$((i + 1))

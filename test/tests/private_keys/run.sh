@@ -2,15 +2,15 @@
 
 ## Test for private keys types
 
-if [[ -z $GITHUB_ACTIONS ]]; then
+if [[ -z ${GITHUB_ACTIONS} ]]; then
   le_container_name="$(basename "${0%/*}")_$(date "+%Y-%m-%d_%H.%M.%S")"
 else
   le_container_name="$(basename "${0%/*}")"
 fi
-run_le_container "${1:?}" "$le_container_name"
+run_le_container "${1:?}" "${le_container_name}"
 
-# Create the $domains array from comma separated domains in TEST_DOMAINS.
-IFS=',' read -r -a domains <<< "$TEST_DOMAINS"
+# Create the ${domains} array from comma separated domains in TEST_DOMAINS.
+IFS=',' read -r -a domains <<< "${TEST_DOMAINS}"
 
 # Cleanup function with EXIT trap
 function cleanup {
@@ -19,9 +19,9 @@ function cleanup {
     docker rm --force "${key}" &> /dev/null
   done
   # Cleanup the files created by this run of the test to avoid foiling following test(s).
-  docker exec "$le_container_name" /app/cleanup_test_artifacts
+  docker exec "${le_container_name}" /app/cleanup_test_artifacts
   # Stop the LE container
-  docker stop "$le_container_name" > /dev/null
+  docker stop "${le_container_name}" > /dev/null
 }
 trap cleanup EXIT
 
@@ -46,18 +46,18 @@ for key in "${!key_types[@]}"; do
 
   # Grep the expected string from the public key in text form.
   for domain in "${domains[@]:0:2}"; do
-    if wait_for_symlink "$domain" "$le_container_name"; then
-      public_key=$(docker exec "$le_container_name" openssl pkey -in "/etc/nginx/certs/${domain}.key" -noout -text_pub)
-      if ! grep -q "${key_types[$key]}" <<< "$public_key"; then
-        echo "Private key for test $key and domain $domain was not of the correct type, expected ${key_types[$key]} and got the following:"
-        echo "$public_key"
+    if wait_for_symlink "${domain}" "${le_container_name}"; then
+      public_key=$(docker exec "${le_container_name}" openssl pkey -in "/etc/nginx/certs/${domain}.key" -noout -text_pub)
+      if ! grep -q "${key_types[${key}]}" <<< "${public_key}"; then
+        echo "Private key for test ${key} and domain ${domain} was not of the correct type, expected ${key_types[${key}]} and got the following:"
+        echo "${public_key}"
       fi
     else
-      echo "${key_types[$key]} key test timed out for domain $domain"
+      echo "${key_types[${key}]} key test timed out for domain ${domain}"
     fi
   done
 
   docker stop "${key}" "${key}-legacy" &> /dev/null
-  docker exec "$le_container_name" /app/cleanup_test_artifacts
+  docker exec "${le_container_name}" /app/cleanup_test_artifacts
 
 done
