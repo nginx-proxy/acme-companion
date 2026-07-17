@@ -309,7 +309,7 @@ function get_nginx_proxy_container {
         if [[ -n "${NGINX_PROXY_CONTAINER:-}" ]]; then
             nginx_cid="$NGINX_PROXY_CONTAINER"
         # ... else try to get the container ID with the volumes_from method.
-        elif [[ $(get_self_cid) ]]; then
+        elif [[ -n $(get_self_cid) ]]; then
             volumes_from=$(docker_api "/containers/$(get_self_cid)/json" | jq -r '.HostConfig.VolumesFrom[]' 2>/dev/null)
             for cid in $volumes_from; do
                 cid="${cid%:*}" # Remove leading :ro or :rw set by remote docker-compose (thx anoopr)

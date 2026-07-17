@@ -43,7 +43,7 @@ function check_docker_socket {
 
 function check_dir_is_mounted_volume {
     local dir="$1"
-    if [[ $(get_self_cid) ]]; then
+    if [[ -n $(get_self_cid) ]]; then
         if ! docker_api "/containers/$(get_self_cid)/json" | jq ".Mounts[].Destination" | grep -q "^\"$dir\"$"; then
             echo "Warning: '$dir' does not appear to be a mounted volume."
         fi
