@@ -2,7 +2,7 @@
 
 set -u
 
-# shellcheck source=functions.sh
+# shellcheck source=app/functions.sh
 source /app/functions.sh
 
 function print_version {

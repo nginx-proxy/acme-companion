@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# shellcheck source=functions.sh
+# shellcheck source=app/functions.sh
 source /app/functions.sh
 
 CERTS_UPDATE_INTERVAL="${CERTS_UPDATE_INTERVAL:-3600}"
