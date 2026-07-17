@@ -579,6 +579,7 @@ function update_cert {
 
 function update_certs {
     local -a ACME_CONTAINERS
+    local -a ACME_STANDALONE_CONTAINERS
     local -a ACME_STANDALONE_CERTS
     local -a LETSENCRYPT_STANDALONE_CERTS
 
@@ -597,27 +598,31 @@ function update_certs {
         if source /app/letsencrypt_user_data; then
             # Backward compatibility: fall back to LETSENCRYPT_STANDALONE_CERTS if ACME_STANDALONE_CERTS is unset
             [[ ${#ACME_STANDALONE_CERTS[@]} -eq 0 ]] && ACME_STANDALONE_CERTS=( "${LETSENCRYPT_STANDALONE_CERTS[@]}" )
-
-            for cid in "${ACME_STANDALONE_CERTS[@]}"; do
-                local hosts_var
-                hosts_var="$(get_hosts_array_var "${cid}")" || continue
-                local -n hosts_array="${hosts_var}"
-                
-                local -n acme_challenge="ACME_${cid}_CHALLENGE"
-                acme_challenge="${acme_challenge:-HTTP-01}"
-                
-                if [[ "${acme_challenge}" == "HTTP-01" ]]; then
-                    for domain in "${hosts_array[@]}"; do
-                        add_standalone_configuration "${domain}"
-                    done
-                fi
-            done
-
-            reload_nginx
             ACME_CONTAINERS+=( "${ACME_STANDALONE_CERTS[@]}" )
         else
             echo "Warning: could not source /app/letsencrypt_user_data, skipping user data"
+            ACME_STANDALONE_CERTS=()
         fi
+    fi
+
+    # Standalone certificates and containers without VIRTUAL_HOST need a standalone challenge configuration.
+    ACME_STANDALONE_CERTS+=( "${ACME_STANDALONE_CONTAINERS[@]}" )
+    if [[ ${#ACME_STANDALONE_CERTS[@]} -gt 0 ]]; then
+        for cid in "${ACME_STANDALONE_CERTS[@]}"; do
+            local hosts_var
+            hosts_var="$(get_hosts_array_var "${cid}")" || continue
+            local -n hosts_array="${hosts_var}"
+
+            local -n acme_challenge="ACME_${cid}_CHALLENGE"
+            acme_challenge="${acme_challenge:-HTTP-01}"
+
+            if [[ "${acme_challenge}" == "HTTP-01" ]]; then
+                for domain in "${hosts_array[@]}"; do
+                    add_standalone_configuration "${domain}"
+                done
+            fi
+        done
+        reload_nginx
     fi
 
     should_reload_nginx='false'
