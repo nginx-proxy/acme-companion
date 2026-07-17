@@ -278,9 +278,9 @@ function check_cert_subj {
   fi
 
   if [[ "$cert_subject" =~ $re ]]; then
-    return $match_rc
+    return "$match_rc"
   else
-    return $no_match_rc
+    return "$no_match_rc"
   fi
 }
 export -f check_cert_subj

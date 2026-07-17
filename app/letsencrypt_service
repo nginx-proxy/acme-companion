@@ -651,6 +651,6 @@ update_certs "$@"
 
 # Wait some amount of time
 echo "Sleep for ${CERTS_UPDATE_INTERVAL}s"
-sleep $CERTS_UPDATE_INTERVAL & pid=$!
+sleep "$CERTS_UPDATE_INTERVAL" & pid=$!
 wait
 pid=
