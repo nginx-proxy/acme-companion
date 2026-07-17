@@ -638,7 +638,7 @@ function update_certs {
 }
 
 # Allow the script functions to be sourced without starting the Service Loop.
-if [ "${1}" == "--source-only" ]; then
+if [[ "${1}" == "--source-only" ]]; then
   return 0
 fi
 

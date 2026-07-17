@@ -41,7 +41,7 @@ setup_boulder() {
 wait_for_boulder() {
   i=0
   until docker exec boulder bash -c "curl ${acme_endpoint:?} >/dev/null 2>&1"; do
-    if [ $i -gt 300 ]; then
+    if [[ $i -gt 300 ]]; then
       echo "Boulder has not started for 5 minutes, timing out."
       exit 1
     fi

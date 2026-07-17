@@ -71,7 +71,7 @@ for hosts in "${letsencrypt_hosts[@]}"; do
         echo "$domain is on certificate."
       fi
       for otherdomain in "${domains[@]}"; do
-        if [ "$domain" != "$otherdomain" ]; then
+        if [[ "$domain" != "$otherdomain" ]]; then
           if grep -q "$otherdomain" <<< "$created_cert"; then
             echo "$otherdomain is on certificate for $domain, but it must not!"
           elif [[ "${DRY_RUN:-}" == 1 ]]; then
