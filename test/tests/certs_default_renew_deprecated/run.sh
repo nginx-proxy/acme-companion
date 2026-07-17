@@ -67,8 +67,8 @@ actual_renewal_days="$(docker exec "$le_container_name" grep "$acme_renewal_days
 actual_next_renew_time="$(docker exec "$le_container_name" grep "$acme_next_renew_time_key" "$acme_config_file")"
 
 if [[ "$expected_renewal_days" != "$actual_renewal_days" ]]; then
-  echo "Renewal days is not correct"
+  echo "Renewal days is not correct, expected: $expected_renewal_days, actual: $actual_renewal_days"
 fi
 if [[ "$expected_next_renew_time" != "$actual_next_renew_time" ]]; then
-  echo "Next renewal time is not correct"
+  echo "Next renewal time is not correct, expected: $expected_next_renew_time, actual: $actual_next_renew_time"
 fi

@@ -53,10 +53,10 @@ actual_renewal_days="$(docker exec "$le_container_name" grep "$acme_renewal_days
 actual_next_renew_time="$(docker exec "$le_container_name" grep "$acme_next_renew_time_key" "$acme_config_file")"
 
 if [[ "$expected_renewal_days" != "$actual_renewal_days" ]]; then
-  echo "Global renewal days is not correct"
+  echo "Global renewal days is not correct, expected: $expected_renewal_days, actual: $actual_renewal_days"
 fi
 if [[ "$expected_next_renew_time" != "$actual_next_renew_time" ]]; then
-  echo "Global next renewal time is not correct"
+  echo "Global next renewal time is not correct, expected: $expected_next_renew_time, actual: $actual_next_renew_time"
 fi
 
 # Test per-container ACME_RENEW_AFTER override
@@ -83,8 +83,8 @@ actual_renewal_days_2="$(docker exec "$le_container_name" grep "$acme_renewal_da
 actual_next_renew_time_2="$(docker exec "$le_container_name" grep "$acme_next_renew_time_key" "$acme_config_file_2")"
 
 if [[ "$expected_renewal_days_2" != "$actual_renewal_days_2" ]]; then
-  echo "Per-container renewal days is not correct"
+  echo "Per-container renewal days is not correct, expected: $expected_renewal_days_2, actual: $actual_renewal_days_2"
 fi
 if [[ "$expected_next_renew_time_2" != "$actual_next_renew_time_2" ]]; then
-  echo "Per-container next renewal time is not correct"
+  echo "Per-container next renewal time is not correct, expected: $expected_next_renew_time_2, actual: $actual_next_renew_time_2"
 fi
