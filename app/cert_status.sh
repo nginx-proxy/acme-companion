@@ -1,4 +1,5 @@
 #!/bin/bash
+
 function print_cert_info {
   local enddate
   local subject
@@ -10,69 +11,69 @@ function print_cert_info {
   subject="$(openssl x509 -noout -subject -in "$1" | sed -n 's/.*CN = \([a-z0-9.-]*\)/- \1/p')"
   san_str="$(openssl x509 -text -in "$1" | grep 'DNS:')"
 
-  case "$issuer" in
+  case "${issuer}" in
     R3 | R4 | E1 | E2)
-      issuer="Let's Encrypt $issuer"
+      issuer="Let's Encrypt ${issuer}"
       ;;
 
     *)
       ;;
   esac
 
-  echo "Certificate was issued by $issuer"
+  echo "Certificate was issued by ${issuer}"
   if [[ "$2" == "expired" ]]; then
-      echo "Certificate was valid until $enddate"
+      echo "Certificate was valid until ${enddate}"
   else
-      echo "Certificate is valid until $enddate"
+      echo "Certificate is valid until ${enddate}"
   fi
   echo "Subject Name:"
-  echo "$subject"
+  echo "${subject}"
 
   # Display the SAN info only if there is more than one SAN domain.
   while IFS=',' read -ra SAN; do
       if [[ ${#SAN[@]} -gt 1 ]]; then
           echo "Subject Alternative Name:"
           for domain in "${SAN[@]}"; do
-              echo "$domain" | sed -n 's/.*DNS:\([a-z0-9.-]*\)/- \1/p'
+              echo "${domain}" | sed -n 's/.*DNS:\([a-z0-9.-]*\)/- \1/p'
           done
       fi
-  done <<< "$san_str"
+  done <<< "${san_str}"
 }
 
 echo '##### Certificate status #####'
 for cert in /etc/nginx/certs/*/fullchain.pem; do
-    [[ -e "$cert" ]] || continue
+    [[ -e "${cert}" ]] || continue
     if [[ -e "${cert%fullchain.pem}chain.pem" ]]; then
         # Verify the certificate with OpenSSL.
-        if verify=$(openssl verify -untrusted "${cert%fullchain.pem}chain.pem" "$cert" 2>&1); then
-            echo "$verify"
+        if verify=$(openssl verify -untrusted "${cert%fullchain.pem}chain.pem" "${cert}" 2>&1); then
+            echo "${verify}"
             # Print certificate info.
-            print_cert_info "$cert"
-        elif openssl x509 -checkend 0 -noout -in "$cert" &> /dev/null; then
+            print_cert_info "${cert}"
+        elif openssl x509 -checkend 0 -noout -in "${cert}" &> /dev/null; then
             # Chain failed to verify but the leaf itself is still valid (not expired).
             echo "${cert}: OK (chain verification failed)"
             # Print certificate info.
-            print_cert_info "$cert"
+            print_cert_info "${cert}"
         else
             echo "${cert}: EXPIRED"
             # Print certificate info.
-            print_cert_info "$cert" "expired"
+            print_cert_info "${cert}" "expired"
         fi
     else
         echo "${cert}: no corresponding chain.pem file, unable to verify certificate"
         # Print certificate info.
-        print_cert_info "$cert"
+        print_cert_info "${cert}"
     fi
 
     # Find the .crt files in /etc/nginx/certs which are
     # symlinks pointing to the current certificate.
     unset symlinked_domains
     for symlink in /etc/nginx/certs/*.crt; do
-        [[ -e "$symlink" ]] || continue
-        if [[ "$(readlink -f "$symlink")" == "$cert" ]]; then
+        [[ -e "${symlink}" ]] || continue
+        if [[ "$(readlink -f "${symlink}")" == "${cert}" ]]; then
             domain="${symlink%.crt}"
             domain="${domain//\/etc\/nginx\/certs\//}"
-            symlinked_domains+=("$domain")
+            symlinked_domains+=("${domain}")
         fi
     done
 
@@ -80,7 +81,7 @@ for cert in /etc/nginx/certs/*/fullchain.pem; do
     if [[ ${#symlinked_domains[@]} -gt 0 ]]; then
         echo "Certificate is used by the following domain(s):"
         for domain in "${symlinked_domains[@]}"; do
-          echo "- $domain"
+          echo "- ${domain}"
         done
     fi
 

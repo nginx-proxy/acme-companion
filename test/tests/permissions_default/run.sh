@@ -2,24 +2,24 @@
 
 ## Test for sensitive files and folders permissions
 
-if [[ -z $GITHUB_ACTIONS ]]; then
+if [[ -z ${GITHUB_ACTIONS} ]]; then
   le_container_name="$(basename "${0%/*}")_$(date "+%Y-%m-%d_%H.%M.%S")"
 else
   le_container_name="$(basename "${0%/*}")"
 fi
-run_le_container "${1:?}" "$le_container_name"
+run_le_container "${1:?}" "${le_container_name}"
 
-# Create the $domains array from comma separated domains in TEST_DOMAINS.
-IFS=',' read -r -a domains <<< "$TEST_DOMAINS"
+# Create the ${domains} array from comma separated domains in TEST_DOMAINS.
+IFS=',' read -r -a domains <<< "${TEST_DOMAINS}"
 
 # Cleanup function with EXIT trap
 function cleanup {
   # Remove the ${domains[0]} Nginx container silently.
   docker rm --force "${domains[0]}" &> /dev/null
   # Cleanup the files created by this run of the test to avoid foiling following test(s).
-  docker exec "$le_container_name" /app/cleanup_test_artifacts
+  docker exec "${le_container_name}" cleanup_test_artifacts
   # Stop the LE container
-  docker stop "$le_container_name" > /dev/null
+  docker stop "${le_container_name}" > /dev/null
 }
 trap cleanup EXIT
 
@@ -27,7 +27,7 @@ trap cleanup EXIT
 run_nginx_container --hosts "${domains[0]}"
 
 # Wait for the cert symlink.
-wait_for_symlink "${domains[0]}" "$le_container_name"
+wait_for_symlink "${domains[0]}" "${le_container_name}"
 
 # Array of folder paths to test
 folders=( \
@@ -36,8 +36,8 @@ folders=( \
 
 # Test folder paths
 for folder in  "${folders[@]}"; do
-  ownership_and_permissions="$(docker exec "$le_container_name" stat -c %u:%g:%a "$folder")"
-  if [[ "$ownership_and_permissions" != 0:0:755 ]]; then
+  ownership_and_permissions="$(docker exec "${le_container_name}" stat -c %u:%g:%a "${folder}")"
+  if [[ "${ownership_and_permissions}" != 0:0:755 ]]; then
     echo "Expected 0:0:755 on ${folder}, found ${ownership_and_permissions}."
   fi
 done
@@ -52,8 +52,8 @@ symlinks=( \
 
 # Test symlinks paths
 for symlink in  "${symlinks[@]}"; do
-  ownership="$(docker exec "$le_container_name" stat -c %u:%g "$symlink")"
-  if [[ "$ownership" != 0:0 ]]; then
+  ownership="$(docker exec "${le_container_name}" stat -c %u:%g "${symlink}")"
+  if [[ "${ownership}" != 0:0 ]]; then
     echo "Expected 0:0 on ${symlink}, found ${ownership}."
   fi
 done
@@ -66,8 +66,8 @@ private_files=( \
 
 # Test private file paths
 for file in  "${private_files[@]}"; do
-  ownership_and_permissions="$(docker exec "$le_container_name" stat -c %u:%g:%a "$file")"
-  if [[ "$ownership_and_permissions" != 0:0:600 ]]; then
+  ownership_and_permissions="$(docker exec "${le_container_name}" stat -c %u:%g:%a "${file}")"
+  if [[ "${ownership_and_permissions}" != 0:0:600 ]]; then
     echo "Expected 0:0:600 on ${file}, found ${ownership_and_permissions}."
   fi
 done
@@ -83,8 +83,8 @@ public_files=( \
 
 # Test public file paths
 for file in  "${public_files[@]}"; do
-  ownership_and_permissions="$(docker exec "$le_container_name" stat -c %u:%g:%a "$file")"
-  if [[ "$ownership_and_permissions" != 0:0:644 ]]; then
+  ownership_and_permissions="$(docker exec "${le_container_name}" stat -c %u:%g:%a "${file}")"
+  if [[ "${ownership_and_permissions}" != 0:0:644 ]]; then
     echo "Expected 0:0:644 on ${file}, found ${ownership_and_permissions}."
   fi
 done

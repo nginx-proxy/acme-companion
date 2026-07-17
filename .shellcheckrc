@@ -1,1 +1,24 @@
+# Set default shell dialect to bash.
+shell=bash
+
+# Always allow ShellCheck to open arbitrary files from 'source' statements.
 external-sources=true
+
+# Enable all optional checks
+enable=all
+
+# VAR is referenced but not assigned.
+# - Upper case variables are environment variables and are set outside of the script.
+disable=SC2154
+
+# This function is invoked in an 'if' condition so set -e will be disabled. Invoke separately if failures should cause the script to exit.
+# - We don't want to exit if errors happen inside a check, that's why we have a check...
+disable=SC2310
+
+# Bash implicitly disabled set -e for this function invocation because it's inside a command substitution. Add set -e; before it or enable inherit_errexit.
+# - Don't care if we inherit errexit inside substitutions, we do checks for that.
+disable=SC2311
+
+# Consider invoking this command separately to avoid masking its return value (or use '|| true' to ignore).
+# - We already check errors where relevant and adding "|| true" everywhere hinders readability.
+disable=SC2312

@@ -1,0 +1,27 @@
+name: Linting
+
+permissions:
+  contents: read
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "**/*.sh"
+  pull_request:
+    paths:
+      - "**/*.sh"
+
+jobs:
+  shellcheck:
+    name: ShellCheck
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+
+      - name: Run ShellCheck
+        run: shellcheck **/*.sh

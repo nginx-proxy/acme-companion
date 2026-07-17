@@ -2,15 +2,15 @@
 
 ## Test for ACME_RESTART_CONTAINER variable, with backward compatibility for LETSENCRYPT_RESTART_CONTAINER.
 
-if [[ -z $GITHUB_ACTIONS ]]; then
+if [[ -z ${GITHUB_ACTIONS} ]]; then
   le_container_name="$(basename "${0%/*}")_$(date "+%Y-%m-%d_%H.%M.%S")"
 else
   le_container_name="$(basename "${0%/*}")"
 fi
-run_le_container "${1:?}" "$le_container_name"
+run_le_container "${1:?}" "${le_container_name}"
 
-# Create the $domains array from comma separated domains in TEST_DOMAINS.
-IFS=',' read -r -a domains <<< "$TEST_DOMAINS"
+# Create the ${domains} array from comma separated domains in TEST_DOMAINS.
+IFS=',' read -r -a domains <<< "${TEST_DOMAINS}"
 
 # Listen for Docker restart events
 docker events \
@@ -21,37 +21,37 @@ docker_events_pid=$!
 # Cleanup function with EXIT trap
 function cleanup {
   # Kill the Docker events listener
-  kill $docker_events_pid && wait $docker_events_pid 2>/dev/null
+  kill "${docker_events_pid}" && wait "${docker_events_pid}" 2>/dev/null
   # Remove temporary files
   rm -f "${GITHUB_WORKSPACE}/test/tests/container_restart/docker_event_out.txt"
   # Remove any remaining Nginx container(s) silently.
   for domain in "${domains[@]}"; do
-    docker rm --force "$domain" &> /dev/null
+    docker rm --force "${domain}" &> /dev/null
   done
   # Cleanup the files created by this run of the test to avoid foiling following test(s).
-  docker exec "$le_container_name" /app/cleanup_test_artifacts
+  docker exec "${le_container_name}" cleanup_test_artifacts
   # Stop the LE container
-  docker stop "$le_container_name" > /dev/null
+  docker stop "${le_container_name}" > /dev/null
 }
 trap cleanup EXIT
 
-# Run a separate nginx container for each domain in the $domains array.
+# Run a separate nginx container for each domain in the ${domains} array.
 for domain in "${domains[@]}"; do
-  if [[ "$domain" == "${domains[0]}" ]]; then
+  if [[ "${domain}" == "${domains[0]}" ]]; then
     # Use the legacy environment variable name for the first domain to test backward compatibility.
     restart_container_env_var="LETSENCRYPT_RESTART_CONTAINER"
   else
     restart_container_env_var="ACME_RESTART_CONTAINER"
   fi
 
-  run_nginx_container --hosts "$domain" --cli-args "--env ${restart_container_env_var}=true"
+  run_nginx_container --hosts "${domain}" --cli-args "--env ${restart_container_env_var}=true"
 
   # Check if container restarted
   timeout="$(date +%s)"
   timeout="$((timeout + 120))"
-  until grep "$domain" "${GITHUB_WORKSPACE}"/test/tests/container_restart/docker_event_out.txt; do
-    if [[ "$(date +%s)" -gt "$timeout" ]]; then
-      echo "Container $domain didn't restart in under one minute."
+  until grep "${domain}" "${GITHUB_WORKSPACE}"/test/tests/container_restart/docker_event_out.txt; do
+    if [[ "$(date +%s)" -gt "${timeout}" ]]; then
+      echo "Container ${domain} didn't restart in under one minute."
       break
     fi
     sleep 0.1

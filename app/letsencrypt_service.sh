@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# shellcheck source=functions.sh
+# shellcheck source=app/functions.sh
 source /app/functions.sh
 
 CERTS_UPDATE_INTERVAL="${CERTS_UPDATE_INTERVAL:-3600}"
@@ -20,59 +20,59 @@ function strip_wildcard {
     if [[ "${domain:0:2}" == "*." ]]; then
         echo "${domain:2}"
     else
-        echo "$domain"
+        echo "${domain}"
     fi
 }
 
 function create_link {
     local -r source=${1?missing source argument}
     local -r target=${2?missing target argument}
-    if [[ -f "$target" ]] && [[ "$(readlink "$target")" == "$source" ]]; then
-      set_ownership_and_permissions "$target"
-      [[ "$DEBUG" == 1 ]] && echo "$target already linked to $source"
+    if [[ -f "${target}" ]] && [[ "$(readlink "${target}")" == "${source}" ]]; then
+      set_ownership_and_permissions "${target}"
+      [[ "${DEBUG}" == 1 ]] && echo "${target} already linked to ${source}"
       return 1
     else
-      ln -sf "$source" "$target" \
-        && set_ownership_and_permissions "$target"
+      ln -sf "${source}" "${target}" \
+        && set_ownership_and_permissions "${target}"
     fi
 }
 
 function create_links {
     local -r base_domain=${1?missing base_domain argument}
     local domain=${2?missing base_domain argument}
-    domain="$(strip_wildcard "$domain")"
+    domain="$(strip_wildcard "${domain}")"
 
-    if [[ ! -f "/etc/nginx/certs/$base_domain/fullchain.pem" || \
-          ! -f "/etc/nginx/certs/$base_domain/key.pem" ]]; then
+    if [[ ! -f "/etc/nginx/certs/${base_domain}/fullchain.pem" || \
+          ! -f "/etc/nginx/certs/${base_domain}/key.pem" ]]; then
         return 1
     fi
     local return_code=1
-    create_link "./$base_domain/fullchain.pem" "/etc/nginx/certs/$domain.crt"
+    create_link "./${base_domain}/fullchain.pem" "/etc/nginx/certs/${domain}.crt"
     return_code=$(( return_code & $? ))
-    create_link "./$base_domain/key.pem" "/etc/nginx/certs/$domain.key"
+    create_link "./${base_domain}/key.pem" "/etc/nginx/certs/${domain}.key"
     return_code=$(( return_code & $? ))
     if [[ -f "/etc/nginx/certs/dhparam.pem" ]]; then
-        create_link ./dhparam.pem "/etc/nginx/certs/$domain.dhparam.pem"
+        create_link ./dhparam.pem "/etc/nginx/certs/${domain}.dhparam.pem"
         return_code=$(( return_code & $? ))
     fi
-    if [[ -f "/etc/nginx/certs/$base_domain/chain.pem" ]]; then
-        create_link "./$base_domain/chain.pem" "/etc/nginx/certs/$domain.chain.pem"
+    if [[ -f "/etc/nginx/certs/${base_domain}/chain.pem" ]]; then
+        create_link "./${base_domain}/chain.pem" "/etc/nginx/certs/${domain}.chain.pem"
         return_code=$(( return_code & $? ))
     fi
-    return $return_code
+    return "${return_code}"
 }
 
 function get_hosts_array_var {
     local cid="${1:?}"
     local acme_var="ACME_${cid}_HOST"
-    if declare -p "$acme_var" > /dev/null 2>&1; then
-        echo "$acme_var"
+    if declare -p "${acme_var}" > /dev/null 2>&1; then
+        echo "${acme_var}"
         return 0
     fi
 
     local letsencrypt_var="LETSENCRYPT_${cid}_HOST"
-    if declare -p "$letsencrypt_var" > /dev/null 2>&1; then
-        echo "$letsencrypt_var"
+    if declare -p "${letsencrypt_var}" > /dev/null 2>&1; then
+        echo "${letsencrypt_var}"
         return 0
     fi
 
@@ -91,13 +91,13 @@ function cleanup_links {
     # Create an array containing domains for which a symlinked certificate
     # exists in /etc/nginx/certs (excluding default cert).
     for symlinked_domain in /etc/nginx/certs/*.crt; do
-        [[ -L "$symlinked_domain" ]] || continue
+        [[ -L "${symlinked_domain}" ]] || continue
         symlinked_domain="${symlinked_domain##*/}"
         symlinked_domain="${symlinked_domain%*.crt}"
-        [[ "$symlinked_domain" != "default" ]] || continue
-        SYMLINKED_DOMAINS+=("$symlinked_domain")
+        [[ "${symlinked_domain}" != "default" ]] || continue
+        SYMLINKED_DOMAINS+=("${symlinked_domain}")
     done
-    [[ "$DEBUG" == 1 ]] && echo "Symlinked domains: ${SYMLINKED_DOMAINS[*]}"
+    [[ "${DEBUG}" == 1 ]] && echo "Symlinked domains: ${SYMLINKED_DOMAINS[*]}"
 
     # Create an array containing domains that are considered
     # enabled (ie present on /app/letsencrypt_service_data or /app/letsencrypt_user_data).
@@ -110,15 +110,15 @@ function cleanup_links {
 
     for cid in "${ACME_CONTAINERS[@]}"; do
       local hosts_var
-      hosts_var="$(get_hosts_array_var "$cid")" || continue
-      local -n hosts_array="$hosts_var"
+      hosts_var="$(get_hosts_array_var "${cid}")" || continue
+      local -n hosts_array="${hosts_var}"
       for domain in "${hosts_array[@]}"; do
-        domain="$(strip_wildcard "$domain")"
+        domain="$(strip_wildcard "${domain}")"
         # Add domain to the array storing currently enabled domains.
-        ENABLED_DOMAINS+=("$domain")
+        ENABLED_DOMAINS+=("${domain}")
       done
     done
-    [[ "$DEBUG" == 1 ]] && echo "Enabled domains: ${ENABLED_DOMAINS[*]}"
+    [[ "${DEBUG}" == 1 ]] && echo "Enabled domains: ${ENABLED_DOMAINS[*]}"
 
     # Create an array containing only domains for which a symlinked private key exists
     # in /etc/nginx/certs but that no longer have a corresponding ACME_HOST/LETSENCRYPT_HOST set
@@ -129,28 +129,28 @@ function cleanup_links {
                                              "${ENABLED_DOMAINS[@]}" \
                                              | tr ' ' '\n' | sort | uniq -u)
     fi
-    [[ "$DEBUG" == 1 ]] && echo "Disabled domains: ${DISABLED_DOMAINS[*]}"
+    [[ "${DEBUG}" == 1 ]] && echo "Disabled domains: ${DISABLED_DOMAINS[*]}"
 
 
     # Remove disabled domains symlinks if present.
     # Return 1 if nothing was removed and 0 otherwise.
     if [[ ${#DISABLED_DOMAINS[@]} -gt 0 ]]; then
-      [[ "$DEBUG" == 1 ]] && echo "Some domains are disabled :"
+      [[ "${DEBUG}" == 1 ]] && echo "Some domains are disabled :"
       for disabled_domain in "${DISABLED_DOMAINS[@]}"; do
-          [[ "$DEBUG" == 1 ]] && echo "Checking domain ${disabled_domain}"
+          [[ "${DEBUG}" == 1 ]] && echo "Checking domain ${disabled_domain}"
           cert_folder="$(readlink -f "/etc/nginx/certs/${disabled_domain}.crt")"
           # If the dotfile is absent, skip domain.
           if [[ ! -e "${cert_folder%/*}/.companion" ]]; then
-              [[ "$DEBUG" == 1 ]] && echo "No .companion file found in ${cert_folder}. ${disabled_domain} is not managed by acme-companion. Skipping domain."
+              [[ "${DEBUG}" == 1 ]] && echo "No .companion file found in ${cert_folder}. ${disabled_domain} is not managed by acme-companion. Skipping domain."
               continue
           else
-              [[ "$DEBUG" == 1 ]] && echo "${disabled_domain} is managed by acme-companion. Removing unused symlinks."
+              [[ "${DEBUG}" == 1 ]] && echo "${disabled_domain} is managed by acme-companion. Removing unused symlinks."
           fi
 
           for extension in .crt .key .dhparam.pem .chain.pem; do
               file="${disabled_domain}${extension}"
               if [[ -n "${file// }" ]] && [[ -L "/etc/nginx/certs/${file}" ]]; then
-                  [[ "$DEBUG" == 1 ]] && echo "Removing /etc/nginx/certs/${file}"
+                  [[ "${DEBUG}" == 1 ]] && echo "Removing /etc/nginx/certs/${file}"
                   rm -f "/etc/nginx/certs/${file}"
               fi
           done
@@ -164,8 +164,8 @@ function cleanup_links {
 function update_cert {
     local cid="${1:?}"
     local hosts_var
-    hosts_var="$(get_hosts_array_var "$cid")" || return 1
-    local -n hosts_array="$hosts_var"
+    hosts_var="$(get_hosts_array_var "${cid}")" || return 1
+    local -n hosts_array="${hosts_var}"
     # First domain will be our base domain
     local base_domain="${hosts_array[0]}"
 
@@ -180,21 +180,21 @@ function update_cert {
     local -a params_base_arr
     # In debug mode, route acme.sh's own log to docker logs instead of discarding it.
     # Use stderr, not stdout, which acme.sh captures via command substitution.
-    if [[ "$DEBUG" == 1 ]]; then
+    if [[ "${DEBUG}" == 1 ]]; then
         params_base_arr+=(--log /dev/stderr)
     else
         params_base_arr+=(--log /dev/null)
     fi
-    params_base_arr+=(--useragent "nginx-proxy/acme-companion/$COMPANION_VERSION (acme.sh/$ACMESH_VERSION)")
-    [[ "$DEBUG" == 1 ]] && params_base_arr+=(--debug 2)
+    params_base_arr+=(--useragent "nginx-proxy/acme-companion/${COMPANION_VERSION} (acme.sh/${ACMESH_VERSION})")
+    [[ "${DEBUG}" == 1 ]] && params_base_arr+=(--debug 2)
 
     # Alternative trusted root CA path, used for test with Pebble
     if [[ -n "${CA_BUNDLE// }" ]]; then
-        if [[ -f "$CA_BUNDLE" ]]; then
-            params_base_arr+=(--ca-bundle "$CA_BUNDLE")
-            [[ "$DEBUG" == 1 ]] && echo "Debug: acme.sh will use $CA_BUNDLE as trusted root CA."
+        if [[ -f "${CA_BUNDLE}" ]]; then
+            params_base_arr+=(--ca-bundle "${CA_BUNDLE}")
+            [[ "${DEBUG}" == 1 ]] && echo "Debug: acme.sh will use ${CA_BUNDLE} as trusted root CA."
         else
-            echo "Warning: the path to the alternate CA bundle ($CA_BUNDLE) is not valid, using default Alpine trust store."
+            echo "Warning: the path to the alternate CA bundle (${CA_BUNDLE}) is not valid, using default Alpine trust store."
         fi
     fi
 
@@ -210,55 +210,55 @@ function update_cert {
         acme_challenge="${ACME_CHALLENGE:-HTTP-01}"
     fi
     
-    if [[ "$acme_challenge" == "HTTP-01" ]]; then
+    if [[ "${acme_challenge}" == "HTTP-01" ]]; then
         # HTTP-01 challenge
-        if [[ "$wildcard_certificate" == 'true' ]]; then
+        if [[ "${wildcard_certificate}" == 'true' ]]; then
             echo "Error: wildcard certificates (${base_domain}) can't be obtained with HTTP-01 challenge"
             return 1
         fi
         params_issue_arr+=(--webroot /usr/share/nginx/html)
-    elif [[ "$acme_challenge" == "DNS-01" ]]; then
+    elif [[ "${acme_challenge}" == "DNS-01" ]]; then
         # DNS-01 challenge
         local acmesh_dns_config_used='none'
         local acmesh_dns_sleep_value='none'
 
         local default_acmesh_dns_api="${DEFAULT_ACMESH_DNS_API_CONFIG[DNS_API]}"
-        [[ -n "$default_acmesh_dns_api" ]] && acmesh_dns_config_used='default'
+        [[ -n "${default_acmesh_dns_api}" ]] && acmesh_dns_config_used='default'
 
         local -n acmesh_dns_config="ACMESH_${cid}_DNS_API_CONFIG"
         local acmesh_dns_api="${acmesh_dns_config[DNS_API]}"
-        [[ -n "$acmesh_dns_api" ]] && acmesh_dns_config_used='container'
+        [[ -n "${acmesh_dns_api}" ]] && acmesh_dns_config_used='container'
 
         local -a dns_api_keys
 
-        case "$acmesh_dns_config_used" in
+        case "${acmesh_dns_config_used}" in
             'default')
-                params_issue_arr+=(--dns "$default_acmesh_dns_api")
+                params_issue_arr+=(--dns "${default_acmesh_dns_api}")
                 # Loop over defined variable for default acme.sh DNS api config
                 for key in "${!DEFAULT_ACMESH_DNS_API_CONFIG[@]}"; do
-                    if [[ "$key" == "DNS_API" ]]; then
+                    if [[ "${key}" == "DNS_API" ]]; then
                         continue
-                    elif [[ "$key" == "DNS_SLEEP" ]]; then
-                        acmesh_dns_sleep_value="${DEFAULT_ACMESH_DNS_API_CONFIG[$key]}"
+                    elif [[ "${key}" == "DNS_SLEEP" ]]; then
+                        acmesh_dns_sleep_value="${DEFAULT_ACMESH_DNS_API_CONFIG[${key}]}"
                     else
-                        dns_api_keys+=("$key")
-                        local value="${DEFAULT_ACMESH_DNS_API_CONFIG[$key]}"
-                        local -x "$key"="$value"
+                        dns_api_keys+=("${key}")
+                        local value="${DEFAULT_ACMESH_DNS_API_CONFIG[${key}]}"
+                        local -x "${key}"="${value}"
                     fi
                 done
                 ;;
             'container')
-                params_issue_arr+=(--dns "$acmesh_dns_api")
+                params_issue_arr+=(--dns "${acmesh_dns_api}")
                 # Loop over defined variable for per container acme.sh DNS api config
                 for key in "${!acmesh_dns_config[@]}"; do
-                    if [[ "$key" == "DNS_API" ]]; then
+                    if [[ "${key}" == "DNS_API" ]]; then
                         continue
-                    elif [[ "$key" == "DNS_SLEEP" ]]; then
-                        acmesh_dns_sleep_value="${acmesh_dns_config[$key]}"
+                    elif [[ "${key}" == "DNS_SLEEP" ]]; then
+                        acmesh_dns_sleep_value="${acmesh_dns_config[${key}]}"
                     else
-                        dns_api_keys+=("$key")
-                        local value="${acmesh_dns_config[$key]}"
-                        local -x "$key"="$value"
+                        dns_api_keys+=("${key}")
+                        local value="${acmesh_dns_config[${key}]}"
+                        local -x "${key}"="${value}"
                     fi
                 done
                 ;;
@@ -268,34 +268,34 @@ function update_cert {
                 ;;
         esac
 
-        echo "Info: DNS challenge using $acmesh_dns_api DNS API with the following keys: ${dns_api_keys[*]} (${acmesh_dns_config_used} config)"
+        echo "Info: DNS challenge using ${acmesh_dns_api} DNS API with the following keys: ${dns_api_keys[*]} (${acmesh_dns_config_used} config)"
         
-        if [[ "$acmesh_dns_sleep_value" != 'none' ]]; then
-            if [[ "$acmesh_dns_sleep_value" =~ ^[0-9]+$ ]]; then
-                params_issue_arr+=(--dnssleep "$acmesh_dns_sleep_value")
-                echo "Info: acme.sh will wait for $acmesh_dns_sleep_value seconds for all the txt records to propagate."
+        if [[ "${acmesh_dns_sleep_value}" != 'none' ]]; then
+            if [[ "${acmesh_dns_sleep_value}" =~ ^[0-9]+$ ]]; then
+                params_issue_arr+=(--dnssleep "${acmesh_dns_sleep_value}")
+                echo "Info: acme.sh will wait for ${acmesh_dns_sleep_value} seconds for all the txt records to propagate."
             else
-                echo "Warning: the provided DNS_SLEEP value ($acmesh_dns_sleep_value) is not a valid integer, --dnssleep won't be passed to acme.sh." >&2
+                echo "Warning: the provided DNS_SLEEP value (${acmesh_dns_sleep_value}) is not a valid integer, --dnssleep won't be passed to acme.sh." >&2
             fi
             
         fi
     else 
-        echo "Error: unknown ACME challenge method: $acme_challenge"
+        echo "Error: unknown ACME challenge method: ${acme_challenge}"
         return 1
     fi
 
     local -n legacy_cert_keysize_ref="LETSENCRYPT_${cid}_KEYSIZE"
     local -n cert_keysize_ref="ACME_${cid}_KEYSIZE"
     cert_keysize="${cert_keysize_ref:-${legacy_cert_keysize_ref}}"
-    if [[ -z "$cert_keysize" ]] || \
-        [[ ! "$cert_keysize" =~ ^('2048'|'3072'|'4096'|'8192'|'ec-256'|'ec-384'|'ec-521')$ ]]; then
-        cert_keysize=$DEFAULT_KEY_SIZE
+    if [[ -z "${cert_keysize}" ]] || \
+        [[ ! "${cert_keysize}" =~ ^('2048'|'3072'|'4096'|'8192'|'ec-256'|'ec-384'|'ec-521')$ ]]; then
+        cert_keysize=${DEFAULT_KEY_SIZE}
     fi
-    params_issue_arr+=(--keylength "$cert_keysize")
+    params_issue_arr+=(--keylength "${cert_keysize}")
 
     # OCSP-Must-Staple extension
     local -n ocsp="ACME_${cid}_OCSP"
-    if [[ $(lc "$ocsp") == true ]]; then
+    if [[ $(lc "${ocsp}") == true ]]; then
         params_issue_arr+=(--ocsp-must-staple)
     fi
 
@@ -305,50 +305,50 @@ function update_cert {
     local config_home
     # If we don't have an ACME_EMAIL from the proxied container
     # and DEFAULT_EMAIL is set to a non empty value, use the latter.
-    if [[ -z "$accountemail" ]]; then
+    if [[ -z "${accountemail}" ]]; then
         if [[ -n "${DEFAULT_EMAIL// }" ]]; then
-            accountemail="$DEFAULT_EMAIL"
+            accountemail="${DEFAULT_EMAIL}"
         else
             unset accountemail
         fi
     fi
     if [[ -n "${accountemail// }" ]]; then
         # If we got an email, use it with the corresponding config home
-        config_home="/etc/acme.sh/$accountemail"
+        config_home="/etc/acme.sh/${accountemail}"
     else
         # If we did not get any email at all, use the default (empty mail) config
         config_home="/etc/acme.sh/default"
     fi
 
     local -n acme_ca_uri="ACME_${cid}_CA_URI"
-    if [[ -z "$acme_ca_uri" ]]; then
+    if [[ -z "${acme_ca_uri}" ]]; then
         # Use default or user provided ACME end point
-        acme_ca_uri="$ACME_CA_URI"
+        acme_ca_uri="${ACME_CA_URI}"
     fi
     # LETSENCRYPT_TEST overrides ACME_CA_URI
     local -n test_certificate="LETSENCRYPT_${cid}_TEST"
-    if [[ $(lc "$test_certificate") == true ]]; then
+    if [[ $(lc "${test_certificate}") == true ]]; then
         # Use Let's Encrypt ACME V2 staging end point
-        acme_ca_uri="$ACME_CA_TEST_URI"
+        acme_ca_uri="${ACME_CA_TEST_URI}"
     fi
 
     # Set relevant --server parameter and ca folder name
-    params_base_arr+=(--server "$acme_ca_uri")
+    params_base_arr+=(--server "${acme_ca_uri}")
 
     # Reproduce acme.sh logic to determine the ca account folder path
     local ca_host_dir
-    ca_host_dir="$(echo "$acme_ca_uri" | cut -d : -f 2 | tr -s / | cut -d / -f 2)"
+    ca_host_dir="$(echo "${acme_ca_uri}" | cut -d : -f 2 | tr -s / | cut -d / -f 2)"
     local ca_path_dir
-    ca_path_dir="$(echo "$acme_ca_uri" | cut -d : -f 2- | tr -s / | cut -d / -f 3-)"
+    ca_path_dir="$(echo "${acme_ca_uri}" | cut -d : -f 2- | tr -s / | cut -d / -f 3-)"
 
     local relative_certificate_dir
-    if [[ "$wildcard_certificate" == 'true' ]]; then
+    if [[ "${wildcard_certificate}" == 'true' ]]; then
         relative_certificate_dir="wildcard_${base_domain:2}"
     else
-        relative_certificate_dir="$base_domain"
+        relative_certificate_dir="${base_domain}"
     fi
     # If we're going to use one of LE stating endpoints ...
-    if [[ "$acme_ca_uri" =~ ^https://acme-staging.* ]]; then
+    if [[ "${acme_ca_uri}" =~ ^https://acme-staging.* ]]; then
         # Unset accountemail
         # force config dir to 'staging'
         unset accountemail
@@ -357,7 +357,7 @@ function update_cert {
         relative_certificate_dir="_test_${relative_certificate_dir}"
     fi
 
-    local absolute_certificate_dir="/etc/nginx/certs/$relative_certificate_dir"
+    local absolute_certificate_dir="/etc/nginx/certs/${relative_certificate_dir}"
     params_issue_arr+=( \
         --cert-file "${absolute_certificate_dir}/cert.pem" \
         --key-file "${absolute_certificate_dir}/key.pem" \
@@ -365,8 +365,8 @@ function update_cert {
         --fullchain-file "${absolute_certificate_dir}/fullchain.pem" \
     )
 
-    [[ ! -d "$config_home" ]] && mkdir -p "$config_home"
-    params_base_arr+=(--config-home "$config_home")
+    [[ ! -d "${config_home}" ]] && mkdir -p "${config_home}"
+    params_base_arr+=(--config-home "${config_home}")
     local account_file="${config_home}/ca/${ca_host_dir}/${ca_path_dir}/account.json"
 
     # External Account Binding (EAB)
@@ -374,25 +374,25 @@ function update_cert {
     local -n eab_hmac_key="ACME_${cid}_EAB_HMAC_KEY"
     local eab_registration='false'
     local email_registration='false'
-    if [[ ! -f "$account_file" ]]; then
+    if [[ ! -f "${account_file}" ]]; then
         if [[ -n "${eab_kid}" && -n "${eab_hmac_key}" ]]; then
             # Register the ACME account with the per container EAB credentials.
-            params_register_arr+=(--eab-kid "$eab_kid" --eab-hmac-key "$eab_hmac_key")
+            params_register_arr+=(--eab-kid "${eab_kid}" --eab-hmac-key "${eab_hmac_key}")
             eab_registration='true'
         elif [[ -n "${ACME_EAB_KID// }" && -n "${ACME_EAB_HMAC_KEY// }" ]]; then
             # We don't have per-container EAB kid and hmac key or Zero SSL API key.
             # Register the ACME account with the default EAB credentials.
-            params_register_arr+=(--eab-kid "$ACME_EAB_KID" --eab-hmac-key "$ACME_EAB_HMAC_KEY")
+            params_register_arr+=(--eab-kid "${ACME_EAB_KID}" --eab-hmac-key "${ACME_EAB_HMAC_KEY}")
             eab_registration='true'
         elif [[ -n "${accountemail// }" ]]; then
             # We don't have per container nor default EAB credentials, register a new account.
-            params_register_arr+=(--accountemail "$accountemail")
+            params_register_arr+=(--accountemail "${accountemail}")
             email_registration='true'
         fi
 
-        if parse_true "$eab_registration"; then
+        if parse_true "${eab_registration}"; then
             if [[ -n "${accountemail// }" ]]; then
-                params_register_arr+=(--accountemail "$accountemail")
+                params_register_arr+=(--accountemail "${accountemail}")
             else
                 echo "Warning: registering a new ACME account with EAB but no contact email." \
                     "Some ACME CAs require one, so registration may fail." \
@@ -402,19 +402,19 @@ function update_cert {
     fi
 
     # Zero SSL
-    if [[ "$acme_ca_uri" == "https://acme.zerossl.com/v2/DV90" ]]; then
+    if [[ "${acme_ca_uri}" == "https://acme.zerossl.com/v2/DV90" ]]; then
         # Test if :
         #   - we already have an account file
         #   - we're going to register a new account with an email
         #   - we're going to register a new account with EAB credentials
         local account_ok='false'
-        if [[ -f "$account_file" ]] || parse_true "$eab_registration" || parse_true "$email_registration"; then
+        if [[ -f "${account_file}" ]] || parse_true "${eab_registration}" || parse_true "${email_registration}"; then
             account_ok='true'
         fi
 
-        if ! parse_true "$account_ok"; then
+        if ! parse_true "${account_ok}"; then
             local -n zerossl_api_key="ZEROSSL_${cid}_API_KEY"
-            if [[ -z "$zerossl_api_key" ]]; then
+            if [[ -z "${zerossl_api_key}" ]]; then
                 # Try using the default API key
                 zerossl_api_key="${ZEROSSL_API_KEY:-}"
             fi
@@ -423,11 +423,11 @@ function update_cert {
                 # Generate a set of ACME EAB credentials using the ZeroSSL API.
                 local zerossl_api_response
                 if zerossl_api_response="$(curl -s -X POST "https://api.zerossl.com/acme/eab-credentials?access_key=${zerossl_api_key}")"; then
-                    if [[ "$(jq -r .success <<< "$zerossl_api_response")" == 'true' ]]; then
-                        eab_kid="$(jq -r .eab_kid <<< "$zerossl_api_response")"
-                        eab_hmac_key="$(jq -r .eab_hmac_key <<< "$zerossl_api_response")"
-                        params_register_arr+=(--eab-kid "$eab_kid" --eab-hmac-key "$eab_hmac_key")
-                        [[ "$DEBUG" == 1 ]] && echo "Successfull EAB credentials request against the ZeroSSL API, got the following EAB kid : ${eab_kid}"
+                    if [[ "$(jq -r .success <<< "${zerossl_api_response}")" == 'true' ]]; then
+                        eab_kid="$(jq -r .eab_kid <<< "${zerossl_api_response}")"
+                        eab_hmac_key="$(jq -r .eab_hmac_key <<< "${zerossl_api_response}")"
+                        params_register_arr+=(--eab-kid "${eab_kid}" --eab-hmac-key "${eab_hmac_key}")
+                        [[ "${DEBUG}" == 1 ]] && echo "Successfull EAB credentials request against the ZeroSSL API, got the following EAB kid : ${eab_kid}"
                     else
                         # The JSON response body indicated an unsuccesfull API call.
                         echo "Warning: the EAB credentials request against the ZeroSSL API was not successfull."
@@ -446,97 +446,97 @@ function update_cert {
     fi
 
     # Account registration and update if required
-    if [[ ! -f "$account_file" ]]; then
+    if [[ ! -f "${account_file}" ]]; then
         params_register_arr=("${params_base_arr[@]}" "${params_register_arr[@]}")
-        [[ "$DEBUG" == 1 ]] && echo "Calling acme.sh --register-account with the following parameters : ${params_register_arr[*]}"
+        [[ "${DEBUG}" == 1 ]] && echo "Calling acme.sh --register-account with the following parameters : ${params_register_arr[*]}"
         acme.sh --register-account "${params_register_arr[@]}"
     fi
-    if [[ -n "${accountemail// }" ]] && ! grep -q "mailto:$accountemail" "$account_file"; then
-        local -a params_update_arr=("${params_base_arr[@]}" --accountemail "$accountemail")
-        [[ "$DEBUG" == 1 ]] && echo "Calling acme.sh --update-account with the following parameters : ${params_update_arr[*]}"
+    if [[ -n "${accountemail// }" ]] && ! grep -q "mailto:${accountemail}" "${account_file}"; then
+        local -a params_update_arr=("${params_base_arr[@]}" --accountemail "${accountemail}")
+        [[ "${DEBUG}" == 1 ]] && echo "Calling acme.sh --update-account with the following parameters : ${params_update_arr[*]}"
         acme.sh --update-account "${params_update_arr[@]}"
     fi
 
     # If we still don't have an account.json file by this point, we've got an issue
-    if [[ ! -f "$account_file" ]]; then
-        echo "Error: no ACME account was found or registered for $accountemail and $acme_ca_uri, certificate creation aborted."
+    if [[ ! -f "${account_file}" ]]; then
+        echo "Error: no ACME account was found or registered for ${accountemail} and ${acme_ca_uri}, certificate creation aborted."
         return 1
     fi
 
     local -n acme_cert_profile="ACME_${cid}_CERT_PROFILE"
     if [[ -n "${acme_cert_profile}" ]]; then
         # Use per-container certificate profile
-        params_issue_arr+=(--cert-profile "$acme_cert_profile")
+        params_issue_arr+=(--cert-profile "${acme_cert_profile}")
     elif [[ -n ${ACME_CERT_PROFILE// } ]]; then
         # Use default certificate profile
-        params_issue_arr+=(--cert-profile "$ACME_CERT_PROFILE")
+        params_issue_arr+=(--cert-profile "${ACME_CERT_PROFILE}")
     fi
 
     # acme.sh pre and post hooks
     local -n acme_pre_hook="ACME_${cid}_PRE_HOOK"
     if [[ -n "${acme_pre_hook}" ]]; then
         # Use per-container pre hook
-	    params_issue_arr+=(--pre-hook "$acme_pre_hook")
+	    params_issue_arr+=(--pre-hook "${acme_pre_hook}")
     elif [[ -n ${ACME_PRE_HOOK// } ]]; then
         # Use default pre hook
-        params_issue_arr+=(--pre-hook "$ACME_PRE_HOOK")
+        params_issue_arr+=(--pre-hook "${ACME_PRE_HOOK}")
     fi
 
     local -n acme_post_hook="ACME_${cid}_POST_HOOK"
     if [[ -n "${acme_post_hook}" ]]; then
         # Use per-container post hook
-	    params_issue_arr+=(--post-hook "$acme_post_hook")
+	    params_issue_arr+=(--post-hook "${acme_post_hook}")
     elif [[ -n ${ACME_POST_HOOK// } ]]; then
         # Use default post hook
-        params_issue_arr+=(--post-hook "$ACME_POST_HOOK")
+        params_issue_arr+=(--post-hook "${ACME_POST_HOOK}")
     fi
 
     local -n acme_preferred_chain="ACME_${cid}_PREFERRED_CHAIN"
     if [[ -n "${acme_preferred_chain}" ]]; then
         # Using amce.sh --preferred-chain to select alternate chain.
-        params_issue_arr+=(--preferred-chain "$acme_preferred_chain")
+        params_issue_arr+=(--preferred-chain "${acme_preferred_chain}")
     fi
     # Allow to override private key renewal (per-container or global)
     local -n renew_private_keys="ACME_${cid}_RENEW_PRIVATE_KEYS"
-    if [[ -z "$renew_private_keys" ]]; then
-        renew_private_keys="$RENEW_PRIVATE_KEYS"
+    if [[ -z "${renew_private_keys}" ]]; then
+        renew_private_keys="${RENEW_PRIVATE_KEYS}"
     fi
-    if [[ "$(lc "$renew_private_keys")" != 'false' && "$REUSE_PRIVATE_KEYS" != 'true' ]]; then
+    if [[ "$(lc "${renew_private_keys}")" != 'false' && "${REUSE_PRIVATE_KEYS}" != 'true' ]]; then
         params_issue_arr+=(--always-force-new-domain-key)
     fi
     [[ "${2:-}" == "--force-renew" ]] && params_issue_arr+=(--force)
 
     # Create directory for the first domain
-    mkdir -p "$absolute_certificate_dir"
-    set_ownership_and_permissions "$absolute_certificate_dir"
+    mkdir -p "${absolute_certificate_dir}"
+    set_ownership_and_permissions "${absolute_certificate_dir}"
 
     for domain in "${hosts_array[@]}"; do
         # Add all the domains to certificate
-        params_issue_arr+=(--domain "$domain")
+        params_issue_arr+=(--domain "${domain}")
         # If enabled, add location configuration for the domain
-        if [[ "$acme_challenge" == "HTTP-01" ]] && parse_true "${ACME_HTTP_CHALLENGE_LOCATION:=false}"; then
-            add_location_configuration "$domain" || reload_nginx
+        if [[ "${acme_challenge}" == "HTTP-01" ]] && parse_true "${ACME_HTTP_CHALLENGE_LOCATION:=false}"; then
+            add_location_configuration "${domain}" || reload_nginx
         fi
     done
 
     # Allow to override day to renew cert (per-container or global)
     local -n renew_after="ACME_${cid}_RENEW_AFTER"
-    if [[ -z "$renew_after" ]] || [[ ! "$renew_after" =~ ^[0-9]+$ ]]; then
-        renew_after="$ACME_RENEW_AFTER"
+    if [[ -z "${renew_after}" ]] || [[ ! "${renew_after}" =~ ^[0-9]+$ ]]; then
+        renew_after="${ACME_RENEW_AFTER}"
     fi
-    params_issue_arr+=(--days "$renew_after")
+    params_issue_arr+=(--days "${renew_after}")
 
     params_issue_arr=("${params_base_arr[@]}" "${params_issue_arr[@]}")
-    [[ "$DEBUG" == 1 ]] && echo "Calling acme.sh --issue with the following parameters : ${params_issue_arr[*]}"
-    echo "Creating/renewal $base_domain certificates... (${hosts_array[*]})"
+    [[ "${DEBUG}" == 1 ]] && echo "Calling acme.sh --issue with the following parameters : ${params_issue_arr[*]}"
+    echo "Creating/renewal ${base_domain} certificates... (${hosts_array[*]})"
     acme.sh --issue "${params_issue_arr[@]}"
 
     local acmesh_return=$?
 
     # 0 = success, 2 = RENEW_SKIP
-    if [[ $acmesh_return == 0 || $acmesh_return == 2 ]]; then
+    if [[ ${acmesh_return} == 0 || ${acmesh_return} == 2 ]]; then
         for domain in "${hosts_array[@]}"; do
-            create_links "$relative_certificate_dir" "$domain" \
+            create_links "${relative_certificate_dir}" "${domain}" \
                 && should_reload_nginx='true' \
                 && should_restart_container='true'
         done
@@ -545,13 +545,13 @@ function update_cert {
         # Make private key root readable only
         for file in cert.pem key.pem chain.pem fullchain.pem; do
             local file_path="${absolute_certificate_dir}/${file}"
-            [[ -e "$file_path" ]] && set_ownership_and_permissions "$file_path"
+            [[ -e "${file_path}" ]] && set_ownership_and_permissions "${file_path}"
         done
         local acme_private_key
         acme_private_key="$(find /etc/acme.sh -name "*.key" -path "*${hosts_array[0]}*")"
-        [[ -e "$acme_private_key" ]] && set_ownership_and_permissions "$acme_private_key"
+        [[ -e "${acme_private_key}" ]] && set_ownership_and_permissions "${acme_private_key}"
         # Queue nginx reload if a certificate was issued or renewed
-        [[ $acmesh_return -eq 0 ]] \
+        [[ ${acmesh_return} -eq 0 ]] \
             && should_reload_nginx='true' \
             && should_restart_container='true'
     fi
@@ -560,19 +560,19 @@ function update_cert {
     local -n legacy_restart_container_on_cert_update="LETSENCRYPT_${cid}_RESTART_CONTAINER"
     local -n restart_container_on_cert_update="ACME_${cid}_RESTART_CONTAINER"
     restart_container_on_cert_update="${restart_container_on_cert_update:-${legacy_restart_container_on_cert_update:-false}}"
-    if parse_true "$restart_container_on_cert_update" && parse_true "$should_restart_container"; then
+    if parse_true "${restart_container_on_cert_update}" && parse_true "${should_restart_container}"; then
         echo "Restarting container (${cid})..."
         docker_restart "${cid}"
     fi
 
     for domain in "${hosts_array[@]}"; do
-        if [[ -f "/etc/nginx/conf.d/standalone-cert-$domain.conf" ]]; then
-            [[ "$DEBUG" == 1 ]] && echo "Debug: removing standalone configuration file /etc/nginx/conf.d/standalone-cert-$domain.conf"
-            rm -f "/etc/nginx/conf.d/standalone-cert-$domain.conf" && should_reload_nginx='true'
+        if [[ -f "/etc/nginx/conf.d/standalone-cert-${domain}.conf" ]]; then
+            [[ "${DEBUG}" == 1 ]] && echo "Debug: removing standalone configuration file /etc/nginx/conf.d/standalone-cert-${domain}.conf"
+            rm -f "/etc/nginx/conf.d/standalone-cert-${domain}.conf" && should_reload_nginx='true'
         fi
     done
 
-    if ! parse_true "${RELOAD_NGINX_ONLY_ONCE:-false}" && parse_true $should_reload_nginx; then
+    if ! parse_true "${RELOAD_NGINX_ONLY_ONCE:-false}" && parse_true "${should_reload_nginx}"; then
         reload_nginx
     fi
 }
@@ -600,15 +600,15 @@ function update_certs {
 
             for cid in "${ACME_STANDALONE_CERTS[@]}"; do
                 local hosts_var
-                hosts_var="$(get_hosts_array_var "$cid")" || continue
-                local -n hosts_array="$hosts_var"
+                hosts_var="$(get_hosts_array_var "${cid}")" || continue
+                local -n hosts_array="${hosts_var}"
                 
                 local -n acme_challenge="ACME_${cid}_CHALLENGE"
                 acme_challenge="${acme_challenge:-HTTP-01}"
                 
-                if [[ "$acme_challenge" == "HTTP-01" ]]; then
+                if [[ "${acme_challenge}" == "HTTP-01" ]]; then
                     for domain in "${hosts_array[@]}"; do
-                        add_standalone_configuration "$domain"
+                        add_standalone_configuration "${domain}"
                     done
                 fi
             done
@@ -623,7 +623,7 @@ function update_certs {
     should_reload_nginx='false'
     for cid in "${ACME_CONTAINERS[@]}"; do
         # Pass the eventual --force-renew arg to update_cert() as second arg
-        update_cert "$cid" "${1:-}"
+        update_cert "${cid}" "${1:-}"
     done
 
     # Only cleanup once docker-gen has generated the service data file, otherwise
@@ -632,13 +632,13 @@ function update_certs {
         cleanup_links && should_reload_nginx='true'
     fi
 
-    [[ "$should_reload_nginx" == 'true' ]] && reload_nginx
+    [[ "${should_reload_nginx}" == 'true' ]] && reload_nginx
 
     popd > /dev/null || return
 }
 
 # Allow the script functions to be sourced without starting the Service Loop.
-if [ "${1}" == "--source-only" ]; then
+if [[ "${1}" == "--source-only" ]]; then
   return 0
 fi
 
@@ -651,6 +651,6 @@ update_certs "$@"
 
 # Wait some amount of time
 echo "Sleep for ${CERTS_UPDATE_INTERVAL}s"
-sleep $CERTS_UPDATE_INTERVAL & pid=$!
+sleep "${CERTS_UPDATE_INTERVAL}" & pid=$!
 wait
 pid=

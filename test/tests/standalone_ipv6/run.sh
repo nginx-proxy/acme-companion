@@ -19,4 +19,4 @@ cat /etc/nginx/conf.d/standalone-cert-unset.example.test.conf
 EOF
 )"
 
-docker run --rm "$1" bash -c "$commands" 2>&1
+docker run --rm "$1" bash -c "${commands}" 2>&1

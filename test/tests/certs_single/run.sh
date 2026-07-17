@@ -2,71 +2,71 @@
 
 ## Test for single domain certificates.
 
-if [[ -z $GITHUB_ACTIONS ]]; then
+if [[ -z ${GITHUB_ACTIONS} ]]; then
   le_container_name="$(basename "${0%/*}")_$(date "+%Y-%m-%d_%H.%M.%S")"
 else
   le_container_name="$(basename "${0%/*}")"
 fi
-run_le_container "${1:?}" "$le_container_name"
+run_le_container "${1:?}" "${le_container_name}"
 
-# Create the $domains array from comma separated domains in TEST_DOMAINS.
-IFS=',' read -r -a domains <<< "$TEST_DOMAINS"
+# Create the ${domains} array from comma separated domains in TEST_DOMAINS.
+IFS=',' read -r -a domains <<< "${TEST_DOMAINS}"
 
 # Cleanup function with EXIT trap
 function cleanup {
   # Remove any remaining Nginx container(s) silently.
   for domain in "${domains[@]}"; do
-    docker rm --force "$domain" &> /dev/null
+    docker rm --force "${domain}" &> /dev/null
   done
   # Cleanup the files created by this run of the test to avoid foiling following test(s).
-  docker exec "$le_container_name" /app/cleanup_test_artifacts
+  docker exec "${le_container_name}" cleanup_test_artifacts
   # Stop the LE container
-  docker stop "$le_container_name" > /dev/null
+  docker stop "${le_container_name}" > /dev/null
 }
 trap cleanup EXIT
 
-# Run a separate nginx container for each domain in the $domains array.
+# Run a separate nginx container for each domain in the ${domains} array.
 # Start all the containers in a row so that docker-gen debounce timers fire only once.
 # Keep one container on legacy LETSENCRYPT_HOST to ensure backward compatibility.
 run_nginx_container --hosts "${domains[0]}" --legacy-host-var
 for domain in "${domains[@]:1}"; do
-  run_nginx_container --hosts "$domain"
+  run_nginx_container --hosts "${domain}"
 done
 
 for domain in "${domains[@]}"; do
 
-  # Wait for a symlink at /etc/nginx/certs/$domain.crt
-  if wait_for_symlink "$domain" "$le_container_name" "./${domain}/fullchain.pem" ; then
+  # Wait for a symlink at /etc/nginx/certs/${domain}.crt
+  if wait_for_symlink "${domain}" "${le_container_name}" "./${domain}/fullchain.pem" ; then
     # then grab the certificate in text form from the file ...
-    created_cert="$(docker exec "$le_container_name" \
+    created_cert="$(docker exec "${le_container_name}" \
       openssl x509 -in "/etc/nginx/certs/${domain}/cert.pem" -text -noout)"
     # ... as well as the certificate fingerprint.
-    created_cert_fingerprint="$(docker exec "$le_container_name" \
+    created_cert_fingerprint="$(docker exec "${le_container_name}" \
       openssl x509 -in "/etc/nginx/certs/${domain}/cert.pem" -fingerprint -noout)"
   fi
 
 
   # Check if the domain is on the certificate.
-  if ! grep -q "$domain" <<< "$created_cert"; then
-    echo "Domain $domain isn't on certificate."
+  if ! grep -q "${domain}" <<< "${created_cert}"; then
+    echo "Domain ${domain} isn't on certificate."
   elif [[ "${DRY_RUN:-}" == 1 ]]; then
-    echo "Domain $domain is on certificate."
+    echo "Domain ${domain} is on certificate."
   fi
 
   # Wait for a connection to https://domain and for the served
   # certificate to match the created certificate.
   # If it does not, display a full diff.
-  if ! wait_for_conn --domain "$domain" --cert-match "$created_cert_fingerprint"; then
-    echo "Nginx served an incorrect certificate for $domain."
+  if ! wait_for_conn --domain "${domain}" --cert-match "${created_cert_fingerprint}"; then
+    echo "Nginx served an incorrect certificate for ${domain}."
     served_cert="$(echo \
-      | openssl s_client -showcerts -servername "$domain" -connect "$domain:443" 2>/dev/null \
+      | openssl s_client -showcerts -servername "${domain}" -connect "${domain}:443" 2>/dev/null \
       | openssl x509 -text -noout \
       | sed 's/ = /=/g' )"
-    diff -u <(echo "${created_cert// = /=}") <(echo "$served_cert")
+    diff -u <(echo "${created_cert// = /=}") <(echo "${served_cert}")
   elif [[ "${DRY_RUN:-}" == 1 ]]; then
-    echo "The correct certificate for $domain was served by Nginx."
+    echo "The correct certificate for ${domain} was served by Nginx."
   fi
 
   # Stop the Nginx container silently.
-  docker stop "$domain" > /dev/null
+  docker stop "${domain}" > /dev/null
 done

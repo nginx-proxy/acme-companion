@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-#shellcheck disable=SC2068,SC2206
+#shellcheck disable=SC2068,SC2206,SC2243,SC2244,SC2248,SC2249,SC2250,SC2292
 
 # This file is adapted from the Docker official images test suite
 # under Apache 2.0 License and as such includes of copy of the license
@@ -208,7 +208,7 @@ if [[ -z $GITHUB_ACTIONS ]] && [[ -f "$dir/local_test_env.sh" ]]; then
 	source "$dir/local_test_env.sh"
 fi
 
-# shellcheck source=./tests/test-functions.sh
+# shellcheck source=test/tests/test-functions.sh
 source "$dir/tests/test-functions.sh"
 ## End of additional code
 
@@ -286,7 +286,7 @@ fi
 declare -A testPaths=()
 for conf in "${configs[@]}"; do
 	## Next two line were modified by nginxproxy/acme-companion
-  # shellcheck source=./config.sh
+  # shellcheck source=test/config.sh
 	source "$conf"
 	## End of modifications
 

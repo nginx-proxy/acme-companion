@@ -2,7 +2,7 @@
 
 set -u
 
-# shellcheck source=functions.sh
+# shellcheck source=app/functions.sh
 source /app/functions.sh
 
 function print_version {
@@ -12,15 +12,15 @@ function print_version {
 }
 
 function check_docker_socket {
-    if [[ $DOCKER_HOST == unix://* ]]; then
+    if [[ ${DOCKER_HOST} == unix://* ]]; then
         socket_file=${DOCKER_HOST#unix://}
-        if [[ ! -S $socket_file ]]; then
-            if [[ ! -r $socket_file ]]; then
-                echo "Warning: Docker host socket at $socket_file might not be readable. Please check user permissions" >&2
-                echo "If you are in a SELinux environment, try using: '-v /var/run/docker.sock:$socket_file:z'" >&2
+        if [[ ! -S ${socket_file} ]]; then
+            if [[ ! -r ${socket_file} ]]; then
+                echo "Warning: Docker host socket at ${socket_file} might not be readable. Please check user permissions" >&2
+                echo "If you are in a SELinux environment, try using: '-v /var/run/docker.sock:${socket_file}:z'" >&2
             fi
-            echo "Error: you need to share your Docker host socket with a volume at $socket_file" >&2
-            echo "Typically you should run your container with: '-v /var/run/docker.sock:$socket_file:ro'" >&2
+            echo "Error: you need to share your Docker host socket with a volume at ${socket_file}" >&2
+            echo "Typically you should run your container with: '-v /var/run/docker.sock:${socket_file}:ro'" >&2
             exit 1
         fi
     elif parse_true "${DOCKER_TLS_VERIFY:-}"; then
@@ -43,43 +43,43 @@ function check_docker_socket {
 
 function check_dir_is_mounted_volume {
     local dir="$1"
-    if [[ $(get_self_cid) ]]; then
-        if ! docker_api "/containers/$(get_self_cid)/json" | jq ".Mounts[].Destination" | grep -q "^\"$dir\"$"; then
-            echo "Warning: '$dir' does not appear to be a mounted volume."
+    if [[ -n $(get_self_cid) ]]; then
+        if ! docker_api "/containers/$(get_self_cid)/json" | jq ".Mounts[].Destination" | grep -q "^\"${dir}\"$"; then
+            echo "Warning: '${dir}' does not appear to be a mounted volume."
         fi
     else
-        echo "Warning: can't check if '$dir' is a mounted volume without self container ID."
+        echo "Warning: can't check if '${dir}' is a mounted volume without self container ID."
     fi
 }
 
 function check_writable_directory {
     local dir="$1"
 
-    check_dir_is_mounted_volume "$dir"
+    check_dir_is_mounted_volume "${dir}"
 
-    if [[ ! -d "$dir" ]]; then
-        echo "Error: can't access to '$dir' directory !" >&2
-        echo "Check that '$dir' directory is declared as a writable volume." >&2
+    if [[ ! -d "${dir}" ]]; then
+        echo "Error: can't access to '${dir}' directory !" >&2
+        echo "Check that '${dir}' directory is declared as a writable volume." >&2
         exit 1
     fi
-    if ! touch "$dir/.check_writable" 2>/dev/null ; then
-        echo "Error: can't write to the '$dir' directory !" >&2
-        echo "Check that '$dir' directory is export as a writable volume." >&2
+    if ! touch "${dir}/.check_writable" 2>/dev/null ; then
+        echo "Error: can't write to the '${dir}' directory !" >&2
+        echo "Check that '${dir}' directory is export as a writable volume." >&2
         exit 1
     fi
-    rm -f "$dir/.check_writable"
+    rm -f "${dir}/.check_writable"
 }
 
 function warn_html_directory {
     local dir='/usr/share/nginx/html'
     
-    check_dir_is_mounted_volume "$dir"
+    check_dir_is_mounted_volume "${dir}"
 
-    if [[ ! -d "$dir" ]] || ! touch "$dir/.check_writable" 2>/dev/null; then
-        echo "Warning: can't access or write to '$dir' directory. This will prevent HTML-01 challenges from working correctly."
-        echo "If you are only using DNS-01 challenges, you can ignore this warning, otherwise check that '$dir' is declared as a writable volume."
+    if [[ ! -d "${dir}" ]] || ! touch "${dir}/.check_writable" 2>/dev/null; then
+        echo "Warning: can't access or write to '${dir}' directory. This will prevent HTML-01 challenges from working correctly."
+        echo "If you are only using DNS-01 challenges, you can ignore this warning, otherwise check that '${dir}' is declared as a writable volume."
     fi
-    rm -f "$dir/.check_writable"
+    rm -f "${dir}/.check_writable"
 }
 
 function check_dh_group {
@@ -96,31 +96,31 @@ function check_dh_group {
     fi
 
     # Let's check DHPARAM_BITS is set to a supported value
-    if [[ ! "$DHPARAM_BITS" =~ ^(2048|3072|4096)$ ]]; then
+    if [[ ! "${DHPARAM_BITS}" =~ ^(2048|3072|4096)$ ]]; then
         echo "Error: Unsupported DHPARAM_BITS size: ${DHPARAM_BITS}. Supported values are 2048, 3072, or 4096 (default)." >&2
         exit 1
     fi
 
     # Use an existing pre-generated DH group from RFC7919 (https://datatracker.ietf.org/doc/html/rfc7919#appendix-A):
     local RFC7919_DHPARAM_FILE="/app/dhparam/ffdhe${DHPARAM_BITS}.pem"
-    local EXPECTED_DHPARAM_HASH; EXPECTED_DHPARAM_HASH=$(sha256sum "$RFC7919_DHPARAM_FILE" | cut -d ' ' -f1)
+    local EXPECTED_DHPARAM_HASH; EXPECTED_DHPARAM_HASH=$(sha256sum "${RFC7919_DHPARAM_FILE}" | cut -d ' ' -f1)
 
 	# DH params may be provided by the user (rarely necessary)
-	if [[ -f "$DHPARAM_FILE" ]]; then
+	if [[ -f "${DHPARAM_FILE}" ]]; then
         local USER_PROVIDED_DH
 
         # Check if the DH params file is user provided or comes from acme-companion
-        local DHPARAM_HASH; DHPARAM_HASH=$(sha256sum "$DHPARAM_FILE" | cut -d ' ' -f1)
+        local DHPARAM_HASH; DHPARAM_HASH=$(sha256sum "${DHPARAM_FILE}" | cut -d ' ' -f1)
         
         for f in /app/dhparam/ffdhe*.pem; do
-            local FFDHE_HASH; FFDHE_HASH=$(sha256sum "$f" | cut -d ' ' -f1)
-            if [[ "$DHPARAM_HASH" == "$FFDHE_HASH" ]]; then
+            local FFDHE_HASH; FFDHE_HASH=$(sha256sum "${f}" | cut -d ' ' -f1)
+            if [[ "${DHPARAM_HASH}" == "${FFDHE_HASH}" ]]; then
                 # This is an acme-companion created DH params file
                 USER_PROVIDED_DH='false'
 
                 # Check if /etc/nginx/certs/dhparam.pem matches the expected pre-generated DH group
-                if [[ "$DHPARAM_HASH" == "$EXPECTED_DHPARAM_HASH" ]]; then
-                    set_ownership_and_permissions "$DHPARAM_FILE"
+                if [[ "${DHPARAM_HASH}" == "${EXPECTED_DHPARAM_HASH}" ]]; then
+                    set_ownership_and_permissions "${DHPARAM_FILE}"
                     echo "Info: ${DHPARAM_BITS} bits RFC7919 Diffie-Hellman group found, generation skipped."
                     return 0
                 fi
@@ -129,7 +129,7 @@ function check_dh_group {
 
         if parse_true "${USER_PROVIDED_DH:=true}"; then
             # This is a user provided DH params file
-            set_ownership_and_permissions "$DHPARAM_FILE"
+            set_ownership_and_permissions "${DHPARAM_FILE}"
             echo "Info: A custom dhparam.pem file was provided. Best practice is to use standardized RFC7919 Diffie-Hellman groups instead."
             return 0
         fi
@@ -137,9 +137,9 @@ function check_dh_group {
 
     # The RFC7919 DH params file either need to be created or replaced
 	echo "Info: Setting up ${DHPARAM_BITS} bits RFC7919 Diffie-Hellman group..."
-	cp "$RFC7919_DHPARAM_FILE" "${DHPARAM_FILE}.tmp"
-    mv "${DHPARAM_FILE}.tmp" "$DHPARAM_FILE"
-    set_ownership_and_permissions "$DHPARAM_FILE"
+	cp "${RFC7919_DHPARAM_FILE}" "${DHPARAM_FILE}.tmp"
+    mv "${DHPARAM_FILE}.tmp" "${DHPARAM_FILE}"
+    set_ownership_and_permissions "${DHPARAM_FILE}"
 }
 
 function check_default_cert_key {
@@ -153,7 +153,7 @@ function check_default_cert_key {
         # than 3 months / 7776000 seconds (60 x 60 x 24 x 30 x 3).
         check_cert_min_validity /etc/nginx/certs/default.crt 7776000
         cert_validity=$?
-        [[ "$DEBUG" == 1 ]] && echo "Debug: a default certificate with $default_cert_cn is present."
+        [[ "${DEBUG}" == 1 ]] && echo "Debug: a default certificate with ${default_cert_cn} is present."
     fi
 
     # Create a default cert and private key if:
@@ -161,19 +161,19 @@ function check_default_cert_key {
     #   OR
     #   - the existing default cert/key were generated by the container
     #     and the cert validity is less than three months
-    if [[ ! -e /etc/nginx/certs/default.crt || ! -e /etc/nginx/certs/default.key ]] || [[ "${default_cert_cn:-}" =~ $cn && "${cert_validity:-}" -ne 0 ]]; then
+    if [[ ! -e /etc/nginx/certs/default.crt || ! -e /etc/nginx/certs/default.key ]] || [[ "${default_cert_cn:-}" =~ ${cn} && "${cert_validity:-}" -ne 0 ]]; then
         openssl req -x509 \
             -newkey rsa:4096 -sha256 -nodes -days 365 \
-            -subj "/CN=$cn" \
+            -subj "/CN=${cn}" \
             -keyout /etc/nginx/certs/default.key.new \
             -out /etc/nginx/certs/default.crt.new \
         && mv /etc/nginx/certs/default.key.new /etc/nginx/certs/default.key \
         && mv /etc/nginx/certs/default.crt.new /etc/nginx/certs/default.crt \
         && reload_nginx
         echo "Info: a default key and certificate have been created at /etc/nginx/certs/default.key and /etc/nginx/certs/default.crt."
-    elif [[ "$DEBUG" == 1 && "${default_cert_cn:-}" =~ $cn ]]; then
+    elif [[ "${DEBUG}" == 1 && "${default_cert_cn:-}" =~ ${cn} ]]; then
         echo "Debug: the self generated default certificate is still valid for more than three months. Skipping default certificate creation."
-    elif [[ "$DEBUG" == 1 ]]; then
+    elif [[ "${DEBUG}" == 1 ]]; then
         echo "Debug: the default certificate is user provided. Skipping default certificate creation."
     fi
     set_ownership_and_permissions "/etc/nginx/certs/default.key"
@@ -193,7 +193,7 @@ function check_renew_after_env {
     # Check for deprecated DEFAULT_RENEW variable
     if [[ -n "${DEFAULT_RENEW:-}" && -z "${ACME_RENEW_AFTER:-}" ]]; then
         echo "Warning: DEFAULT_RENEW is deprecated. Please use ACME_RENEW_AFTER instead." >&2
-        export ACME_RENEW_AFTER="$DEFAULT_RENEW"
+        export ACME_RENEW_AFTER="${DEFAULT_RENEW}"
     fi
 }
 

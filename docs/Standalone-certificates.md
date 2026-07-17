@@ -102,7 +102,7 @@ declare -A ACMESH_alt_DNS_API_CONFIG=(
 
 The container does not actively watch the `/app/letsencrypt_user_data` file for changes.
 
-Changes will either be picked up every hour when the service loop execute again, or by using `docker exec your-le-container-name-or-id /app/signal_le_service` to manually trigger the service loop execution.
+Changes will either be picked up every hour when the service loop execute again, or by using `docker exec your-le-container-name-or-id signal_le_service` to manually trigger the service loop execution.
 
 ### Proxying to something else than a Docker container
 

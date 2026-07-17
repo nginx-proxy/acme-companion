@@ -26,4 +26,4 @@ echo '## unix-socket-get'
 EOF
 )"
 
-docker run --rm "$1" bash -c "$commands" 2>&1
+docker run --rm "$1" bash -c "${commands}" 2>&1
