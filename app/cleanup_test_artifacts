@@ -21,16 +21,9 @@ while [[ $# -gt 0 ]]; do
 done
 
 for domain in le1.wtf le2.wtf le3.wtf le4.wtf lim.it; do
-    folder="/etc/nginx/certs/$domain"
-    [[ -d "$folder" ]] && rm -rf "$folder"
-    folder="/etc/acme.sh/default/$domain"
-    [[ -d "$folder" ]] && rm -rf "$folder"
-    folder="/etc/acme.sh/contact@${domain}/$domain"
-    [[ -d "$folder" ]] && rm -rf "$folder"
-    folder="/etc/acme.sh/legacy-contact@${domain}/$domain"
-    [[ -d "$folder" ]] && rm -rf "$folder"
-    folder="/etc/acme.sh/default/${domain}_ecc"
-    [[ -d "$folder" ]] && rm -rf "$folder"
+    for folder in "/etc/nginx/certs/$domain" "/etc/acme.sh/default/$domain" "/etc/acme.sh/default/${domain}_ecc" "/etc/acme.sh/contact@${domain}" "/etc/acme.sh/legacy-contact@${domain}"; do
+        [[ -d "$folder" ]] && rm -rf "$folder"
+    done
     location_file="/etc/nginx/vhost.d/$domain"
     [[ -f "$location_file" ]] && rm -rf "$location_file" 2> /dev/null
     for extension in key crt chain.pem dhparam.pem; do
