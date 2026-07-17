@@ -6,6 +6,8 @@ There are three methods to inform the **acme-companion** container of the **ngin
 
 * `label` method: add the label `com.github.nginx-proxy.nginx` to the **nginx**/**nginx-proxy** container.
 
+  * Optional. Using a custom `label`: add a custom label, e.g. :`custom.label.nginx` to the **nginx**/**nginx-proxy** container and set the environment variable `NGINX_PROXY_CONTAINER_LABEL` to match the custom label.
+
 * `environment variable` method: assign a fixed name to the **nginx**/**nginx-proxy** container with `container_name:` and set the environment variable `NGINX_PROXY_CONTAINER` to this name on the **acme-companion** container.
 
 * `volumes_from` method. Using this method, the **acme-companion** container will get the **nginx**/**nginx-proxy** container ID from the volumes it got using the `volumes_from` option.
@@ -13,6 +15,8 @@ There are three methods to inform the **acme-companion** container of the **ngin
 And two methods to inform the **acme-companion** container of the **docker-gen** container ID:
 
 * `label` method: add the label `com.github.nginx-proxy.docker-gen` to the **docker-gen** container.
+
+  * Optional. Using a custom `label`: add a custom label, e.g. :`custom.label.docker-gen` to the **docker-gen** container and set the environment variable `NGINX_DOCKER_GEN_CONTAINER_LABEL` to match the custom label.
 
 * `environment variable` method: assign a fixed name to the **docker-gen** container with `container_name:` and set the environment variable `NGINX_DOCKER_GEN_CONTAINER` to this name on the **acme-companion** container.
 
@@ -36,6 +40,25 @@ $ docker run --detach \
 
 $ docker run --detach \
     [...]
+    nginxproxy/acme-companion
+```
+
+`label` method with custom label.
+```
+$ docker run --detach \
+    [...]
+    --label custom.label.nginx \
+    nginx
+
+$ docker run --detach \
+    [...]
+    --label custom.label.docker-gen \
+    nginxproxy/docker-gen
+
+$ docker run --detach \
+    [...]
+    --env NGINX_PROXY_CONTAINER_LABEL=custom.label.nginx
+    --env NGINX_DOCKER_GEN_CONTAINER_LABEL=custom.label.docker-gen
     nginxproxy/acme-companion
 ```
 
