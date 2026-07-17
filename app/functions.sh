@@ -37,7 +37,7 @@ function check_nginx_proxy_container_run {
     local -a _nginx_proxy_containers
     mapfile -t _nginx_proxy_containers < <(get_nginx_proxy_container)
     if [[ ${#_nginx_proxy_containers[@]} -eq 0 ]]; then
-        echo "$(date "+%Y/%m/%d %T") Error: could not get a nginx-proxy container ID." >&2
+        echo "$(date "+%Y/%m/%d %T") Error: could not get an nginx-proxy container ID." >&2
         return 1
     fi
     local _nginx_proxy_container
