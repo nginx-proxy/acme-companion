@@ -10,7 +10,8 @@ fi
 
 default_renew=170
 run_le_container "${1:?}" "$le_container_name" \
-  --cli-args "--env DEFAULT_RENEW=$default_renew"
+  --cli-args "--env DEFAULT_RENEW=$default_renew" \
+  --cli-args "--env NO_ARI=1"
 
 # Create the $domains array from comma separated domains in TEST_DOMAINS.
 IFS=',' read -r -a domains <<< "$TEST_DOMAINS"
