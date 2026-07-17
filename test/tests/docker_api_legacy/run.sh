@@ -249,4 +249,8 @@ $labeled_nginx2_cid
 EOF
   ;;
 
+  *)
+    echo "Invalid setup option: $SETUP"
+    exit 1
+
 esac
