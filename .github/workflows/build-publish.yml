@@ -1,4 +1,4 @@
-name: Build and publish Docker image
+name: Build and publish
 
 permissions:
   contents: read
@@ -24,7 +24,7 @@ on:
 
 jobs:
   multiarch-build:
-    name: Build and publish Docker image
+    name: Multiarch Docker image
     runs-on: ubuntu-latest
     if: (github.event_name == 'schedule' && github.repository == 'nginx-proxy/acme-companion') || (github.event_name != 'schedule')
     steps:

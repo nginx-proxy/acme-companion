@@ -25,6 +25,7 @@ env:
 
 jobs:
   companion-build:
+    name: Image build
     runs-on: ubuntu-latest
 
     steps:
@@ -53,6 +54,7 @@ jobs:
           path: companion.tar
 
   docker-specs-tests:
+    name: Docker specs
     needs: companion-build
     runs-on: ubuntu-latest
 
@@ -79,6 +81,7 @@ jobs:
         run: test/github_actions/containers-logs.sh
 
   integration-tests:
+    name: Integration (${{ matrix.test-name }}/${{ matrix.setup }})
     needs:
       - companion-build
     strategy:

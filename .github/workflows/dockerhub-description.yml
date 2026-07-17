@@ -1,4 +1,4 @@
-name: Update Docker Hub Description
+name: Docker Hub Description
 
 permissions:
   contents: read
@@ -12,8 +12,8 @@ on:
       - .github/workflows/dockerhub-description.yml
 
 jobs:
-  dockerHubDescription:
-    name: Update Docker Hub Description
+  update-description:
+    name: Update
     runs-on: ubuntu-latest
 
     steps:
