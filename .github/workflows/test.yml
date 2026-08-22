@@ -131,6 +131,9 @@ jobs:
           - test-name: renew_private_keys
             setup: 2containers
             pebble-config: pebble-config.json
+          - test-name: nginx_replicas
+            setup: 2containers
+            pebble-config: pebble-config.json
     runs-on: ubuntu-latest
 
     steps:
