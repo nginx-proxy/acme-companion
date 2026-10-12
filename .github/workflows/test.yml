@@ -96,6 +96,7 @@ jobs:
             certs_san,
             certs_single_domain,
             certs_standalone,
+            standalone_container,
             certs_renew_after,
             certs_default_renew_deprecated,
             cert_profiles,
