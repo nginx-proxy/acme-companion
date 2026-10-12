@@ -25,6 +25,7 @@ globalTests+=(
 	certs_default_renew_deprecated
 	ocsp_must_staple
 	certs_persistence
+	nginx_replicas
 )
 
 # The acme_eab test requires Pebble with a specific configuration
