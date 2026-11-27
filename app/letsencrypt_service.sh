@@ -207,6 +207,9 @@ function update_cert {
     # CLI parameters array used for --issue
     local -a params_issue_arr
 
+    # CLI parameters array used for --install-cert
+    local -a params_install_arr
+
     # ACME challenge type
     local -n acme_challenge="ACME_${cid}_CHALLENGE"
     if [[ -z "${acme_challenge}" ]]; then
@@ -361,12 +364,14 @@ function update_cert {
     fi
 
     local absolute_certificate_dir="/etc/nginx/certs/${relative_certificate_dir}"
-    params_issue_arr+=( \
+    local -a certificate_paths_arr=( \
         --cert-file "${absolute_certificate_dir}/cert.pem" \
         --key-file "${absolute_certificate_dir}/key.pem" \
         --ca-file "${absolute_certificate_dir}/chain.pem" \
         --fullchain-file "${absolute_certificate_dir}/fullchain.pem" \
     )
+    params_issue_arr+=("${certificate_paths_arr[@]}")
+    params_install_arr+=("${certificate_paths_arr[@]}")
 
     [[ ! -d "${config_home}" ]] && mkdir -p "${config_home}"
     params_base_arr+=(--config-home "${config_home}")
@@ -538,6 +543,21 @@ function update_cert {
 
     # 0 = success, 2 = RENEW_SKIP
     if [[ ${acmesh_return} == 0 || ${acmesh_return} == 2 ]]; then
+        # 2 = RENEW_SKIP: acme.sh holds a still valid certificate and skipped the renewal.
+        # In that case acme.sh does not copy the certificate to the paths provided by
+        # --cert-file/--key-file/--ca-file/--fullchain-file. If those files are missing
+        # (e.g. the volume was recreated while the acme.sh data persisted), reinstall them from the acme.sh storage.
+        if [[ ${acmesh_return} == 2 ]] \
+            && [[ ! -f "${absolute_certificate_dir}/fullchain.pem" || ! -f "${absolute_certificate_dir}/key.pem" ]]; then
+            [[ "${DEBUG}" == 1 ]] && echo "Certificates for ${base_domain} are missing from ${absolute_certificate_dir}, reinstalling them from the acme.sh storage."
+            params_install_arr=("${params_base_arr[@]}" --domain "${base_domain}" "${params_install_arr[@]}")
+            [[ "${cert_keysize}" == ec-* ]] && params_install_arr+=(--ecc)
+            [[ "${DEBUG}" == 1 ]] && echo "Calling acme.sh --install-cert with the following parameters : ${params_install_arr[*]}"
+            if ! acme.sh --install-cert "${params_install_arr[@]}"; then
+                echo "Error: acme.sh --install-cert failed for ${base_domain}, certificate files are still missing."
+            fi
+        fi
+
         for domain in "${hosts_array[@]}"; do
             create_links "${relative_certificate_dir}" "${domain}" \
                 && should_reload_nginx='true' \
