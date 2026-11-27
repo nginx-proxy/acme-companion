@@ -104,6 +104,21 @@ The container does not actively watch the `/app/letsencrypt_user_data` file for 
 
 Changes will either be picked up every hour when the service loop execute again, or by using `docker exec your-le-container-name-or-id signal_le_service` to manually trigger the service loop execution.
 
+### Standalone certificates from a container's environment variables
+
+If the certificate can be tied to a running container (for instance a mail server that is not proxied by **nginx-proxy**), you don't need the `letsencrypt_user_data` file: a container with an `ACME_HOST` / `LETSENCRYPT_HOST` environment variable but no `VIRTUAL_HOST` / `VIRTUAL_HOST_MULTIPORTS` variable will get its certificate through the standalone flow:
+
+```yaml
+services:
+  smtp:
+    image: mysmtp
+    environment:
+      LETSENCRYPT_HOST: smtp.example.org
+      LETSENCRYPT_RESTART_CONTAINER: "true"
+```
+
+The requirements are the same as for `letsencrypt_user_data` standalone certificates: with the HTTP-01 challenge, the `/etc/nginx/vhost.d` and `/etc/nginx/conf.d` folders must be shared between the **nginx-proxy** and **acme-companion** containers (this does not apply to the DNS-01 challenge). All the per-container [configuration variables](./Container-configuration.md) (`LETSENCRYPT_RESTART_CONTAINER`, `ACME_CHALLENGE`, etc.) are supported.
+
 ### Proxying to something else than a Docker container
 
 Please see the [**nginx-proxy** documentation](https://github.com/nginx-proxy/nginx-proxy#proxy-wide).
